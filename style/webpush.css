@@ -1,0 +1,7 @@
+#subscribe::before {
+    content: "プッシュ通知を有効にする";
+}
+
+#subscribe.subscribing::before {
+    content: "プッシュ通知を無効にする";
+}

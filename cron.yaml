@@ -1,0 +1,4 @@
+cron:
+- description: site_cruising
+  url: /api/cron
+  schedule: every 1 hours

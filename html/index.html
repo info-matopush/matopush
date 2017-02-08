@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta charset="utf-8" />
+        <meta name="keywords" content="更新,通知,ウェブプッシュ,プッシュ,WebPush,Push,RSS,ATOM" />
+        <meta name="discription" content="気にサイトの更新をWebPush通知で受け取れるサービス" />
+        <title>まとプ - 気になるサイトの更新をまとめてWebPush通知 -</title>
+        <link rel="stylesheet" href="style/bootstrap.min.css" />
+        <link rel="stylesheet" href="style/webpush.css" />
+        <link rel="icon" type="image/x-icon" href="/img/hira_31.ico" />
+        <script src="js/main.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>お気に入りサイトの更新情報をまとめてWebPush通知</h1>
+            <div id="control">
+            <button id="subscribe" class="btn btn-primary" disabled></button>
+            <button id="test" class="btn btn-primary" disabled>通知をテストする</button>
+            </div>
+
+            <div id="how_to_use"><BR>
+                <dl class="dl-horizontal">
+                    <dt>対応ブラウザ</dt><dd>FireFox, Chrome</dd>
+                    <dt>対応OS</dt><dd>Windows, Android, Mac</dd>
+                    <dt>使い方</dt><dd>①プッシュ通知を有効にして、テスト通知が届くことを確認してください。</dd>
+                    <dt></dt><dd>②下記の「登録済みサンプルサイト」のリストから更新を通知してほしいサイトをチェックしてください。</dd>
+                    <dt></dt><dd>③「登録済みサンプルサイト」のリストにないサイトはサイトURLを参考にフィード配信しているURLを入力することで追加ができます。</dd>
+                    <dt></dt><dd>→RSS 1.0, RSS 2.0, ATOMに対応しています。(html内にフィードへのリンクがあればhtmlを指定してもいいです)</dd>
+                    <dt>通知について</dt><dd><strong>１時間に１回、サーバー側でサイトを巡回して新着記事があればWebPushで通知します。</strong></dd>
+                </dl>
+            </div>
+            サイトURL(フィード配信URL)
+            <div class="input-group">
+                <input type="url" class="form-control" id="SiteUrl">
+                <span class="input-group-btn">
+                    <button id="addSite" class="btn btn-success" disabled>追加</button>
+                </span>
+            </div>
+            <h2>マイ・サイト</h2>
+            現在通知対象、または過去に通知対象としてチェックしたことのあるサイトです。
+            <table class="table">
+                <thread>
+                    <tr>
+                        <th>通知</th>
+                        <th>サイト名</th>
+                        <th>最新記事</th>
+                        <th>サイトURL</th>
+                    </tr>
+                    <tbody id="mySiteTable">
+                    </tbody>
+                </thread>
+            </table>
+
+            <h2>登録済みサンプルサイト</h2>
+            各行にある左端にあるチェックをつけることで、すぐに通知が行われるようになります。
+            <table class="table">
+                <thread>
+                    <tr>
+                        <th>通知</th>
+                        <th>サイト名</th>
+                        <th>最新記事</th>
+                        <th>サイトURL</th>
+                    </tr>
+                    <tbody id="siteTable">
+                    </tbody>
+                </thread>
+            </table>
+        </div>
+    </body>
+</html>
