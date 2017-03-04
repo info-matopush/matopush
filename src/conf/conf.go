@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"github.com/mjibson/goon"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 	"time"
         "src/site"
 )
@@ -41,7 +42,9 @@ func Cleanup(ctx context.Context, endpoint string) (error) {
 	g := goon.FromContext(ctx)
 	query := datastore.NewQuery("SiteSubscribe").Filter("endpoint=", endpoint)
 
-	keys, err := g.GetAll(query, nil)
+	var list []SiteSubscribe
+	keys, err := g.GetAll(query, &list)
+	log.Infof(ctx, "取得したSiteSubscribeの数 %d", len(keys))
 	if err == datastore.ErrInvalidEntityType {
 		// エンティティがない場合
 		return nil
