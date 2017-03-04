@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"src/endpoint"
 	"src/site"
+	"src/conf"
 )
 
 type ContentInfo struct {
@@ -15,7 +16,24 @@ type ContentInfo struct {
 
 type SiteInfo struct {
 	SiteUrl      string
-	SiteTitle    string     // todo: titleタグから取得するように後で変更する
+	SiteTitle    string
+}
+
+func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
+	// 削除済み通知先のリストを取得する
+	list := endpoint.GetAllDeletedEndpoint(ctx)
+
+	for _, ei := range list {
+		err := conf.Cleanup(ctx, ei.Endpoint)
+		if err == nil {
+			endpoint.Cleanup(ctx, ei.Endpoint)
+		} else {
+			log.Warningf(ctx, "cleanup error. %v", err)
+		}
+	}
+	log.Infof(ctx, "cleanupしたendpoint数. %d", len(list))
 }
 
 func healthHandler(_ http.ResponseWriter, r *http.Request) {

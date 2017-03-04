@@ -41,7 +41,7 @@ type SiteUpdateInfo struct {
 	// プッシュ通知を行う時だけ使う
 	Endpoint     string    `datastore:"-"`
 	// cron実行時に通知したEndpointの数を設定する
-	SubscribeCount int64     `datastore:"SubscribeCount"`
+	SubscribeCount int64     `datastore:"SubscribeCount,noindex"`
 }
 
 func GetAll(ctx context.Context, dst *[]SiteUpdateInfo) (error) {

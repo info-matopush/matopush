@@ -3,8 +3,9 @@ package conf
 import (
 	"golang.org/x/net/context"
 	"github.com/mjibson/goon"
-	"src/site"
+	"google.golang.org/appengine/datastore"
 	"time"
+        "src/site"
 )
 
 type SiteSubscribe struct {
@@ -12,7 +13,7 @@ type SiteSubscribe struct {
 	Endpoint   string    `datastore:"endpoint"`
 	SiteUrl    string    `datastore:"site_url"`
 	Value      string    `datastore:"value"`
-	UpdateDate time.Time `datastore:"update_date"`
+	UpdateDate time.Time `datastore:"update_date,noindex"`
 }
 
 func Update(ctx context.Context, endpoint, siteUrl, value string) (string, error) {
@@ -35,3 +36,18 @@ func Update(ctx context.Context, endpoint, siteUrl, value string) (string, error
 	err = g.Get(&sui)
 	return sui.SiteTitle, err
 }
+
+func Cleanup(ctx context.Context, endpoint string) (error) {
+	g := goon.FromContext(ctx)
+	query := datastore.NewQuery("SiteSubscribe").Filter("endpoint=", endpoint)
+
+	keys, err := g.GetAll(query, nil)
+	if err == datastore.ErrInvalidEntityType {
+		// エンティティがない場合
+		return nil
+	} else if err == nil {
+		err = g.DeleteMulti(keys)
+	}
+	return err
+}
+

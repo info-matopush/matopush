@@ -158,15 +158,13 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 	return
 }
 
-func sendPushAll(ctx context.Context, sui *site.SiteUpdateInfo) (err error) {
-	err = nil
-
+func sendPushAll(ctx context.Context, sui *site.SiteUpdateInfo) {
 	// 通知先のリストを取得する
-	var list []endpoint.EndpointInfo
-	endpoint.GetAll(ctx, list)
+	list := endpoint.GetAll(ctx)
 
 	for _, ei := range list {
 		sendPush(ctx, sui, &ei)
 	}
+	log.Debugf(ctx, "通知した数 %d", len(list))
 	return
 }

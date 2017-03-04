@@ -8,6 +8,7 @@ import (
 	"google.golang.org/appengine/datastore"
 	"hash/fnv"
 	"time"
+	"google.golang.org/appengine/log"
 )
 
 // 通知先識別情報
@@ -50,6 +51,11 @@ func getPhysicalEndpointInfo(ctx context.Context, endpoint string) *physicalEndp
 
 func getAllEndpointQuery() *datastore.Query {
 	query := datastore.NewQuery("physicalEndpointInfo").Filter("delete_flag=", false)
+	return query
+}
+
+func getDeletedEndpointQuery() *datastore.Query {
+	query := datastore.NewQuery("physicalEndpointInfo").Filter("delete_flag=", true)
 	return query
 }
 
@@ -117,7 +123,7 @@ func Count(ctx context.Context) int {
 	return num
 }
 
-func GetAll(ctx context.Context, dst []EndpointInfo) {
+func GetAll(ctx context.Context) (dst []EndpointInfo) {
 	g := goon.FromContext(ctx)
 	query := getAllEndpointQuery()
 	var list []physicalEndpointInfo
@@ -130,4 +136,29 @@ func GetAll(ctx context.Context, dst []EndpointInfo) {
 			P256dh:   endpoint.P256dh,
 		})
 	}
+	log.Debugf(ctx, "取得したendpointの数 %d", len(list))
+	return
+}
+
+func GetAllDeletedEndpoint(ctx context.Context) (dst []EndpointInfo) {
+	g := goon.FromContext(ctx)
+	query := getDeletedEndpointQuery()
+	var list []physicalEndpointInfo
+	g.GetAll(query, &list)
+
+	for _, endpoint := range list {
+		dst = append(dst, EndpointInfo{
+			Endpoint: endpoint.Endpoint,
+			Auth:     endpoint.Auth,
+			P256dh:   endpoint.P256dh,
+		})
+	}
+	log.Debugf(ctx, "取得したendpointの数 %d", len(list))
+	return
+}
+
+func Cleanup(ctx context.Context, endpoint string) {
+	g := goon.FromContext(ctx)
+	e := physicalEndpointInfo{Key:endpointToKeyString(endpoint)}
+	g.Delete(g.Key(e))
 }
