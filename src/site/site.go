@@ -5,17 +5,17 @@ import (
 	"errors"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
 	"net/http"
-	"src/atom"
-	"time"
-	"google.golang.org/appengine/datastore"
-	"src/rdf"
-	"src/html"
+	"src/xml/atom"
+	"src/xml/html"
+	"src/xml/rdf"
+	"src/xml/rss"
 	"strings"
-	"src/rss"
+	"time"
 )
 
 type Result struct {
@@ -24,27 +24,25 @@ type Result struct {
 	ContentUrl   string
 }
 
+// サイト更新情報
 type SiteUpdateInfo struct {
-	SiteUrl      string    `datastore:"-"                   goon:"id"`
-	SiteTitle    string    `datastore:"site_title,noindex"`
-	ContentUrl   string    `datastore:"content_url,noindex"`
-	ContentTitle string    `datastore:"content_title,noindex"`
-	UpdateFlg    bool      `datastore:"-"                   json:"-"`
-	Public       bool      `datastore:"public"`
-	Icon         string    `datastore:"-"`
-	CreateDate   time.Time `datastore:"create_date,noindex" json:"-"`
-	UpdateDate   time.Time `datastore:"update_date,noindex" json:"-"`
-	DeleteFlag   bool      `datastore:"delete_flag"         json:"-"`
-	DeleteDate   time.Time `datastore:"delete_date,noindex" json:"-"`
-	// マイ・リストを返す時だけ使う
-	Value        string    `datastore:"-"`
-	// プッシュ通知を行う時だけ使う
-	Endpoint     string    `datastore:"-"`
-	// cron実行時に通知したEndpointの数を設定する
-	SubscribeCount int64     `datastore:"SubscribeCount,noindex"`
+	SiteUrl        string    `datastore:"-"                   goon:"id"`
+	SiteTitle      string    `datastore:"site_title,noindex"`
+	ContentUrl     string    `datastore:"content_url,noindex"`
+	ContentTitle   string    `datastore:"content_title,noindex"`
+	UpdateFlg      bool      `datastore:"-"                   json:"-"`
+	Public         bool      `datastore:"public"`
+	Icon           string    `datastore:"-"`
+	CreateDate     time.Time `datastore:"create_date,noindex" json:"-"`
+	UpdateDate     time.Time `datastore:"update_date,noindex" json:"-"`
+	DeleteFlag     bool      `datastore:"delete_flag"         json:"-"`
+	DeleteDate     time.Time `datastore:"delete_date,noindex" json:"-"`
+	Value          string    `datastore:"-"`                      // マイ・リストを返す時だけ使う
+	Endpoint       string    `datastore:"-"`                      // プッシュ通知を行う時だけ使う
+	SubscribeCount int64     `datastore:"SubscribeCount,noindex"` // cron実行時に通知したEndpointの数を設定する
 }
 
-func GetAll(ctx context.Context, dst *[]SiteUpdateInfo) (error) {
+func GetAll(ctx context.Context, dst *[]SiteUpdateInfo) error {
 	g := goon.FromContext(ctx)
 	query := datastore.NewQuery("SiteUpdateInfo").Filter("delete_flag=", false)
 	keys, err := g.GetAll(query, dst)
@@ -54,7 +52,7 @@ func GetAll(ctx context.Context, dst *[]SiteUpdateInfo) (error) {
 
 func Get(ctx context.Context, url string) (*SiteUpdateInfo, error) {
 	g := goon.FromContext(ctx)
-	sui := &SiteUpdateInfo{SiteUrl:url}
+	sui := &SiteUpdateInfo{SiteUrl: url}
 	err := g.Get(sui)
 	if err != nil {
 		// 未登録と見做す
@@ -78,7 +76,7 @@ func Get(ctx context.Context, url string) (*SiteUpdateInfo, error) {
 	return sui, err
 }
 
-func CheckSite(ctx context.Context, sui *SiteUpdateInfo) (error) {
+func CheckSite(ctx context.Context, sui *SiteUpdateInfo) error {
 	g := goon.FromContext(ctx)
 
 	info, err := getContentsInfo(ctx, sui.SiteUrl)
@@ -182,8 +180,8 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 		}
 	}
 	// 過去の経緯から[url]atom.xmlをチェックする
-	if len(url) - 1 == strings.LastIndex(url, "/") {
-		return getContentsInfo(ctx, url + "atom.xml")
+	if len(url)-1 == strings.LastIndex(url, "/") {
+		return getContentsInfo(ctx, url+"atom.xml")
 	}
 
 	return nil, errors.New("can't read information.")

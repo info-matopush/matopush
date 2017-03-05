@@ -6,18 +6,19 @@ import (
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 	"hash/fnv"
 	"time"
-	"google.golang.org/appengine/log"
 )
 
-// 通知先識別情報
+// 通知先識別情報(論理モデル)
 type EndpointInfo struct {
 	Endpoint string `json:"endpoint"`
 	P256dh   []byte `json:"p256dh"`
 	Auth     []byte `json:"auth"`
 }
 
+// 通知先情報(物理モデル)
 type physicalEndpointInfo struct {
 	// Uid はendpointをHash化したもの(EndpointInfoではEndpointがidだったため、memcacheへの格納が失敗していた。
 	Key        string    `datastore:"-" goon:"id"`
@@ -159,6 +160,6 @@ func GetAllDeletedEndpoint(ctx context.Context) (dst []EndpointInfo) {
 
 func Cleanup(ctx context.Context, endpoint string) {
 	g := goon.FromContext(ctx)
-	e := physicalEndpointInfo{Key:endpointToKeyString(endpoint)}
+	e := physicalEndpointInfo{Key: endpointToKeyString(endpoint)}
 	g.Delete(g.Key(e))
 }

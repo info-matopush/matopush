@@ -64,7 +64,7 @@ window.addEventListener('load', function() {
 function addSite() {
     var data = new FormData();
     data.append('endpoint', subscription.endpoint);
-    data.append('siteUrl', _('SiteUrl').value)
+    data.append('siteUrl', _('siteUrl').value)
 
     fetch('api/add', {
         method: 'post',
@@ -230,6 +230,7 @@ function disablePushRequest() {
     _('subscribe').disabled = false;
     _('test').disabled = true;
     _('addSite').disabled = true;
+    _('siteUrl').disabled = true;
 }
 
 function enablePushRequest(sub) {
@@ -238,6 +239,7 @@ function enablePushRequest(sub) {
     _('subscribe').disabled = false;
     _('test').disabled = false;
     _('addSite').disabled = false;
+    _('siteUrl').disabled = false;
 
     // subscriptionを登録する
     var data = new FormData();

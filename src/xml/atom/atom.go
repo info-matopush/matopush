@@ -6,8 +6,8 @@ type Feed struct {
 }
 
 type Entry struct {
-	Title string    `xml:"title"`
-	Link  []*Link   `xml:"link"`
+	Title string  `xml:"title"`
+	Link  []*Link `xml:"link"`
 }
 
 type Link struct {

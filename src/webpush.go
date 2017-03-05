@@ -3,7 +3,9 @@ package main
 import (
 	"crypto/elliptic"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	webpush "github.com/SherClockHolmes/webpush-go"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
@@ -13,17 +15,15 @@ import (
 	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
 	"net/http"
-	"fmt"
-	"encoding/json"
+	"src/conf"
 	"src/endpoint"
 	"src/site"
-	"src/conf"
 )
 
 func testHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	sui := site.SiteUpdateInfo{SiteTitle:"まとプ", ContentTitle:"これはテスト通知です。"}
+	sui := site.SiteUpdateInfo{SiteTitle: "まとプ", ContentTitle: "これはテスト通知です。"}
 
 	ei, _ := endpoint.Get(ctx, r.FormValue("endpoint"))
 	if ei != nil {
@@ -66,7 +66,7 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 func sendPush(ctx context.Context, sui *site.SiteUpdateInfo, ei *endpoint.EndpointInfo) (err error) {
 	// payloadの固定値はここで設定する
 	sui.Icon = "/img/news.png"
-	sui.Endpoint = ei.Endpoint    // ログ用
+	sui.Endpoint = ei.Endpoint // ログ用
 
 	message, _ := json.Marshal(sui)
 
@@ -121,7 +121,7 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 	err = nil
 
 	// 更新がなければ通知はしない
-	if (!sui.UpdateFlg) {
+	if !sui.UpdateFlg {
 		return
 	}
 
@@ -151,7 +151,7 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 			continue
 		}
 
-		sui.SubscribeCount++;
+		sui.SubscribeCount++
 		sendPush(ctx, sui, ei)
 	}
 	// 購読数を記録

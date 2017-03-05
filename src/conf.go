@@ -1,14 +1,14 @@
 package main
 
 import (
-	"net/http"
-	"github.com/mjibson/goon"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
 	"encoding/json"
-	"src/conf"
 	"fmt"
+	"github.com/mjibson/goon"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
+	"net/http"
+	"src/conf"
 	"src/site"
 )
 
@@ -33,13 +33,13 @@ func confListHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		sui := site.SiteUpdateInfo{SiteUrl:ss.SiteUrl}
+		sui := site.SiteUpdateInfo{SiteUrl: ss.SiteUrl}
 		err = g.Get(&sui)
 		if err != nil {
 			continue
 		}
 		// 現在通知対象かどうかを設定する
-		sui.Value = ss.Value;
+		sui.Value = ss.Value
 		sList = append(sList, sui)
 	}
 
@@ -64,5 +64,3 @@ func confSiteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-

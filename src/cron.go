@@ -4,9 +4,9 @@ import (
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"net/http"
+	"src/conf"
 	"src/endpoint"
 	"src/site"
-	"src/conf"
 )
 
 type ContentInfo struct {
@@ -15,8 +15,8 @@ type ContentInfo struct {
 }
 
 type SiteInfo struct {
-	SiteUrl      string
-	SiteTitle    string
+	SiteUrl   string
+	SiteTitle string
 }
 
 func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,7 @@ func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 func healthHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	sui := site.SiteUpdateInfo{SiteTitle:"まとプ", ContentTitle:""}
+	sui := site.SiteUpdateInfo{SiteTitle: "まとプ", ContentTitle: ""}
 
 	sendPushAll(ctx, &sui)
 
@@ -63,4 +63,3 @@ func cronHandler(_ http.ResponseWriter, r *http.Request) {
 
 	log.Infof(ctx, "site num:%d", len(siteList))
 }
-

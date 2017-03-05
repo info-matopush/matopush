@@ -6,10 +6,10 @@ type RDF struct {
 }
 
 type Channel struct {
-	Title   string  `xml:"title"`
+	Title string `xml:"title"`
 }
 
 type Item struct {
-	Title   string  `xml:"title"`
-	Link    string  `xml:"link"`
+	Title string `xml:"title"`
+	Link  string `xml:"link"`
 }

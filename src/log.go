@@ -1,9 +1,9 @@
 package main
 
 import (
-	"net/http"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
+	"net/http"
 )
 
 func logHandler(_ http.ResponseWriter, r *http.Request) {

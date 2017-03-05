@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/mjibson/goon"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"net/http"
-	"src/site"
-	"fmt"
 	"src/conf"
+	"src/site"
 )
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
