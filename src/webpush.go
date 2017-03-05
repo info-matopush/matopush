@@ -146,7 +146,8 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 
 		ei, err := endpoint.Get(ctx, ss.Endpoint)
 		if err != nil {
-			// todo: endpointが見つからない場合はSiteSubScriptionを無効にする
+			// endpointが見つからなかった場合(cleanupミス？)はSiteSubscribeの削除フラグを立てる
+			conf.Delete(ctx, ss)
 			continue
 		}
 

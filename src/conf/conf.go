@@ -15,6 +15,8 @@ type SiteSubscribe struct {
 	SiteUrl    string    `datastore:"site_url"`
 	Value      string    `datastore:"value"`
 	UpdateDate time.Time `datastore:"update_date,noindex"`
+	DeleteFlag bool      `datastore:"delete_flag"`
+	DeleteDate time.Time `datastore:"delete_date,noindex"`
 }
 
 func Update(ctx context.Context, endpoint, siteUrl, value string) (string, error) {
@@ -54,3 +56,12 @@ func Cleanup(ctx context.Context, endpoint string) (error) {
 	return err
 }
 
+func Delete(ctx context.Context, ss SiteSubscribe) {
+	g := goon.FromContext(ctx)
+
+	ss.DeleteFlag = true
+	ss.DeleteDate = time.Now()
+	ss.UpdateDate = time.Now()
+
+	g.Put(&ss)
+}
