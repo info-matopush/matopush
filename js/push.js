@@ -14,15 +14,28 @@ self.addEventListener('push', function(evt) {
     }
     if ('ContentUrl' in object) {
         content = object.ContentUrl;
+        tag = object.ContentUrl;
     }
     if ('Icon' in object) {
         icon = object.Icon;
     }
     if ('SiteUrl' in object) {
-        tag = object.SiteUrl;
+        // tag = object.SiteUrl;
     }
     if ('Endpoint' in object) {
         endpoint = object.Endpoint;
+    }
+
+    // Endpointに到達したことをログする
+    if (content !== "") {
+        var data = new FormData();
+        data.append('endpoint', endpoint);
+        data.append('url', content);
+        data.append('command', 'reach');
+        fetch('api/log', {
+            method: 'post',
+            body:   data,
+        });
     }
 
     if (body !== '') {
@@ -45,14 +58,15 @@ self.addEventListener('push', function(evt) {
 
 self.addEventListener('notificationclick', function(evt) {
     var url = evt.notification.data.url;
+    var endpoint = evt.notification.data.endpoint;
     evt.notification.close();
-
-    var data = new FormData();
-    data.append('endpoint', evt.notification.data.endpoint);
-    data.append('url', url);
 
     // URLが指定されていれば遷移する
     if (url !== "") {
+        var data = new FormData();
+        data.append('endpoint', endpoint);
+        data.append('url', url);
+        data.append('command', 'click');
         fetch('api/log', {
             method: 'post',
             body:   data,

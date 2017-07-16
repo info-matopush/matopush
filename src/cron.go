@@ -34,6 +34,9 @@ func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 		}
 	}
 	log.Infof(ctx, "cleanupしたendpoint数. %d", len(list))
+
+	// 古いログを削除する
+	LogCleanup(ctx)
 }
 
 func healthHandler(_ http.ResponseWriter, r *http.Request) {

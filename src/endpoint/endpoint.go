@@ -20,7 +20,7 @@ type EndpointInfo struct {
 
 // 通知先情報(物理モデル)
 type physicalEndpointInfo struct {
-	// Uid はendpointをHash化したもの(EndpointInfoではEndpointがidだったため、memcacheへの格納が失敗していた。
+	// Key はendpointをHash化したもの(EndpointInfoではEndpointがidだったため、memcacheへの格納が失敗していた。
 	Key        string    `datastore:"-" goon:"id"`
 	Endpoint   string    `datastore:"endpoint,noindex"`
 	P256dh     []byte    `datastore:"p256dh,noindex"`
