@@ -4,6 +4,11 @@
   "display": "standalone",
   "start_url": ".",
   "short_name": "まとプ",
+  "icons": [{
+    "src": "/img/news.png",
+    "sizes": "64x64",
+    "type": "image/png"
+  }],
   "description": "サイトの更新情報をプッシュでお知らせ！",
   "background_color": "#ffffff"
 }
