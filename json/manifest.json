@@ -1,0 +1,9 @@
+{
+  "name": "matopush",
+  "orientation": "portrait",
+  "display": "standalone",
+  "start_url": ".",
+  "short_name": "まとプ",
+  "description": "サイトの更新情報をプッシュでお知らせ！",
+  "background_color": "#ffffff"
+}

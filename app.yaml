@@ -21,6 +21,12 @@ handlers:
   upload: xml/sitemap.xml
   secure: always
 
+- url: /manifest.json
+  mime_type: application/manifest+json
+  static_files: json/manifest.json
+  upload: json/manifest.json
+  secure: always
+
 - url: /robots.txt
   static_files: txt/robots.txt
   upload: txt/robots.txt
