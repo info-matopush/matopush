@@ -63,6 +63,7 @@ self.addEventListener('notificationclick', function(evt) {
 
     // URLが指定されていれば遷移する
     if (url !== "") {
+        // Push通知から該当ページに遷移したことをログする
         var data = new FormData();
         data.append('endpoint', endpoint);
         data.append('url', url);

@@ -88,9 +88,9 @@ func logHandler(_ http.ResponseWriter, r *http.Request) {
 	log.Infof(ctx, "プッシュ通知からWebページ閲覧した。%s, %s", url, endpoint)
 
 	if command == "click" {
-		LogClick(ctx, endpoint, url)
+//		LogClick(ctx, endpoint, url)
 	} else if command == "reach" {
-		LogReach(ctx, endpoint, url)
+//		LogReach(ctx, endpoint, url)
 	}
 }
 
