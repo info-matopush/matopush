@@ -45,6 +45,7 @@ window.addEventListener('load', function() {
             tr.appendChild(td2);
 
             let td3 = document.createElement('td');
+            td3.setAttribute("class", "visible-lg visible-md")
             td3.textContent = json[i].SiteUrl;
             tr.appendChild(td3);
             _('siteTable').appendChild(tr);
@@ -294,6 +295,7 @@ function enablePushRequest(sub) {
             tr.appendChild(td2);
 
             let td3 = document.createElement('td');
+            td3.setAttribute("class", "visible-lg visible-md")
             td3.textContent = json[i].SiteUrl;
             tr.appendChild(td3);
             _('mySiteTable').appendChild(tr);
