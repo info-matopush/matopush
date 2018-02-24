@@ -37,22 +37,34 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+var SUBSCRIBE_URL = "https://matopush.appspot.com/api/subscriber?"
+
 func addHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
+	g := goon.NewGoon(r)
 
 	url := r.FormValue("siteUrl")
 	endpoint := r.FormValue("endpoint")
 
-	sui, err := site.Get(ctx, url)
+	sui, isNewSite, err := site.Get(ctx, url)
 	if err != nil {
 		fmt.Fprint(w, "サイトの登録に失敗しました。")
-	} else {
-		fmt.Fprintf(w, "「%s」を追加しました。\n", sui.SiteTitle)
-		siteTitle, err := conf.Update(ctx, endpoint, url, "true")
-		if err != nil {
-			fmt.Fprint(w, "設定の更新に失敗しました。")
-		} else {
-			fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", siteTitle)
+		return
+	}
+	if isNewSite {
+		g.Put(sui)
+		if sui.HasHub {
+			SubscribeRequest(ctx,
+				SUBSCRIBE_URL + sui.SiteUrl,
+				sui.FeedUrl,
+				sui.HubUrl)
 		}
+	}
+	fmt.Fprintf(w, "「%s」を追加しました。\n", sui.SiteTitle)
+	siteTitle, err := conf.Update(ctx, endpoint, url, "true")
+	if err != nil {
+		fmt.Fprint(w, "設定の更新に失敗しました。")
+	} else {
+		fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", siteTitle)
 	}
 }

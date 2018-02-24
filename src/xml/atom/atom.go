@@ -3,14 +3,15 @@ package atom
 type Feed struct {
 	Title string   `xml:"title"`
 	Entry []*Entry `xml:"entry"`
+	Link  []*Link  `xml:"link"`
 }
 
 type Entry struct {
-	Title string  `xml:"title"`
-	Link  []*Link `xml:"link"`
+	Title string   `xml:"title"`
+	Link  []*Link  `xml:"link"`
 }
 
 type Link struct {
-	Rel  string `xml:"rel,attr"`
-	Href string `xml:"href,attr"`
+	Rel   string   `xml:"rel,attr"`
+	Href  string   `xml:"href,attr"`
 }

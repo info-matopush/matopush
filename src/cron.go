@@ -60,7 +60,13 @@ func cronHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, sui := range siteList {
-		site.CheckSite(ctx, &sui)
+		err := site.CheckSite(ctx, &sui)
+		if err != nil {
+			// Feedの読み込みに失敗
+			// todo: どうしよう。とりあえず更新なしとする
+			log.Warningf(ctx, "feedの読み込みに失敗 url:%s", sui.SiteUrl)
+			return
+		}
 		sendPushWhenSiteUpdate(ctx, &sui)
 	}
 

@@ -6,10 +6,16 @@ type RDF struct {
 }
 
 type Channel struct {
-	Title string `xml:"title"`
+	Title    string   `xml:"title"`
+	AtomLink AtomLink `xml:"link"`
 }
 
 type Item struct {
 	Title string `xml:"title"`
 	Link  string `xml:"link"`
+}
+
+type AtomLink struct {
+	Rel  string `xml:"rel,attr"`
+	Href string `xml:"href,attr"`
 }
