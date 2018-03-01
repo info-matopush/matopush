@@ -101,7 +101,7 @@ func CheckSite(ctx context.Context, sui *SiteUpdateInfo) error {
 	if sui.FeedUrl == "" {
 		info, err := getContentsInfo(ctx, sui.SiteUrl)
 		if err != nil {
-			return nil
+			return err
 		}
 		sui.FeedUrl = info.FeedUrl
 
@@ -114,13 +114,13 @@ func CheckSite(ctx context.Context, sui *SiteUpdateInfo) error {
 			sui.UpdateDate = time.Now()
 		}
 	} else {
-		body, err := getBodyByUrl(ctx, sui.SiteUrl)
+		body, err := getBodyByUrl(ctx, sui.FeedUrl)
 		if err != nil {
-			return nil
+			return err
 		}
 		info, err := getFeedInfo(ctx, body)
 		if err != nil {
-			return nil
+			return err
 		}
 		// 読み込んだ情報を前回値と比較する
 		if sui.ContentUrl != info.ContentUrl {
@@ -134,7 +134,7 @@ func CheckSite(ctx context.Context, sui *SiteUpdateInfo) error {
 	return nil
 }
 
-func CheckSiteByFeed(ctx context.Context, url string, body []byte)(*SiteUpdateInfo, error) {
+func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*SiteUpdateInfo, error) {
 	g := goon.FromContext(ctx)
 	sui := &SiteUpdateInfo{SiteUrl: url}
 	err := g.Get(sui)
