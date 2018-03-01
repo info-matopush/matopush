@@ -9,16 +9,6 @@ import (
 	"src/site"
 )
 
-type ContentInfo struct {
-	ContentUrl   string
-	ContentTitle string
-}
-
-type SiteInfo struct {
-	SiteUrl   string
-	SiteTitle string
-}
-
 func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
