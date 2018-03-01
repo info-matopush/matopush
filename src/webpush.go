@@ -154,7 +154,7 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 		sui.SubscribeCount++
 		err = sendPush(ctx, sui, ei)
 		if err == nil {
-			LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
+			// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
 		}
 	}
 	// 購読数を記録
