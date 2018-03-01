@@ -38,7 +38,7 @@ type SiteUpdateInfo struct {
 	Public         bool      `datastore:"public"`
 	Icon           string    `datastore:"-"`
 	CreateDate     time.Time `datastore:"create_date,noindex" json:"-"`
-	UpdateDate     time.Time `datastore:"update_date,noindex" json:"-"`
+	UpdateDate     time.Time `datastore:"update_date"         json:"-"`
 	DeleteFlag     bool      `datastore:"delete_flag"         json:"-"`
 	DeleteDate     time.Time `datastore:"delete_date,noindex" json:"-"`
 	Value          string    `datastore:"-"`                      // マイ・リストを返す時だけ使う
@@ -46,6 +46,22 @@ type SiteUpdateInfo struct {
 	SubscribeCount int64     `datastore:"SubscribeCount,noindex"` // cron実行時に通知したEndpointの数を設定する
 	HasHub         bool      `datastore:"-"`                      // PubSubHubBubを使用しているか
 	HubUrl         string    `datastore:"-"`
+}
+
+// 三ヶ月以上更新がないサイトを抽出し削除する
+func DeleteUnnecessarySite(ctx context.Context) error {
+	g := goon.FromContext(ctx)
+	query := datastore.NewQuery("SiteUpdateInfo").Filter("UpdateDate <=", time.Now().AddDate(0, -3, 0)).KeysOnly()
+
+	keys, err := g.GetAll(query, nil)
+	if err != nil {
+		return errors.New("DeleteUnnecessarySite: g.GetAll: " + err.Error())
+	}
+	err = g.DeleteMulti(keys)
+	if err != nil {
+		return errors.New("DeleteUnnecessarySite: g.DeleteMulti: " + err.Error())
+	}
+	return nil
 }
 
 func GetAll(ctx context.Context, dst *[]SiteUpdateInfo) error {

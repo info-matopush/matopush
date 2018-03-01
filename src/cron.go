@@ -35,6 +35,14 @@ func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 	log.Infof(ctx, "cleanupしたendpoint数. %d", len(list))
 
+	// 更新のないサイト情報を削除する
+	err := site.DeleteUnnecessarySite(ctx)
+	if err != nil {
+		log.Errorf(ctx, "DeleteUnnecessarySite: %v", err)
+	}
+
+	// todo: サイト情報と紐付かない購読情報を削除する
+
 	// 古いログを削除する
 	LogCleanup(ctx)
 }
