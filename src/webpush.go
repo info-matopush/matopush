@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	webpush "github.com/SherClockHolmes/webpush-go"
+	"github.com/SherClockHolmes/webpush-go"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
@@ -25,7 +25,7 @@ func testHandler(_ http.ResponseWriter, r *http.Request) {
 
 	sui := site.SiteUpdateInfo{SiteTitle: "まとプ", ContentTitle: "これはテスト通知です。"}
 
-	ei, _ := endpoint.Get(ctx, r.FormValue("endpoint"))
+	ei, _ := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if ei != nil {
 		sendPush(ctx, &sui, ei)
 	}
@@ -37,18 +37,22 @@ func registHandler(_ http.ResponseWriter, r *http.Request) {
 	auth, _ := base64.RawURLEncoding.DecodeString(r.FormValue("auth"))
 	p256dh, _ := base64.RawURLEncoding.DecodeString(r.FormValue("p256dh"))
 
-	ei := &endpoint.EndpointInfo{
+	ei := &endpoint.Endpoint{
 		Endpoint: r.FormValue("endpoint"),
 		Auth:     auth,
 		P256dh:   p256dh,
 	}
 
-	endpoint.Touch(ctx, ei)
+	ei.Touch(ctx)
 }
 
 func unregistHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
-	endpoint.Delete(ctx, r.FormValue("endpoint"))
+	e, err := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
+	if err != nil {
+		return
+	}
+	e.Delete(ctx)
 }
 
 func keyHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,14 +60,14 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 
 	publicKey, err := GetPublicKey(ctx)
 	if err != nil {
-		log.Errorf(ctx, "get PublicKey error. %v", err)
+		log.Errorf(ctx, "get public key error: %v", err)
 		return
 	}
 	byteArray := elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	fmt.Fprint(w, base64.RawURLEncoding.EncodeToString(byteArray))
 }
 
-func sendPush(ctx context.Context, sui *site.SiteUpdateInfo, ei *endpoint.EndpointInfo) (err error) {
+func sendPush(ctx context.Context, sui *site.SiteUpdateInfo, ei *endpoint.Endpoint) (err error) {
 	// payloadの固定値はここで設定する
 	sui.Icon = "/img/news.png"
 	sui.Endpoint = ei.Endpoint // ログ用
@@ -100,19 +104,19 @@ func sendPush(ctx context.Context, sui *site.SiteUpdateInfo, ei *endpoint.Endpoi
 
 	if resp.StatusCode == 0 {
 		log.Errorf(ctx, "send notification return code 0.")
-		err = errors.New("send notification return code 0.")
+		err = errors.New("send notification return code 0")
 	} else if resp.StatusCode == http.StatusOK {
 		return
 	} else if resp.StatusCode == http.StatusCreated {
 		return
 	} else if resp.StatusCode == http.StatusGone {
-		endpoint.Delete(ctx, ei.Endpoint)
-		err = errors.New("endpoint was gone.")
+		ei.Delete(ctx)
+		err = errors.New("endpoint was gone")
 	} else {
 		log.Infof(ctx, "resp %s", resp)
 		buf, _ := ioutil.ReadAll(resp.Body)
 		log.Infof(ctx, "body %v", string(buf))
-		err = errors.New("unknown response.")
+		err = errors.New("unknown response")
 	}
 	return
 }
@@ -144,7 +148,7 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 			break
 		}
 
-		ei, err := endpoint.Get(ctx, ss.Endpoint)
+		ei, err := endpoint.NewFromDatastore(ctx, ss.Endpoint)
 		if err != nil {
 			// endpointが見つからなかった場合(cleanupミス？)はSiteSubscribeの削除フラグを立てる
 			conf.Delete(ctx, ss)

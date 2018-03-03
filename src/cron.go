@@ -13,12 +13,12 @@ func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	// 削除済み通知先のリストを取得する
-	list := endpoint.GetAllDeletedEndpoint(ctx)
+	list := endpoint.GetAllDeleted(ctx)
 
 	for _, ei := range list {
 		err := conf.Cleanup(ctx, ei.Endpoint)
 		if err == nil {
-			endpoint.Cleanup(ctx, ei.Endpoint)
+			ei.Cleanup(ctx)
 		} else {
 			log.Warningf(ctx, "cleanup error. %v", err)
 		}

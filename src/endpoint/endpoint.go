@@ -12,7 +12,7 @@ import (
 )
 
 // 通知先識別情報(論理モデル)
-type EndpointInfo struct {
+type Endpoint struct {
 	Endpoint string `json:"endpoint"`
 	P256dh   []byte `json:"p256dh"`
 	Auth     []byte `json:"auth"`
@@ -20,7 +20,8 @@ type EndpointInfo struct {
 
 // 通知先情報(物理モデル)
 type physicalEndpointInfo struct {
-	// Key はendpointをHash化したもの(EndpointInfoではEndpointがidだったため、memcacheへの格納が失敗していた。
+	// Key はendpointをハッシュ化したもの
+	// endpointをそのまま使うとKeyとして長すぎてmemcacheへの格納が失敗するため。
 	Key        string    `datastore:"-" goon:"id"`
 	Endpoint   string    `datastore:"endpoint,noindex"`
 	P256dh     []byte    `datastore:"p256dh,noindex"`
@@ -31,18 +32,20 @@ type physicalEndpointInfo struct {
 	DeleteDate time.Time `datastore:"delete_date,noindex"`
 }
 
-// endpointは文字列として長すぎるので、ハッシュを使ってキーを作成する
+// endpointは長すぎるので、ハッシュを使ってキーを作成する
 func endpointToKeyString(endpoint string) string {
 	h := fnv.New64a()
 	h.Write([]byte(endpoint))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
+// datastoreよりendpointを取得する
+// goonを使用して取得結果はmemcacheに載せるようにする
 func getPhysicalEndpointInfo(ctx context.Context, endpoint string) *physicalEndpointInfo {
+	g := goon.FromContext(ctx)
 	pei := &physicalEndpointInfo{
 		Key: endpointToKeyString(endpoint),
 	}
-	g := goon.FromContext(ctx)
 	err := g.Get(pei)
 	if err != nil {
 		return nil
@@ -50,23 +53,23 @@ func getPhysicalEndpointInfo(ctx context.Context, endpoint string) *physicalEndp
 	return pei
 }
 
-func getAllEndpointQuery() *datastore.Query {
+func getAllEndpointsQuery() *datastore.Query {
 	query := datastore.NewQuery("physicalEndpointInfo").Filter("delete_flag=", false)
 	return query
 }
 
-func getDeletedEndpointQuery() *datastore.Query {
+func getDeletedEndpointsQuery() *datastore.Query {
 	query := datastore.NewQuery("physicalEndpointInfo").Filter("delete_flag=", true)
 	return query
 }
 
-func Touch(ctx context.Context, endpointInfo *EndpointInfo) error {
-	pei := getPhysicalEndpointInfo(ctx, endpointInfo.Endpoint)
+func (e *Endpoint) Touch(ctx context.Context) error {
+	pei := getPhysicalEndpointInfo(ctx, e.Endpoint)
 	if pei == nil {
 		// 存在しない場合は生成する
-		return Create(ctx, endpointInfo)
+		return e.Create(ctx)
 	}
-	// 存在する場合はアクセス日時を記録する
+	// 存在する場合はアクセス日時を更新する
 	pei.AccessDate = time.Now()
 
 	g := goon.FromContext(ctx)
@@ -74,12 +77,12 @@ func Touch(ctx context.Context, endpointInfo *EndpointInfo) error {
 	return err
 }
 
-func Create(ctx context.Context, endpointInfo *EndpointInfo) error {
+func (e *Endpoint) Create(ctx context.Context) error {
 	pei := &physicalEndpointInfo{
-		Key:        endpointToKeyString(endpointInfo.Endpoint),
-		Endpoint:   endpointInfo.Endpoint,
-		P256dh:     endpointInfo.P256dh,
-		Auth:       endpointInfo.Auth,
+		Key:        endpointToKeyString(e.Endpoint),
+		Endpoint:   e.Endpoint,
+		P256dh:     e.P256dh,
+		Auth:       e.Auth,
 		CreateDate: time.Now(),
 		AccessDate: time.Now(),
 	}
@@ -88,24 +91,24 @@ func Create(ctx context.Context, endpointInfo *EndpointInfo) error {
 	return err
 }
 
-func Get(ctx context.Context, endpoint string) (*EndpointInfo, error) {
+func NewFromDatastore(ctx context.Context, endpoint string) (*Endpoint, error) {
 	pei := getPhysicalEndpointInfo(ctx, endpoint)
 	if pei == nil {
-		return nil, errors.New("not found.")
+		return nil, errors.New("not found")
 	}
 	if pei.DeleteFlag == true {
-		return nil, errors.New("endpoint was gone.")
+		return nil, errors.New("endpoint was gone")
 	}
-	return &EndpointInfo{
-		Endpoint: pei.Endpoint,
-		Auth:     pei.Auth,
-		P256dh:   pei.P256dh,
+	return &Endpoint{
+		pei.Endpoint,
+		pei.P256dh,
+		pei.Auth,
 	}, nil
 }
 
-func Delete(ctx context.Context, endpoint string) error {
+func (e *Endpoint) Delete(ctx context.Context) error {
 	pei := &physicalEndpointInfo{
-		Key: endpointToKeyString(endpoint),
+		Key: endpointToKeyString(e.Endpoint),
 	}
 	g := goon.FromContext(ctx)
 	err := g.Get(pei)
@@ -120,46 +123,46 @@ func Delete(ctx context.Context, endpoint string) error {
 
 func Count(ctx context.Context) int {
 	g := goon.FromContext(ctx)
-	num, _ := g.Count(getAllEndpointQuery())
+	num, _ := g.Count(getAllEndpointsQuery())
 	return num
 }
 
-func GetAll(ctx context.Context) (dst []EndpointInfo) {
+func GetAll(ctx context.Context) (dst []Endpoint) {
 	g := goon.FromContext(ctx)
-	query := getAllEndpointQuery()
+	query := getAllEndpointsQuery()
 	var list []physicalEndpointInfo
 	g.GetAll(query, &list)
 
 	for _, endpoint := range list {
-		dst = append(dst, EndpointInfo{
-			Endpoint: endpoint.Endpoint,
-			Auth:     endpoint.Auth,
-			P256dh:   endpoint.P256dh,
+		dst = append(dst, Endpoint{
+			endpoint.Endpoint,
+			endpoint.P256dh,
+			endpoint.Auth,
 		})
 	}
-	log.Debugf(ctx, "取得したendpointの数 %d", len(list))
+	log.Debugf(ctx, "有効なendpointの数 %d", len(list))
 	return
 }
 
-func GetAllDeletedEndpoint(ctx context.Context) (dst []EndpointInfo) {
+func GetAllDeleted(ctx context.Context) (dst []Endpoint) {
 	g := goon.FromContext(ctx)
-	query := getDeletedEndpointQuery()
+	query := getDeletedEndpointsQuery()
 	var list []physicalEndpointInfo
 	g.GetAll(query, &list)
 
 	for _, endpoint := range list {
-		dst = append(dst, EndpointInfo{
-			Endpoint: endpoint.Endpoint,
-			Auth:     endpoint.Auth,
-			P256dh:   endpoint.P256dh,
+		dst = append(dst, Endpoint{
+			endpoint.Endpoint,
+			endpoint.P256dh,
+			endpoint.Auth,
 		})
 	}
-	log.Debugf(ctx, "取得したendpointの数 %d", len(list))
+	log.Debugf(ctx, "無効なendpointの数 %d", len(list))
 	return
 }
 
-func Cleanup(ctx context.Context, endpoint string) {
+func (e *Endpoint) Cleanup(ctx context.Context) {
 	g := goon.FromContext(ctx)
-	e := physicalEndpointInfo{Key: endpointToKeyString(endpoint)}
-	g.Delete(g.Key(e))
+	ei := physicalEndpointInfo{Key: endpointToKeyString(e.Endpoint)}
+	g.Delete(g.Key(ei))
 }
