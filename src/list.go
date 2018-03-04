@@ -55,16 +55,16 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		g.Put(sui)
 		if sui.HasHub {
 			SubscribeRequest(ctx,
-				SUBSCRIBE_URL + sui.SiteUrl,
+				SUBSCRIBE_URL+sui.SiteUrl,
 				sui.FeedUrl,
 				sui.HubUrl)
 		}
 	}
 	fmt.Fprintf(w, "「%s」を追加しました。\n", sui.SiteTitle)
-	siteTitle, err := conf.Update(ctx, endpoint, url, "true")
+	err = conf.Update(ctx, endpoint, sui.FeedUrl, true)
 	if err != nil {
 		fmt.Fprint(w, "設定の更新に失敗しました。")
 	} else {
-		fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", siteTitle)
+		fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", sui.SiteTitle)
 	}
 }

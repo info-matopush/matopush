@@ -1,71 +1,98 @@
 package conf
 
 import (
+	"encoding/base64"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	"src/site"
+	"hash/fnv"
 	"time"
 )
 
 // サイト購読情報
 type SiteSubscribe struct {
-	Id         string    `datastore:"-" goon:"id"`
+	Endpoint string
+	FeedUrl  string
+	Enabled  bool
+}
+
+type physicalSiteSubscribe struct {
+	Key        string    `datastore:"-" goon:"id"`
 	Endpoint   string    `datastore:"endpoint"`
-	SiteUrl    string    `datastore:"site_url"`
-	Value      string    `datastore:"value"`
+	FeedUrl    string    `datastore:"feed_url"`
+	Enabled    bool      `datastore:"enabled,noindex"`
 	UpdateDate time.Time `datastore:"update_date,noindex"`
 	DeleteFlag bool      `datastore:"delete_flag"`
 	DeleteDate time.Time `datastore:"delete_date,noindex"`
 }
 
-// ユーザ固有設定(サイト購読情報)を更新する
-func Update(ctx context.Context, endpoint, siteUrl, value string) (string, error) {
-	g := goon.FromContext(ctx)
+func makeKeyString(endpoint, feedUrl string) string {
+	h := fnv.New64a()
+	h.Write([]byte(endpoint + ";" + feedUrl))
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
 
-	// todo: キーとなる文字列の長さが長すぎるかも。（優先度：低）
-	ss := SiteSubscribe{
-		Id:         endpoint + ";" + siteUrl,
+// ユーザ固有設定(サイト購読情報)を更新する
+func Update(ctx context.Context, endpoint, feedUrl string, enabled bool) error {
+	g := goon.FromContext(ctx)
+	ss := physicalSiteSubscribe{
+		Key:        makeKeyString(endpoint, feedUrl),
 		Endpoint:   endpoint,
-		SiteUrl:    siteUrl,
-		Value:      value,
+		FeedUrl:    feedUrl,
+		Enabled:    enabled,
 		UpdateDate: time.Now(),
 	}
 	_, err := g.Put(&ss)
-	if err != nil {
-		return "", err
-	}
-	// サイトURLからサイト名への変換
-	sui := site.SiteUpdateInfo{SiteUrl: ss.SiteUrl}
-	err = g.Get(&sui)
-	return sui.SiteTitle, err
+	return err
 }
 
 // 削除されたendpointの購読情報を物理削除する
 func Cleanup(ctx context.Context, endpoint string) error {
 	g := goon.FromContext(ctx)
-	query := datastore.NewQuery("SiteSubscribe").Filter("endpoint=", endpoint)
+	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint).KeysOnly()
 
-	var list []SiteSubscribe
-	keys, err := g.GetAll(query, &list)
+	keys, err := g.GetAll(query, nil)
 	log.Infof(ctx, "取得したSiteSubscribeの数 %d", len(keys))
 	if err == datastore.ErrInvalidEntityType {
 		// エンティティがない場合
 		return nil
-	} else if err == nil {
-		err = g.DeleteMulti(keys)
 	}
-	return err
+	return g.DeleteMulti(keys)
 }
 
 // 購読情報の削除フラグを立てる
-func Delete(ctx context.Context, ss SiteSubscribe) {
+func (s *SiteSubscribe) Delete(ctx context.Context) {
+	g := goon.FromContext(ctx)
+	pss := physicalSiteSubscribe{
+		Key: makeKeyString(s.Endpoint, s.FeedUrl),
+	}
+	err := g.Get(&pss)
+	if err != nil {
+		return
+	}
+	pss.DeleteFlag = true
+	pss.DeleteDate = time.Now()
+	pss.UpdateDate = time.Now()
+	g.Put(&s)
+}
+
+func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
 	g := goon.FromContext(ctx)
 
-	ss.DeleteFlag = true
-	ss.DeleteDate = time.Now()
-	ss.UpdateDate = time.Now()
-
-	g.Put(&ss)
+	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint)
+	var confs []physicalSiteSubscribe
+	var subs []SiteSubscribe
+	_, err := g.GetAll(query, &confs)
+	if err != nil {
+		return subs
+	}
+	for _, conf := range confs {
+		subs = append(subs, SiteSubscribe{
+			Endpoint: conf.Endpoint,
+			FeedUrl:  conf.FeedUrl,
+			Enabled:  conf.Enabled,
+		})
+	}
+	return subs
 }

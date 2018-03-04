@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mjibson/goon"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"src/conf"
@@ -14,33 +12,22 @@ import (
 
 func confListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
-	g := goon.NewGoon(r)
 
 	endpoint := r.FormValue("endpoint")
-
-	query := datastore.NewQuery("SiteSubscribe").Filter("endpoint=", endpoint)
-	it := g.Run(query)
+	confs := conf.ListFromEndpoint(ctx, endpoint)
 
 	sList := []site.SiteUpdateInfo{}
-	for {
-		var ss conf.SiteSubscribe
-		_, err := it.Next(&ss)
-		if err == datastore.Done {
-			break
-		}
-		if err != nil {
-			log.Errorf(ctx, "datastore get error.%v", err)
-			return
-		}
-
-		sui := site.SiteUpdateInfo{SiteUrl: ss.SiteUrl}
-		err = g.Get(&sui)
+	for _, conf := range confs {
+		sui, _, err := site.Get(ctx, conf.FeedUrl)
 		if err != nil {
 			continue
 		}
-		// 現在通知対象かどうかを設定する
-		sui.Value = ss.Value
-		sList = append(sList, sui)
+		if conf.Enabled {
+			sui.Value = "true"
+		} else {
+			sui.Value = "false"
+		}
+		sList = append(sList, *sui)
 	}
 
 	b, _ := json.Marshal(sList)
@@ -48,19 +35,32 @@ func confListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func confSiteHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
 	endpoint := r.FormValue("endpoint")
 	siteUrl := r.FormValue("siteUrl")
 	value := r.FormValue("value")
 
-	siteTitle, err := conf.Update(appengine.NewContext(r), endpoint, siteUrl, value)
-
-	if err != nil {
-		fmt.Fprint(w, "設定の更新に失敗しました。")
-	} else {
-		if value == "true" {
-			fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", siteTitle)
-		} else if value == "false" {
-			fmt.Fprintf(w, "サイト「%s」の更新を「通知しない」に設定しました。", siteTitle)
-		}
+	enabled := true
+	if value == "false" {
+		enabled = false
 	}
+	sui, _, err := site.Get(ctx, siteUrl)
+	if err == nil {
+		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedUrl, enabled)
+		if err == nil {
+			siteTitle := sui.SiteTitle
+			if value == "true" {
+				fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", siteTitle)
+			} else if value == "false" {
+				fmt.Fprintf(w, "サイト「%s」の更新を「通知しない」に設定しました。", siteTitle)
+			}
+			return
+		} else {
+			log.Infof(ctx, "conf.Updateに失敗 %v", err)
+		}
+	} else {
+		log.Infof(ctx, "site.Getに失敗 %s, %v", siteUrl, err)
+	}
+	fmt.Fprint(w, "設定の更新に失敗しました。")
 }

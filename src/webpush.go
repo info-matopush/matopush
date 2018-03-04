@@ -151,7 +151,7 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err 
 		ei, err := endpoint.NewFromDatastore(ctx, ss.Endpoint)
 		if err != nil {
 			// endpointが見つからなかった場合(cleanupミス？)はSiteSubscribeの削除フラグを立てる
-			conf.Delete(ctx, ss)
+			ss.Delete(ctx)
 			continue
 		}
 
