@@ -1,15 +1,15 @@
 package main
 
 import (
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/datastore"
-	"net/http"
-	"time"
-	"golang.org/x/net/context"
-	"hash/fnv"
 	"encoding/base64"
 	"github.com/mjibson/goon"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
+	"hash/fnv"
+	"net/http"
+	"time"
 )
 
 type logInfo struct {
@@ -23,8 +23,8 @@ type logInfo struct {
 }
 
 func LogCleanup(ctx context.Context) {
-	deltime := time.Now().Add(time.Duration(-7 * 24) * time.Hour)
-	query := datastore.NewQuery("logInfo").Filter("push_date<", deltime).KeysOnly()
+	limit := time.Now().Add(time.Duration(-7*24) * time.Hour)
+	query := datastore.NewQuery("logInfo").Filter("push_date<", limit).KeysOnly()
 	g := goon.FromContext(ctx)
 	keys, err := g.GetAll(query, nil)
 	if err != nil {
@@ -47,11 +47,11 @@ func endpointToKeyString(endpoint, contentUrl string) string {
 func LogPush(ctx context.Context, endpoint, siteUrl, contentUrl string) {
 	g := goon.FromContext(ctx)
 	l := &logInfo{
-		Key:endpointToKeyString(endpoint, contentUrl),
-		Endpoint:endpoint,
-		SiteUrl:siteUrl,
-		ContentUrl:contentUrl,
-		PushDate:time.Now(),
+		Key:        endpointToKeyString(endpoint, contentUrl),
+		Endpoint:   endpoint,
+		SiteUrl:    siteUrl,
+		ContentUrl: contentUrl,
+		PushDate:   time.Now(),
 	}
 	_, err := g.Put(l)
 	if err != nil {
@@ -61,7 +61,7 @@ func LogPush(ctx context.Context, endpoint, siteUrl, contentUrl string) {
 
 func LogReach(ctx context.Context, endpoint, contentUrl string) {
 	g := goon.FromContext(ctx)
-	l := &logInfo{Key:endpointToKeyString(endpoint, contentUrl)}
+	l := &logInfo{Key: endpointToKeyString(endpoint, contentUrl)}
 	err := g.Get(l)
 	if err == nil {
 		l.ReachDate = time.Now()
@@ -71,7 +71,7 @@ func LogReach(ctx context.Context, endpoint, contentUrl string) {
 
 func LogClick(ctx context.Context, endpoint, contentUrl string) {
 	g := goon.FromContext(ctx)
-	l := &logInfo{Key:endpointToKeyString(endpoint, contentUrl)}
+	l := &logInfo{Key: endpointToKeyString(endpoint, contentUrl)}
 	err := g.Get(l)
 	if err == nil {
 		l.ClickDate = time.Now()
@@ -88,9 +88,8 @@ func logHandler(_ http.ResponseWriter, r *http.Request) {
 	log.Infof(ctx, "プッシュ通知からWebページ閲覧した。%s, %s", url, endpoint)
 
 	if command == "click" {
-//		LogClick(ctx, endpoint, url)
+		//		LogClick(ctx, endpoint, url)
 	} else if command == "reach" {
-//		LogReach(ctx, endpoint, url)
+		//		LogReach(ctx, endpoint, url)
 	}
 }
-

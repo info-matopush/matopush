@@ -1,14 +1,14 @@
 package main
 
 import (
-	"net/url"
-	"net/http"
 	"bytes"
 	"golang.org/x/net/context"
-	"google.golang.org/appengine/urlfetch"
-	"google.golang.org/appengine/log"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"src/site"
 )
 
@@ -37,8 +37,8 @@ func subscriberHandler(w http.ResponseWriter, r *http.Request) {
 
 // https://www.w3.org/TR/websub
 // 5.3.1 Verification Details
-// The subscriber MUST confirm that the hub.topic corresponds to a pending subscription or unsub
-// scription that it wishes to carry out. If so, the subscriber MUST respond with an HTTP success (2xx)
+// The subscriber MUST confirm that the hub.topic corresponds to a pending subscription or
+// unsubscription that it wishes to carry out. If so, the subscriber MUST respond with an HTTP success (2xx)
 // code with a response body equal to the hub.challenge parameter.
 func verify(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
@@ -76,4 +76,3 @@ func SubscribeRequest(ctx context.Context, callbackUrl, topic, hub string) {
 	reason, _ := ioutil.ReadAll(resp.Body)
 	log.Infof(ctx, "reason %v", string(reason))
 }
-

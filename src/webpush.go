@@ -31,7 +31,7 @@ func testHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registHandler(_ http.ResponseWriter, r *http.Request) {
+func regestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	auth, _ := base64.RawURLEncoding.DecodeString(r.FormValue("auth"))
@@ -46,7 +46,7 @@ func registHandler(_ http.ResponseWriter, r *http.Request) {
 	ei.Touch(ctx)
 }
 
-func unregistHandler(_ http.ResponseWriter, r *http.Request) {
+func unregestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	e, err := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if err != nil {

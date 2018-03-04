@@ -12,6 +12,8 @@ import (
 	"src/site"
 )
 
+var SubscribeUrl = "https://matopush.appspot.com/api/subscriber?"
+
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	g := goon.NewGoon(r)
@@ -19,7 +21,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	query := datastore.NewQuery("SiteUpdateInfo").Filter("delete_flag=", false).Filter("public=", true)
 	it := g.Run(query)
 
-	list := []site.SiteUpdateInfo{}
+	var list []site.SiteUpdateInfo
 	for {
 		var s site.SiteUpdateInfo
 		_, err := it.Next(&s)
@@ -37,8 +39,6 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-var SUBSCRIBE_URL = "https://matopush.appspot.com/api/subscriber?"
-
 func addHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	g := goon.NewGoon(r)
@@ -55,7 +55,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		g.Put(sui)
 		if sui.HasHub {
 			SubscribeRequest(ctx,
-				SUBSCRIBE_URL+sui.SiteUrl,
+				SubscribeUrl+sui.SiteUrl,
 				sui.FeedUrl,
 				sui.HubUrl)
 		}

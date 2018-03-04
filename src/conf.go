@@ -14,15 +14,15 @@ func confListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	endpoint := r.FormValue("endpoint")
-	confs := conf.ListFromEndpoint(ctx, endpoint)
+	cList := conf.ListFromEndpoint(ctx, endpoint)
 
-	sList := []site.SiteUpdateInfo{}
-	for _, conf := range confs {
-		sui, _, err := site.Get(ctx, conf.FeedUrl)
+	var sList []site.SiteUpdateInfo
+	for _, c := range cList {
+		sui, _, err := site.Get(ctx, c.FeedUrl)
 		if err != nil {
 			continue
 		}
-		if conf.Enabled {
+		if c.Enabled {
 			sui.Value = "true"
 		} else {
 			sui.Value = "false"

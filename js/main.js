@@ -1,8 +1,8 @@
 'use strict';
 
 let _ = function(id) {return document.getElementById(id);}
-let registURL = '/api/regist';
-let unregistURL = 'api/unregist';
+let registURL = '/api/regest';
+let unregistURL = 'api/unregest';
 let subscription = null;
 let serverKey = null;
 

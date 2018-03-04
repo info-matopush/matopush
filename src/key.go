@@ -28,11 +28,11 @@ func getPrivateKey(ctx context.Context) (*ecdsa.PrivateKey, error) {
 	pri := ServerKey{Name: "PrivateKey"}
 	g.Get(&pri)
 	if pri.Value == nil {
-		_pri, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
 			return nil, err
 		}
-		pri.Value, err = x509.MarshalECPrivateKey(_pri)
+		pri.Value, err = x509.MarshalECPrivateKey(key)
 		if err != nil {
 			return nil, err
 		}
