@@ -7,10 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
@@ -23,7 +21,7 @@ import (
 func testHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	sui := site.SiteUpdateInfo{SiteTitle: "まとプ", ContentTitle: "これはテスト通知です。"}
+	sui := site.UpdateInfo{SiteTitle: "まとプ", ContentTitle: "これはテスト通知です。"}
 
 	ei, _ := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if ei != nil {
@@ -31,7 +29,7 @@ func testHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func regestHandler(_ http.ResponseWriter, r *http.Request) {
+func registHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	auth, _ := base64.RawURLEncoding.DecodeString(r.FormValue("auth"))
@@ -46,7 +44,7 @@ func regestHandler(_ http.ResponseWriter, r *http.Request) {
 	ei.Touch(ctx)
 }
 
-func unregestHandler(_ http.ResponseWriter, r *http.Request) {
+func unregistHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	e, err := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if err != nil {
@@ -67,7 +65,7 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, base64.RawURLEncoding.EncodeToString(byteArray))
 }
 
-func sendPush(ctx context.Context, sui *site.SiteUpdateInfo, ei *endpoint.Endpoint) (err error) {
+func sendPush(ctx context.Context, sui *site.UpdateInfo, ei *endpoint.Endpoint) (err error) {
 	// payloadの固定値はここで設定する
 	sui.Icon = "/img/news.png"
 	sui.Endpoint = ei.Endpoint // ログ用
@@ -121,52 +119,33 @@ func sendPush(ctx context.Context, sui *site.SiteUpdateInfo, ei *endpoint.Endpoi
 	return
 }
 
-func sendPushWhenSiteUpdate(ctx context.Context, sui *site.SiteUpdateInfo) (err error) {
-	err = nil
-
-	// 更新がなければ通知はしない
-	if !sui.UpdateFlg {
-		return
-	}
-
+func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err error) {
 	// 通知先のリストを取得する
-	g := goon.FromContext(ctx)
-	query := datastore.NewQuery("SiteSubscribe").Filter("site_url=", sui.SiteUrl).Filter("value=", "true").Limit(1000)
-	it := g.Run(query)
-	// 購読数カウントクリア
-	sui.SubscribeCount = 0
-	for {
-		var ss conf.SiteSubscribe
-		_, err := it.Next(&ss)
-		if err == datastore.Done {
-			// エラーとして扱わない
-			err = nil
-			break
-		}
-		if err != nil {
-			log.Errorf(ctx, "datastore get error.%v", err)
-			break
-		}
+	s := conf.ListForPush(ctx, sui.FeedUrl)
 
-		ei, err := endpoint.NewFromDatastore(ctx, ss.Endpoint)
-		if err != nil {
-			// endpointが見つからなかった場合(cleanupミス？)はSiteSubscribeの削除フラグを立てる
-			ss.Delete(ctx)
-			continue
-		}
+	// 更新があれば通知
+	if sui.UpdateFlg {
+		for _, ss := range s {
+			ei, err := endpoint.NewFromDatastore(ctx, ss.Endpoint)
+			if err != nil {
+				// endpointが見つからなかった場合(cleanupミス？)はSiteSubscribeの削除フラグを立てる
+				ss.Delete(ctx)
+				continue
+			}
 
-		sui.SubscribeCount++
-		err = sendPush(ctx, sui, ei)
-		if err == nil {
-			// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
+			err = sendPush(ctx, sui, ei)
+			if err == nil {
+				// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
+			}
 		}
 	}
 	// 購読数を記録
-	g.Put(sui)
+	sui.Count = int64(len(s))
+	log.Infof(ctx, "url %v, count %v", sui.FeedUrl, sui.Count)
 	return
 }
 
-func sendPushAll(ctx context.Context, sui *site.SiteUpdateInfo) {
+func sendPushAll(ctx context.Context, sui *site.UpdateInfo) {
 	// 通知先のリストを取得する
 	list := endpoint.GetAll(ctx)
 

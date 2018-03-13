@@ -29,6 +29,7 @@ func subscriberHandler(w http.ResponseWriter, r *http.Request) {
 	sui, _ := site.CheckSiteByFeed(ctx, params.Get("site"), body)
 	if sui != nil {
 		sendPushWhenSiteUpdate(ctx, sui)
+		sui.Update(ctx)
 		return
 	}
 	// 購読対象外の場合はステータスコードを4xxにする
@@ -44,7 +45,7 @@ func verify(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	params := r.URL.Query()
-	_, isNewSite, err := site.Get(ctx, params.Get("site"))
+	_, isNewSite, err := site.FromUrl(ctx, params.Get("site"))
 	if err != nil && !isNewSite {
 		// 購読対象URLの場合
 		w.Write([]byte(params.Get("hub.challenge")))

@@ -40,7 +40,7 @@ func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 func healthHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	sui := site.SiteUpdateInfo{SiteTitle: "まとプ", ContentTitle: ""}
+	sui := site.UpdateInfo{SiteTitle: "まとプ", ContentTitle: ""}
 
 	sendPushAll(ctx, &sui)
 
@@ -51,21 +51,20 @@ func healthHandler(_ http.ResponseWriter, r *http.Request) {
 func cronHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	var siteList []site.SiteUpdateInfo
-	err := site.GetAll(ctx, &siteList)
+	siteList, err := site.List(ctx)
 	if err != nil {
 		log.Errorf(ctx, "get site failed. %v", err)
 	}
 
 	for _, sui := range siteList {
-		err := site.CheckSite(ctx, &sui)
+		err := sui.CheckSite(ctx)
 		if err != nil {
 			// Feedの読み込みに失敗
-			// todo: どうしよう。とりあえず更新なしとする
-			log.Warningf(ctx, "feedの読み込みに失敗 url:%s", sui.SiteUrl)
+			log.Warningf(ctx, "feedの読み込みに失敗 url:%s", sui.FeedUrl)
 			return
 		}
 		sendPushWhenSiteUpdate(ctx, &sui)
+		sui.Update(ctx)
 	}
 
 	log.Infof(ctx, "site num:%d", len(siteList))

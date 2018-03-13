@@ -16,18 +16,15 @@ func confListHandler(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.FormValue("endpoint")
 	cList := conf.ListFromEndpoint(ctx, endpoint)
 
-	var sList []site.SiteUpdateInfo
+	var sList []site.UpdateInfo
 	for _, c := range cList {
-		sui, _, err := site.Get(ctx, c.FeedUrl)
+		sui, _, err := site.FromUrl(ctx, c.FeedUrl)
 		if err != nil {
 			continue
 		}
-		if c.Enabled {
-			sui.Value = "true"
-		} else {
-			sui.Value = "false"
-		}
+		sui.Value = c.Enabled
 		sList = append(sList, *sui)
+		log.Infof(ctx, "UpdateInfo %v", sui)
 	}
 
 	b, _ := json.Marshal(sList)
@@ -45,7 +42,7 @@ func confSiteHandler(w http.ResponseWriter, r *http.Request) {
 	if value == "false" {
 		enabled = false
 	}
-	sui, _, err := site.Get(ctx, siteUrl)
+	sui, _, err := site.FromUrl(ctx, siteUrl)
 	if err == nil {
 		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedUrl, enabled)
 		if err == nil {

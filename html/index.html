@@ -7,14 +7,20 @@
         <meta name="keywords" content="更新,通知,ウェブプッシュ,プッシュ,WebPush,Push,RSS,ATOM" />
         <meta name="discription" content="気にサイトの更新をWebPush通知で受け取れるサービス" />
         <title>まとプ - 気になるサイトの更新をまとめてWebPush通知 -</title>
-        <link rel="stylesheet" href="style/bootstrap.min.css" />
+        <link rel="manifest" href="/manifest.json">
         <link rel="stylesheet" href="style/webpush.css" />
         <link rel="icon" type="image/x-icon" href="/img/hira_31.ico" />
-        <link rel="manifest" href="/manifest.json">
+
+        <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+        <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.15/dist/vue.js"></script>
+        <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+        <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
         <script src="js/main.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-        <script src="js/bootstrap.min.js"></script>
     </head>
+
     <body>
         <div class="container">
             <h1>気になるサイトの更新をまとめてWebPush通知</h1>
@@ -45,14 +51,20 @@
             現在通知対象、または過去に通知対象としてチェックしたことのあるサイトです。
             <table class="table">
                 <thead>
-                    <tr>
-                        <th class="col-1">通知</th>
-                        <th class="col-2">サイト名</th>
-                        <th class="col-3">最新記事</th>
-                        <th class="col-2 visible-lg visible-md">サイトURL</th>
-                    </tr>
+                <tr class="d-flex">
+                    <th class="col-1">通知</th>
+                    <th class="col-5">サイト名</th>
+                    <th class="col-6">最新記事</th>
+                </tr>
                 </thead>
-                <tbody id="mySiteTable">
+                <tbody id="my-list">
+                <tr class="d-flex" v-for="(item, index) in items">
+                    <td class="col-1" v-on:click="item.Value=!item.Value; onclick_my(index)">
+                        <input type="checkbox" v-model="item.Value">
+                    </td>
+                    <td class="col-5" v-on:click="item.Value=!item.Value; onclick_my(index)">{{item.SiteTitle}}</td>
+                    <td class="col-6"><a :href="item.ContentUrl">{{item.ContentTitle}}</a></td>
+                </tr>
                 </tbody>
             </table>
 
@@ -60,14 +72,20 @@
             各行にある左端にあるチェックをつけることで、すぐに通知が行われるようになります。
             <table class="table">
                 <thead>
-                    <tr>
-                        <th class="col-1">通知</th>
-                        <th class="col-2">サイト名</th>
-                        <th class="col-3">最新記事</th>
-                        <th class="col-2 visible-lg visible-md">サイトURL</th>
-                    </tr>
+                <tr class="d-flex">
+                    <th class="col-1">通知</th>
+                    <th class="col-5">サイト名</th>
+                    <th class="col-6">最新記事</th>
+                </tr>
                 </thead>
-                <tbody id="siteTable">
+                <tbody id="public-list">
+                <tr class="d-flex" v-for="(item, index) in items">
+                    <td class="col-1" v-on:click="item.Value=!item.Value; onclick_public(index)">
+                        <input type="checkbox" v-model="item.Value">
+                    </td>
+                    <td class="col-5" v-on:click="item.Value=!item.Value; onclick_public(index)">{{item.SiteTitle}}</td>
+                    <td class="col-6"><a :href="item.ContentUrl">{{item.ContentTitle}}</a></td>
+                </tr>
                 </tbody>
             </table>
         </div>

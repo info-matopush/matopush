@@ -82,7 +82,7 @@ handlers:
   script: _go_app
 
 # データ移行用のコマンド
-- url: /api/mente
+- url: /api/mainte
   secure: always
   login: admin
   script: _go_app

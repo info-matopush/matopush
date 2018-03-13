@@ -21,7 +21,7 @@ type physicalSiteSubscribe struct {
 	Key        string    `datastore:"-" goon:"id"`
 	Endpoint   string    `datastore:"endpoint"`
 	FeedUrl    string    `datastore:"feed_url"`
-	Enabled    bool      `datastore:"enabled,noindex"`
+	Enabled    bool      `datastore:"enabled"`
 	UpdateDate time.Time `datastore:"update_date,noindex"`
 	DeleteFlag bool      `datastore:"delete_flag"`
 	DeleteDate time.Time `datastore:"delete_date,noindex"`
@@ -31,6 +31,14 @@ func makeKeyString(endpoint, feedUrl string) string {
 	h := fnv.New64a()
 	h.Write([]byte(endpoint + ";" + feedUrl))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+func Migration(ctx context.Context) {
+	var list []physicalSiteSubscribe
+	g := goon.FromContext(ctx)
+	query := datastore.NewQuery("physicalSiteSubscribe")
+	g.GetAll(query, &list)
+	g.PutMulti(&list)
 }
 
 // ユーザ固有設定(サイト購読情報)を更新する
@@ -68,19 +76,38 @@ func (s *SiteSubscribe) Delete(ctx context.Context) {
 		Key: makeKeyString(s.Endpoint, s.FeedUrl),
 	}
 	err := g.Get(&pss)
-	if err != nil {
-		return
+	if err == nil {
+		pss.DeleteFlag = true
+		pss.DeleteDate = time.Now()
+		pss.UpdateDate = time.Now()
+		g.Put(&s)
 	}
-	pss.DeleteFlag = true
-	pss.DeleteDate = time.Now()
-	pss.UpdateDate = time.Now()
-	g.Put(&s)
 }
 
 func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
 	g := goon.FromContext(ctx)
 
 	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint)
+	var confs []physicalSiteSubscribe
+	var subs []SiteSubscribe
+	_, err := g.GetAll(query, &confs)
+	if err == nil {
+		for _, conf := range confs {
+			subs = append(subs, SiteSubscribe{
+				Endpoint: conf.Endpoint,
+				FeedUrl:  conf.FeedUrl,
+				Enabled:  conf.Enabled,
+			})
+		}
+	}
+	return subs
+}
+
+func ListForPush(ctx context.Context, feedUrl string) []SiteSubscribe {
+	g := goon.FromContext(ctx)
+
+	query := datastore.NewQuery("physicalSiteSubscribe").Filter("feed_url=", feedUrl).Filter("enabled=", true)
+
 	var confs []physicalSiteSubscribe
 	var subs []SiteSubscribe
 	_, err := g.GetAll(query, &confs)
@@ -94,5 +121,6 @@ func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
 			Enabled:  conf.Enabled,
 		})
 	}
+	log.Infof(ctx, "conf.ListForPush %v, count %v", feedUrl, len(subs))
 	return subs
 }

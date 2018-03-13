@@ -5,8 +5,8 @@ import (
 )
 
 func init() {
-	http.HandleFunc("/api/regest", regestHandler)
-	http.HandleFunc("/api/unregest", unregestHandler)
+	http.HandleFunc("/api/regist", registHandler)
+	http.HandleFunc("/api/unregist", unregistHandler)
 	http.HandleFunc("/api/add", addHandler)
 	http.HandleFunc("/api/key", keyHandler)
 	http.HandleFunc("/api/dummy", dummyHander)

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/mjibson/goon"
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
 	"net/http"
 	"src/conf"
 	"src/site"
@@ -16,25 +14,11 @@ var SubscribeUrl = "https://matopush.appspot.com/api/subscriber?"
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
-	g := goon.NewGoon(r)
-
-	query := datastore.NewQuery("SiteUpdateInfo").Filter("delete_flag=", false).Filter("public=", true)
-	it := g.Run(query)
-
-	var list []site.SiteUpdateInfo
-	for {
-		var s site.SiteUpdateInfo
-		_, err := it.Next(&s)
-		if err == datastore.Done {
-			break
-		}
-		if err != nil {
-			log.Errorf(ctx, "datastore get error.%v", err)
-			break
-		}
-		list = append(list, s)
+	list, err := site.PublicList(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
-
 	b, _ := json.Marshal(list)
 	w.Write(b)
 }
@@ -46,16 +30,16 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("siteUrl")
 	endpoint := r.FormValue("endpoint")
 
-	sui, isNewSite, err := site.Get(ctx, url)
+	sui, isNewSite, err := site.FromUrl(ctx, url)
 	if err != nil {
 		fmt.Fprint(w, "サイトの登録に失敗しました。")
 		return
 	}
 	if isNewSite {
 		g.Put(sui)
-		if sui.HasHub {
+		if sui.HubUrl != "" {
 			SubscribeRequest(ctx,
-				SubscribeUrl+sui.SiteUrl,
+				SubscribeUrl+sui.FeedUrl,
 				sui.FeedUrl,
 				sui.HubUrl)
 		}

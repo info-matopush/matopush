@@ -25,33 +25,60 @@ type Result struct {
 	FeedUrl      string
 	HasHub       bool
 	HubUrl       string
+	Type         string
+}
+
+type Content struct {
+	Url   string `datastore:"url,noindex"`
+	Title string `datastore:"title,noindex"`
+}
+
+// KeyはFeedUrl
+type physicalSite struct {
+	Key           string    `datastore:"-" goon:"id"`
+	Type          string    `datastore:"type,noindex"`
+	SiteTitle     string    `datastore:"site_title,noindex"`
+	LatestContent Content   `datastore:"latest,noindex"`
+	Public        bool      `datastore:"public"`
+	HubUrl        string    `datastore:"hub_url,noindex"`
+	ContentList   []Content `datastore:"content,noindex"`
+	Count         int64     `datastore:"count,noindex"`
+	CreateDate    time.Time `datastore:"create_date,noindex"`
+	UpdateDate    time.Time `datastore:"update_date,noindex"`
+	DeleteFlag    bool      `datastore:"delete_flag"`
+	DeleteDate    time.Time `datastore:"delete_date,noindex"`
 }
 
 // サイト更新情報
-type SiteUpdateInfo struct {
-	SiteUrl        string    `datastore:"-"                   goon:"id"`
-	FeedUrl        string    `datastore:"feed_url,noindex"`
-	SiteTitle      string    `datastore:"site_title,noindex"`
-	ContentUrl     string    `datastore:"content_url,noindex"`
-	ContentTitle   string    `datastore:"content_title,noindex"`
-	UpdateFlg      bool      `datastore:"-"                   json:"-"`
-	Public         bool      `datastore:"public"`
-	Icon           string    `datastore:"-"`
-	CreateDate     time.Time `datastore:"create_date,noindex" json:"-"`
-	UpdateDate     time.Time `datastore:"update_date"         json:"-"`
-	DeleteFlag     bool      `datastore:"delete_flag"         json:"-"`
-	DeleteDate     time.Time `datastore:"delete_date,noindex" json:"-"`
-	Value          string    `datastore:"-"`                      // マイ・リストを返す時だけ使う
-	Endpoint       string    `datastore:"-"`                      // プッシュ通知を行う時だけ使う
-	SubscribeCount int64     `datastore:"SubscribeCount,noindex"` // cron実行時に通知したEndpointの数を設定する
-	HasHub         bool      `datastore:"-"`                      // PubSubHubBubを使用しているか
-	HubUrl         string    `datastore:"-"`
+type UpdateInfo struct {
+	FeedUrl      string
+	SiteTitle    string
+	ContentUrl   string
+	ContentTitle string
+	UpdateFlg    bool
+	Icon         string
+	Value        bool
+	Endpoint     string
+	Count        int64
+	HubUrl       string
+}
+
+func (sui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
+	g := goon.FromContext(ctx)
+
+	s := &physicalSite{Key: sui.FeedUrl}
+	err := g.Get(s)
+	if err != nil {
+		return
+	}
+	s.Count = count
+	g.Put(s)
 }
 
 // 三ヶ月以上更新がないサイトを抽出し削除する
 func DeleteUnnecessarySite(ctx context.Context) error {
 	g := goon.FromContext(ctx)
-	query := datastore.NewQuery("SiteUpdateInfo").Filter("UpdateDate <=", time.Now().AddDate(0, -3, 0)).KeysOnly()
+	query := datastore.NewQuery("physicalSite").Filter("UpdateDate <=", time.Now().AddDate(0, -3, 0)).KeysOnly()
 
 	keys, err := g.GetAll(query, nil)
 	if err != nil {
@@ -64,20 +91,72 @@ func DeleteUnnecessarySite(ctx context.Context) error {
 	return nil
 }
 
-func GetAll(ctx context.Context, dst *[]SiteUpdateInfo) error {
+func List(ctx context.Context) ([]UpdateInfo, error) {
 	g := goon.FromContext(ctx)
-	query := datastore.NewQuery("SiteUpdateInfo").Filter("delete_flag=", false)
-	keys, err := g.GetAll(query, dst)
-	log.Infof(ctx, "keys num. %d", len(keys))
-	return err
+
+	var sui []UpdateInfo
+	var list []physicalSite
+	query := datastore.NewQuery("physicalSite").Filter("delete_flag=", false)
+	_, err := g.GetAll(query, &list)
+	if err != nil {
+		return sui, nil
+	}
+	for _, s := range list {
+		sui = append(sui, UpdateInfo{
+			FeedUrl:      s.Key,
+			SiteTitle:    s.SiteTitle,
+			ContentUrl:   s.LatestContent.Url,
+			ContentTitle: s.LatestContent.Title,
+		})
+	}
+	return sui, nil
 }
 
-func Get(ctx context.Context, url string) (*SiteUpdateInfo, bool, error) {
+func PublicList(ctx context.Context) ([]UpdateInfo, error) {
 	g := goon.FromContext(ctx)
-	sui := &SiteUpdateInfo{SiteUrl: url}
-	err := g.Get(sui)
+
+	var sui []UpdateInfo
+	var list []physicalSite
+	query := datastore.NewQuery("physicalSite").Filter("delete_flag=", false).Filter("public=", true)
+	_, err := g.GetAll(query, &list)
+	if err != nil {
+		return sui, nil
+	}
+	for _, s := range list {
+		sui = append(sui, UpdateInfo{
+			FeedUrl:      s.Key,
+			SiteTitle:    s.SiteTitle,
+			ContentUrl:   s.LatestContent.Url,
+			ContentTitle: s.LatestContent.Title,
+		})
+	}
+	log.Infof(ctx, "func PublicList count %v", len(list))
+	return sui, nil
+}
+
+func (sui *UpdateInfo) Update(ctx context.Context) {
+	g := goon.FromContext(ctx)
+	s := &physicalSite{Key: sui.FeedUrl}
+	g.Get(s)
+	s.LatestContent.Url = sui.ContentUrl
+	s.LatestContent.Title = sui.ContentTitle
+	s.Count = sui.Count
+	s.UpdateDate = time.Now()
+	g.Put(s)
+}
+
+func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
+	g := goon.FromContext(ctx)
+	s := &physicalSite{Key: url}
+	err := g.Get(s)
 	if err == nil {
-		return sui, false, nil
+		return &UpdateInfo{
+			FeedUrl:      s.Key,
+			SiteTitle:    s.SiteTitle,
+			ContentUrl:   s.LatestContent.Url,
+			ContentTitle: s.LatestContent.Title,
+			HubUrl:       s.HubUrl,
+		}, false, nil
 	}
 	// 未登録と見做す
 	info, err := getContentsInfo(ctx, url)
@@ -85,75 +164,60 @@ func Get(ctx context.Context, url string) (*SiteUpdateInfo, bool, error) {
 		// 初回読み込み失敗はエラーとみなす
 		return nil, false, err
 	}
-
-	sui.SiteTitle = info.SiteTitle
-	sui.FeedUrl = info.FeedUrl
-	sui.ContentUrl = info.ContentUrl
-	sui.ContentTitle = info.ContentTitle
-	sui.UpdateFlg = true
-	sui.CreateDate = time.Now()
-	sui.UpdateDate = time.Now()
-	sui.HasHub = info.HasHub
-	sui.HubUrl = info.HubUrl
-	return sui, true, nil
+	s.Key = info.FeedUrl
+	s.Type = info.Type
+	s.SiteTitle = info.SiteTitle
+	s.LatestContent.Url = info.ContentUrl
+	s.LatestContent.Title = info.ContentTitle
+	s.HubUrl = info.HubUrl
+	s.CreateDate = time.Now()
+	s.UpdateDate = time.Now()
+	g.Put(s)
+	return &UpdateInfo{
+		FeedUrl:      s.Key,
+		SiteTitle:    s.SiteTitle,
+		ContentUrl:   s.LatestContent.Url,
+		ContentTitle: s.LatestContent.Title,
+		HubUrl:       s.HubUrl,
+	}, true, nil
 }
 
 func getBodyByUrl(ctx context.Context, url string) ([]byte, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
-		log.Infof(ctx, "get error. %v", err)
+		log.Infof(ctx, "get error %v, %v", url, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		log.Infof(ctx, "url %s, resp %v", url, resp)
-		return nil, errors.New("Unknows status code.")
+		return nil, errors.New("unknown status code")
 	}
 	return ioutil.ReadAll(resp.Body)
 }
 
-func CheckSite(ctx context.Context, sui *SiteUpdateInfo) error {
-	if sui.FeedUrl == "" {
-		info, err := getContentsInfo(ctx, sui.SiteUrl)
-		if err != nil {
-			return err
-		}
-		sui.FeedUrl = info.FeedUrl
-
-		// 読み込んだ情報を前回値と比較する
-		if sui.ContentUrl != info.ContentUrl {
-			sui.SiteTitle = info.SiteTitle
-			sui.ContentUrl = info.ContentUrl
-			sui.ContentTitle = info.ContentTitle
-			sui.UpdateFlg = true
-			sui.UpdateDate = time.Now()
-		}
-	} else {
-		body, err := getBodyByUrl(ctx, sui.FeedUrl)
-		if err != nil {
-			return err
-		}
-		info, err := getFeedInfo(ctx, body)
-		if err != nil {
-			return err
-		}
-		// 読み込んだ情報を前回値と比較する
-		if sui.ContentUrl != info.ContentUrl {
-			sui.SiteTitle = info.SiteTitle
-			sui.ContentUrl = info.ContentUrl
-			sui.ContentTitle = info.ContentTitle
-			sui.UpdateFlg = true
-			sui.UpdateDate = time.Now()
-		}
+func (sui *UpdateInfo) CheckSite(ctx context.Context) error {
+	body, err := getBodyByUrl(ctx, sui.FeedUrl)
+	if err != nil {
+		return err
+	}
+	info, err := getFeedInfo(ctx, body)
+	if err != nil {
+		return err
+	}
+	// 読み込んだ情報を前回値と比較する
+	if sui.ContentUrl != info.ContentUrl {
+		sui.SiteTitle = info.SiteTitle
+		sui.ContentUrl = info.ContentUrl
+		sui.ContentTitle = info.ContentTitle
+		sui.UpdateFlg = true
 	}
 	return nil
 }
 
-func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*SiteUpdateInfo, error) {
-	g := goon.FromContext(ctx)
-	sui := &SiteUpdateInfo{SiteUrl: url}
-	err := g.Get(sui)
+func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo, error) {
+	sui, _, err := FromUrl(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -164,12 +228,9 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*SiteUpdateI
 	}
 	// 読み込んだ情報を前回値と比較する
 	if sui.ContentUrl != info.ContentUrl {
-		sui.SiteTitle = info.SiteTitle
 		sui.ContentUrl = info.ContentUrl
 		sui.ContentTitle = info.ContentTitle
 		sui.UpdateFlg = true
-		sui.UpdateDate = time.Now()
-		g.Put(sui)
 	}
 	return sui, nil
 }
@@ -206,7 +267,7 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 		return getContentsInfo(ctx, url+"atom.xml")
 	}
 
-	return nil, errors.New("can't read information.")
+	return nil, errors.New("can't read information")
 }
 
 func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
@@ -227,13 +288,14 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 				}
 			}
 			// linkの中の"alternate"を探す
-			for _, link := range feed.Entry[0].Link {
+			for _, link := range feed.Link {
 				if link.Rel == "hub" {
 					result.HasHub = true
 					result.HubUrl = link.Href
 				}
 			}
 			result.ContentTitle = feed.Entry[0].Title
+			result.Type = "atom"
 			return &result, nil
 		}
 	}
@@ -251,6 +313,7 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 				result.HasHub = true
 				result.HubUrl = rss1.Channel.AtomLink.Href
 			}
+			result.Type = "rss1.0"
 			return &result, nil
 		}
 	}
@@ -264,9 +327,14 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 		if len(rss2.Channel.Item) > 0 {
 			result.ContentTitle = rss2.Channel.Item[0].Title
 			result.ContentUrl = rss2.Channel.Item[0].Link
+
+			if rss2.Channel.AtomLink.Rel == "hub" {
+				result.HasHub = true
+				result.HubUrl = rss1.Channel.AtomLink.Href
+			}
+			result.Type = "rss2.0"
 			return &result, nil
 		}
-
 	}
-	return nil, errors.New("not feed.")
+	return nil, errors.New("not feed")
 }

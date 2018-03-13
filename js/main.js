@@ -1,54 +1,53 @@
 'use strict';
 
-let _ = function(id) {return document.getElementById(id);}
-let registURL = '/api/regest';
-let unregistURL = 'api/unregest';
+let _ = function(id) {return document.getElementById(id);};
+let registURL = '/api/regist';
+let unregistURL = 'api/unregist';
 let subscription = null;
 let serverKey = null;
 
+var publicList = {
+    items:[]
+};
+
+var myList = {
+    items: []
+};
+
 window.addEventListener('load', function() {
+    var my;
+    my = new Vue({
+        el: '#my-list',
+        data: myList,
+        methods: {
+            onclick_my: function (index) {
+                var sel = myList.items[index];
+                toggleSubscribe(sel);
+            }
+        }
+    });
+
+    var pub;
+    pub = new Vue({
+        el: '#public-list',
+        data: publicList,
+        methods: {
+            onclick_public: function (index) {
+                var sel = publicList.items[index];
+                myList.items.push(sel);
+                publicList.items.splice(index, 1);
+                toggleSubscribe(sel);
+            }
+        }
+    });
+
     fetch('api/list', {
         method: 'get'
     }).then(function(resp) {
         return resp.json();
     }).then(function(json) {
-        // 動的に記事リストを作る
-        for (var i = 0; i < json.length; i++) {
-            let site = json[i].SiteUrl
-
-            // 後で削除できるようにidを振っておく
-            let tr = document.createElement('tr');
-            tr.id = 'parent_'+site
-
-            let subscribe = document.createElement('input');
-            subscribe.id = site;
-            subscribe.type = 'checkbox';
-            subscribe.checked = false;
-            subscribe.value = '購読する';
-            subscribe.onclick = function(){toggleSubscribe(site)};
-
-            let contentTitle = document.createElement('a');
-            contentTitle.id = 'contentTitle';
-            contentTitle.href = json[i].ContentUrl;
-            contentTitle.textContent = json[i].ContentTitle;
-
-            let th = document.createElement('th');
-            th.scope = 'row';
-            th.appendChild(subscribe);
-            tr.appendChild(th);
-            let td1 = document.createElement('td');
-            td1.textContent = json[i].SiteTitle;
-            tr.appendChild(td1);
-
-            let td2 = document.createElement('td');
-            td2.appendChild(contentTitle);
-            tr.appendChild(td2);
-
-            let td3 = document.createElement('td');
-            td3.setAttribute("class", "visible-lg visible-md")
-            td3.textContent = json[i].SiteUrl;
-            tr.appendChild(td3);
-            _('siteTable').appendChild(tr);
+        if (json != null) {
+            publicList.items = json;
         }
 
         // 画面が作られたらWebPushの準備を行う
@@ -60,7 +59,45 @@ window.addEventListener('load', function() {
             navigator.serviceWorker.register('push.js')
         }
     });
-}, false)
+}, false);
+
+function setMyList(items) {
+    // 重複する登録済みリストから消し込みを行う
+    for (var i=0; i<items.length; i++) {
+        for (var j=0; j<publicList.items.length; j++) {
+            if (publicList.items[j].FeedUrl === items[i].FeedUrl) {
+                publicList.items.splice(j, 1);
+            }
+        }
+    }
+    myList.items = items;
+}
+
+function toggleSubscribe(item) {
+    console.log(item);
+    var data = new FormData();
+    if (subscription == null) {
+        alert('プッシュ通知が有効になっていません。');
+        location.reload();
+        return;
+    }
+    data.append('endpoint', subscription.endpoint);
+    data.append('siteUrl', item.FeedUrl);
+    if (item.Value) {
+        data.append('value', "true");
+    } else {
+        data.append('value', "false");
+    }
+
+    fetch('api/conf/site', {
+        method: 'post',
+        body: data
+    }).then(function(resp) {
+        return resp.text();
+    }).then(function(text) {
+        alert(text);
+    });
+}
 
 function addSite() {
     var data = new FormData();
@@ -74,7 +111,6 @@ function addSite() {
         return resp.text();
     }).then(function(text) {
         alert(text);
-        location.reload();
     });
 }
 
@@ -87,28 +123,6 @@ function testPush() {
         body: data
     });
     document.activeElement.blur();
-}
-
-function toggleSubscribe(key) {
-    var data = new FormData();
-    if (subscription == null) {
-        alert('プッシュ通知が有効になっていません。');
-        location.reload();
-        return;
-    }
-    data.append('endpoint', subscription.endpoint);
-    data.append('siteUrl', key);
-    data.append('value', _(key).checked);
-
-    fetch('api/conf/site', {
-        method: 'post',
-        body: data
-    }).then(function(resp) {
-        return resp.text();
-    }).then(function(text) {
-        alert(text);
-        location.reload();
-    });
 }
 
 function encodeBase64URL(buffer) {
@@ -259,56 +273,8 @@ function enablePushRequest(sub) {
     }).then(function(resp) {
         return resp.json();
     }).then(function(json) {
-        console.log(json);
-        // 動的にマイ・サイトのリストを作る
-        for (var i = 0; i < json.length; i++) {
-            let site = json[i].SiteUrl;
-
-            let target = _('parent_'+site);
-            if (target !== null) {
-                target.parentNode.removeChild(target);
-            }
-
-            let subscribe = document.createElement('input');
-            subscribe.id = site;
-            subscribe.type = 'checkbox';
-            subscribe.checked = false;
-            subscribe.value = '購読する';
-            subscribe.onclick = function(){toggleSubscribe(site)};
-
-            let contentTitle = document.createElement('a');
-            contentTitle.id = 'contentTitle';
-            contentTitle.href = json[i].ContentUrl;
-            contentTitle.textContent = json[i].ContentTitle;
-
-            let tr = document.createElement('tr');
-            let th = document.createElement('th');
-            th.scope = 'row';
-            th.appendChild(subscribe);
-            tr.appendChild(th);
-            let td1 = document.createElement('td');
-            td1.textContent = json[i].SiteTitle;
-            tr.appendChild(td1);
-
-            let td2 = document.createElement('td');
-            td2.appendChild(contentTitle);
-            tr.appendChild(td2);
-
-            let td3 = document.createElement('td');
-            td3.setAttribute("class", "visible-lg visible-md")
-            td3.textContent = json[i].SiteUrl;
-            tr.appendChild(td3);
-            _('mySiteTable').appendChild(tr);
-        }
-        // チェックを更新する
-        for (var i = 0; i < json.length; i++) {
-            let site = json[i].SiteUrl;
-            if (_(site) !== null) {
-                if (json[i].Value === 'true')
-                    _(site).checked = true;
-                else
-                    _(site).checked = false;
-            }
+        if (json != null) {
+            setMyList(json);
         }
     });
 }
