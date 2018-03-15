@@ -33,14 +33,6 @@ func makeKeyString(endpoint, feedUrl string) string {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func Migration(ctx context.Context) {
-	var list []physicalSiteSubscribe
-	g := goon.FromContext(ctx)
-	query := datastore.NewQuery("physicalSiteSubscribe")
-	g.GetAll(query, &list)
-	g.PutMulti(&list)
-}
-
 // ユーザ固有設定(サイト購読情報)を更新する
 func Update(ctx context.Context, endpoint, feedUrl string, enabled bool) error {
 	g := goon.FromContext(ctx)

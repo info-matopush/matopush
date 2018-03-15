@@ -45,23 +45,26 @@ func verify(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	params := r.URL.Query()
-	_, isNewSite, err := site.FromUrl(ctx, params.Get("site"))
-	if err != nil && !isNewSite {
+	ui, isNewSite, err := site.FromUrl(ctx, params.Get("site"))
+	if err == nil && !isNewSite {
 		// 購読対象URLの場合
-		w.Write([]byte(params.Get("hub.challenge")))
-		log.Infof(ctx, "pubsubhubbubからの通知を有効にしました site=%s", params.Get("site"))
-		return
+		if params.Get("hub.verify_token") == ui.Secret {
+			w.Write([]byte(params.Get("hub.challenge")))
+			log.Infof(ctx, "pubsubhubbubからの通知を有効にしました site=%v", params.Get("site"))
+			return
+		}
 	}
 	// 購読対象外の場合はステータスコードを4xxにする
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func SubscribeRequest(ctx context.Context, callbackUrl, topic, hub string) {
+func SubscribeRequest(ctx context.Context, callbackUrl, topic, hub, secret string) {
 	body := url.Values{}
 	body.Set("hub.mode", "unsubscribe")
 	body.Add("hub.topic", topic)
 	body.Add("hub.callback", callbackUrl)
 	body.Add("hub.verify", "async")
+	body.Add("hub.verify_token", secret)
 
 	req, err := http.NewRequest("POST", hub, bytes.NewBufferString(body.Encode()))
 	if err != nil {
@@ -73,6 +76,10 @@ func SubscribeRequest(ctx context.Context, callbackUrl, topic, hub string) {
 
 	client := urlfetch.Client(ctx)
 	resp, err := client.Do(req)
+	if err != nil {
+		log.Infof(ctx, "SubscribeRequest: err %v", err)
+		return
+	}
 	defer resp.Body.Close()
 	reason, _ := ioutil.ReadAll(resp.Body)
 	log.Infof(ctx, "reason %v", string(reason))

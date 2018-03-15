@@ -61,12 +61,17 @@ type UpdateInfo struct {
 	Endpoint     string
 	Count        int64
 	HubUrl       string
+	Secret       string // pubsubhubbubで使用する秘密鍵
 }
 
-func (sui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
+func (s *physicalSite) createSecret() string {
+	return s.CreateDate.Format("20060102031605")
+}
+
+func (ui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
 	g := goon.FromContext(ctx)
 
-	s := &physicalSite{Key: sui.FeedUrl}
+	s := &physicalSite{Key: ui.FeedUrl}
 	err := g.Get(s)
 	if err != nil {
 		return
@@ -91,25 +96,31 @@ func DeleteUnnecessarySite(ctx context.Context) error {
 	return nil
 }
 
+func fromPhysicalSite(s physicalSite) UpdateInfo {
+	return UpdateInfo{
+		FeedUrl:      s.Key,
+		SiteTitle:    s.SiteTitle,
+		ContentUrl:   s.LatestContent.Url,
+		ContentTitle: s.LatestContent.Title,
+		HubUrl:       s.HubUrl,
+		Secret:       s.createSecret(),
+	}
+}
+
 func List(ctx context.Context) ([]UpdateInfo, error) {
 	g := goon.FromContext(ctx)
 
-	var sui []UpdateInfo
+	var ui []UpdateInfo
 	var list []physicalSite
 	query := datastore.NewQuery("physicalSite").Filter("delete_flag=", false)
 	_, err := g.GetAll(query, &list)
 	if err != nil {
-		return sui, nil
+		return ui, nil
 	}
 	for _, s := range list {
-		sui = append(sui, UpdateInfo{
-			FeedUrl:      s.Key,
-			SiteTitle:    s.SiteTitle,
-			ContentUrl:   s.LatestContent.Url,
-			ContentTitle: s.LatestContent.Title,
-		})
+		ui = append(ui, fromPhysicalSite(s))
 	}
-	return sui, nil
+	return ui, nil
 }
 
 func PublicList(ctx context.Context) ([]UpdateInfo, error) {
@@ -123,40 +134,30 @@ func PublicList(ctx context.Context) ([]UpdateInfo, error) {
 		return sui, nil
 	}
 	for _, s := range list {
-		sui = append(sui, UpdateInfo{
-			FeedUrl:      s.Key,
-			SiteTitle:    s.SiteTitle,
-			ContentUrl:   s.LatestContent.Url,
-			ContentTitle: s.LatestContent.Title,
-		})
+		sui = append(sui, fromPhysicalSite(s))
 	}
 	log.Infof(ctx, "func PublicList count %v", len(list))
 	return sui, nil
 }
 
-func (sui *UpdateInfo) Update(ctx context.Context) {
+func (ui *UpdateInfo) Update(ctx context.Context) {
 	g := goon.FromContext(ctx)
-	s := &physicalSite{Key: sui.FeedUrl}
+	s := &physicalSite{Key: ui.FeedUrl}
 	g.Get(s)
-	s.LatestContent.Url = sui.ContentUrl
-	s.LatestContent.Title = sui.ContentTitle
-	s.Count = sui.Count
+	s.LatestContent.Url = ui.ContentUrl
+	s.LatestContent.Title = ui.ContentTitle
+	s.Count = ui.Count
 	s.UpdateDate = time.Now()
 	g.Put(s)
 }
 
 func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	g := goon.FromContext(ctx)
-	s := &physicalSite{Key: url}
-	err := g.Get(s)
+	s := physicalSite{Key: url}
+	err := g.Get(&s)
 	if err == nil {
-		return &UpdateInfo{
-			FeedUrl:      s.Key,
-			SiteTitle:    s.SiteTitle,
-			ContentUrl:   s.LatestContent.Url,
-			ContentTitle: s.LatestContent.Title,
-			HubUrl:       s.HubUrl,
-		}, false, nil
+		ui := fromPhysicalSite(s)
+		return &ui, false, nil
 	}
 	// 未登録と見做す
 	info, err := getContentsInfo(ctx, url)
@@ -173,13 +174,8 @@ func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	s.CreateDate = time.Now()
 	s.UpdateDate = time.Now()
 	g.Put(s)
-	return &UpdateInfo{
-		FeedUrl:      s.Key,
-		SiteTitle:    s.SiteTitle,
-		ContentUrl:   s.LatestContent.Url,
-		ContentTitle: s.LatestContent.Title,
-		HubUrl:       s.HubUrl,
-	}, true, nil
+	ui := fromPhysicalSite(s)
+	return &ui, true, nil
 }
 
 func getBodyByUrl(ctx context.Context, url string) ([]byte, error) {
@@ -197,8 +193,8 @@ func getBodyByUrl(ctx context.Context, url string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-func (sui *UpdateInfo) CheckSite(ctx context.Context) error {
-	body, err := getBodyByUrl(ctx, sui.FeedUrl)
+func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
+	body, err := getBodyByUrl(ctx, ui.FeedUrl)
 	if err != nil {
 		return err
 	}
@@ -207,17 +203,17 @@ func (sui *UpdateInfo) CheckSite(ctx context.Context) error {
 		return err
 	}
 	// 読み込んだ情報を前回値と比較する
-	if sui.ContentUrl != info.ContentUrl {
-		sui.SiteTitle = info.SiteTitle
-		sui.ContentUrl = info.ContentUrl
-		sui.ContentTitle = info.ContentTitle
-		sui.UpdateFlg = true
+	if ui.ContentUrl != info.ContentUrl {
+		ui.SiteTitle = info.SiteTitle
+		ui.ContentUrl = info.ContentUrl
+		ui.ContentTitle = info.ContentTitle
+		ui.UpdateFlg = true
 	}
 	return nil
 }
 
 func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo, error) {
-	sui, _, err := FromUrl(ctx, url)
+	ui, _, err := FromUrl(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -227,12 +223,12 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo,
 		return nil, err
 	}
 	// 読み込んだ情報を前回値と比較する
-	if sui.ContentUrl != info.ContentUrl {
-		sui.ContentUrl = info.ContentUrl
-		sui.ContentTitle = info.ContentTitle
-		sui.UpdateFlg = true
+	if ui.ContentUrl != info.ContentUrl {
+		ui.ContentUrl = info.ContentUrl
+		ui.ContentTitle = info.ContentTitle
+		ui.UpdateFlg = true
 	}
-	return sui, nil
+	return ui, nil
 }
 
 func getContentsInfo(ctx context.Context, url string) (*Result, error) {
