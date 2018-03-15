@@ -14,13 +14,12 @@ self.addEventListener('push', function(evt) {
     }
     if ('ContentUrl' in object) {
         content = object.ContentUrl;
-        tag = object.ContentUrl;
     }
     if ('Icon' in object) {
         icon = object.Icon;
     }
     if ('SiteUrl' in object) {
-        // tag = object.SiteUrl;
+        tag = object.SiteUrl;
     }
     if ('Endpoint' in object) {
         endpoint = object.Endpoint;

@@ -59,10 +59,10 @@
                 </thead>
                 <tbody id="my-list">
                 <tr class="d-flex" v-for="(item, index) in items">
-                    <td class="col-1" v-on:click="item.Value=!item.Value; onclick_my(index)">
+                    <td class="col-1" v-on:click="item.Value=!item.Value; onclick(index)">
                         <input type="checkbox" v-model="item.Value">
                     </td>
-                    <td class="col-5" v-on:click="item.Value=!item.Value; onclick_my(index)">{{item.SiteTitle}}</td>
+                    <td class="col-5" v-on:click="item.Value=!item.Value; onclick(index)">{{item.SiteTitle}}</td>
                     <td class="col-6"><a :href="item.ContentUrl">{{item.ContentTitle}}</a></td>
                 </tr>
                 </tbody>
@@ -80,10 +80,10 @@
                 </thead>
                 <tbody id="public-list">
                 <tr class="d-flex" v-for="(item, index) in items">
-                    <td class="col-1" v-on:click="item.Value=!item.Value; onclick_public(index)">
+                    <td class="col-1" v-on:click="item.Value=!item.Value; onclick(index)">
                         <input type="checkbox" v-model="item.Value">
                     </td>
-                    <td class="col-5" v-on:click="item.Value=!item.Value; onclick_public(index)">{{item.SiteTitle}}</td>
+                    <td class="col-5" v-on:click="item.Value=!item.Value; onclick(index)">{{item.SiteTitle}}</td>
                     <td class="col-6"><a :href="item.ContentUrl">{{item.ContentTitle}}</a></td>
                 </tr>
                 </tbody>

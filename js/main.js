@@ -1,10 +1,10 @@
 'use strict';
 
-let _ = function(id) {return document.getElementById(id);};
-let registURL = '/api/regist';
-let unregistURL = 'api/unregist';
-let subscription = null;
-let serverKey = null;
+var _ = function(id) {return document.getElementById(id);};
+var registURL = '/api/regist';
+var unregistURL = 'api/unregist';
+var subscription = null;
+var serverKey = null;
 
 var publicList = {
     items:[]
@@ -15,24 +15,22 @@ var myList = {
 };
 
 window.addEventListener('load', function() {
-    var my;
-    my = new Vue({
+    new Vue({
         el: '#my-list',
         data: myList,
         methods: {
-            onclick_my: function (index) {
+            onclick: function (index) {
                 var sel = myList.items[index];
                 toggleSubscribe(sel);
             }
         }
     });
 
-    var pub;
-    pub = new Vue({
+    new Vue({
         el: '#public-list',
         data: publicList,
         methods: {
-            onclick_public: function (index) {
+            onclick: function (index) {
                 var sel = publicList.items[index];
                 myList.items.push(sel);
                 publicList.items.splice(index, 1);
@@ -56,7 +54,7 @@ window.addEventListener('load', function() {
             _('test').addEventListener('click', testPush, false);
             _('addSite').addEventListener('click', addSite, false);
             fetch('./api/key').then(getServerKey).then(setServerKey);
-            navigator.serviceWorker.register('push.js')
+            navigator.serviceWorker.register('push.js');
         }
     });
 }, false);
@@ -102,7 +100,9 @@ function toggleSubscribe(item) {
 function addSite() {
     var data = new FormData();
     data.append('endpoint', subscription.endpoint);
-    data.append('siteUrl', _('siteUrl').value)
+    data.append('siteUrl', _('siteUrl').value);
+
+    _('siteUrl').value = '';
 
     fetch('api/add', {
         method: 'post',
@@ -111,6 +111,22 @@ function addSite() {
         return resp.text();
     }).then(function(text) {
         alert(text);
+        refreshMyList();
+    });
+}
+
+function refreshMyList() {
+    var data = new FormData();
+    data.append('endpoint', subscription.endpoint);
+    fetch('api/conf/list', {
+        method: 'post',
+        body: data
+    }).then(function(resp) {
+        return resp.json();
+    }).then(function(json) {
+        if (json != null) {
+            setMyList(json);
+        }
     });
 }
 
@@ -130,17 +146,9 @@ function encodeBase64URL(buffer) {
 }
 
 function decodeBase64URL(str) {
-    let dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
-    let buffer = new Uint8Array(dec.length);
-    for(let i = 0 ; i < dec.length ; i++)
-        buffer[i] = dec.charCodeAt(i);
-    return buffer;
-}
-
-function decodeBase64URL(str) {
-    let dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
-    let buffer = new Uint8Array(dec.length);
-    for(let i = 0 ; i < dec.length ; i++)
+    var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
+    var buffer = new Uint8Array(dec.length);
+    for(var i = 0 ; i < dec.length ; i++)
         buffer[i] = dec.charCodeAt(i);
     return buffer;
 }
@@ -194,13 +202,13 @@ function requestPushPermission() {
 }
 
 function checkPushPermission(evt) {
-    let state = evt.state || evt.status;
+    var state = evt.state || evt.status;
     if (state !== 'denied')
         navigator.serviceWorker.ready.then(requestPushSubscription);
 }
 
 function requestPushSubscription(registration) {
-    let opt = {
+    var opt = {
         userVisible: true,
         userVisibleOnly: true,
         applicationServerKey: serverKey
@@ -231,7 +239,6 @@ function requestPushUnsubscription() {
         fetch(unregistURL, {
             method: 'post',
             body:   data
-        }).then(res => {
         });
 
         subscription = null;
@@ -264,18 +271,8 @@ function enablePushRequest(sub) {
     fetch(registURL, {
         method: 'post',
         body:   data
-    }).then(res => {
     });
 
-    fetch('api/conf/list', {
-        method: 'post',
-        body: data
-    }).then(function(resp) {
-        return resp.json();
-    }).then(function(json) {
-        if (json != null) {
-            setMyList(json);
-        }
-    });
+    refreshMyList();
 }
 
