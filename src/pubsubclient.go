@@ -60,7 +60,7 @@ func verify(w http.ResponseWriter, r *http.Request) {
 
 func SubscribeRequest(ctx context.Context, callbackUrl, topic, hub, secret string) {
 	body := url.Values{}
-	body.Set("hub.mode", "unsubscribe")
+	body.Set("hub.mode", "subscribe")
 	body.Add("hub.topic", topic)
 	body.Add("hub.callback", callbackUrl)
 	body.Add("hub.verify", "async")
