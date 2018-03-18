@@ -95,7 +95,7 @@
                         <input type="checkbox" v-model="item.Value">
                     </td>
                     <td class="col-5" v-on:click="item.Value=!item.Value; onclick(index)">{{item.SiteTitle}}
-                        <span class="badge badge-pill badge-secondary>{{item.Type}}</span>
+                        <span class="badge badge-pill badge-secondary">{{item.Type}}</span>
                     </td>
                     <td class="col-6"><a :href="item.ContentUrl">{{item.ContentTitle}}</a></td>
                 </tr>
