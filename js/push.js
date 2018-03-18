@@ -18,8 +18,8 @@ self.addEventListener('push', function(evt) {
     if ('Icon' in object) {
         icon = object.Icon;
     }
-    if ('SiteUrl' in object) {
-        tag = object.SiteUrl;
+    if ('FeedUrl' in object) {
+        tag = object.FeedUrl;
     }
     if ('Endpoint' in object) {
         endpoint = object.Endpoint;
@@ -33,7 +33,7 @@ self.addEventListener('push', function(evt) {
         data.append('command', 'reach');
         fetch('api/log', {
             method: 'post',
-            body:   data,
+            body:   data
         });
     }
 
@@ -45,10 +45,10 @@ self.addEventListener('push', function(evt) {
                     body:    body,
                     data:    {
                         url:       content,
-                        endpoint:  endpoint,
+                        endpoint:  endpoint
                     },
                     icon:    icon,
-                    tag:     tag,
+                    tag:     tag
                 }
             )
         )
@@ -69,7 +69,7 @@ self.addEventListener('notificationclick', function(evt) {
         data.append('command', 'click');
         fetch('api/log', {
             method: 'post',
-            body:   data,
+            body:   data
         });
         return clients.openWindow(url);
     }

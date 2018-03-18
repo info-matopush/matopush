@@ -29,8 +29,8 @@ type Result struct {
 }
 
 type Content struct {
-	Url   string `datastore:"url,noindex"`
 	Title string `datastore:"title,noindex"`
+	Url   string `datastore:"url,noindex"`
 }
 
 // KeyはFeedUrl
@@ -100,8 +100,8 @@ func fromPhysicalSite(s physicalSite) UpdateInfo {
 	return UpdateInfo{
 		FeedUrl:      s.Key,
 		SiteTitle:    s.SiteTitle,
-		ContentUrl:   s.LatestContent.Url,
 		ContentTitle: s.LatestContent.Title,
+		ContentUrl:   s.LatestContent.Url,
 		HubUrl:       s.HubUrl,
 		Secret:       s.createSecret(),
 	}
@@ -173,7 +173,7 @@ func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	s.HubUrl = info.HubUrl
 	s.CreateDate = time.Now()
 	s.UpdateDate = time.Now()
-	g.Put(s)
+	g.Put(&s)
 	ui := fromPhysicalSite(s)
 	return &ui, true, nil
 }
@@ -205,8 +205,8 @@ func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
 	// 読み込んだ情報を前回値と比較する
 	if ui.ContentUrl != info.ContentUrl {
 		ui.SiteTitle = info.SiteTitle
-		ui.ContentUrl = info.ContentUrl
 		ui.ContentTitle = info.ContentTitle
+		ui.ContentUrl = info.ContentUrl
 		ui.UpdateFlg = true
 	}
 	return nil
@@ -283,7 +283,7 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 					result.ContentUrl = link.Href
 				}
 			}
-			// linkの中の"alternate"を探す
+			// linkの中の"hub"を探す
 			for _, link := range feed.Link {
 				if link.Rel == "hub" {
 					result.HasHub = true

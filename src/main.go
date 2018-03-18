@@ -20,4 +20,5 @@ func init() {
 	http.HandleFunc("/api/health", healthHandler)
 	http.HandleFunc("/api/log", logHandler)
 	http.HandleFunc("/api/subscriber", subscriberHandler)
+	http.HandleFunc("/api/search", searchHandler)
 }

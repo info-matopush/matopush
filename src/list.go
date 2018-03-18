@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mjibson/goon"
 	"google.golang.org/appengine"
 	"net/http"
 	"src/conf"
@@ -25,7 +24,6 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
-	g := goon.NewGoon(r)
 
 	url := r.FormValue("siteUrl")
 	endpoint := r.FormValue("endpoint")
@@ -36,7 +34,6 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isNewSite {
-		g.Put(ui)
 		if ui.HubUrl != "" {
 			SubscribeRequest(ctx,
 				SubscribeUrl+ui.FeedUrl,

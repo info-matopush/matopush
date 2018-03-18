@@ -53,6 +53,7 @@ window.addEventListener('load', function() {
             _('subscribe').addEventListener('click', togglePushSubscription, false);
             _('test').addEventListener('click', testPush, false);
             _('addSite').addEventListener('click', addSite, false);
+            _('searchSite').addEventListener('click', searchSite, false);
             fetch('./api/key').then(getServerKey).then(setServerKey);
             navigator.serviceWorker.register('push.js');
         }
@@ -94,6 +95,23 @@ function toggleSubscribe(item) {
         return resp.text();
     }).then(function(text) {
         alert(text);
+    });
+}
+
+var searchResult;
+
+function searchSite() {
+    var data = new FormData();
+    data.append('endpoint', subscription.endpoint);
+    data.append('keyword', _('keyword').value);
+
+    fetch('api/search', {
+        method: 'post',
+        body: data
+    }).then(function(resp) {
+        return resp.json();
+    }).then(function(json) {
+        searchResult = json;
     });
 }
 
