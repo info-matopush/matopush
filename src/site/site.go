@@ -62,6 +62,7 @@ type UpdateInfo struct {
 	Count        int64
 	HubUrl       string
 	Secret       string // pubsubhubbubで使用する秘密鍵
+	Type         string
 }
 
 func (s *physicalSite) createSecret() string {
@@ -100,10 +101,16 @@ func fromPhysicalSite(s physicalSite) UpdateInfo {
 	return UpdateInfo{
 		FeedUrl:      s.Key,
 		SiteTitle:    s.SiteTitle,
-		ContentTitle: s.LatestContent.Title,
 		ContentUrl:   s.LatestContent.Url,
+		ContentTitle: s.LatestContent.Title,
+		UpdateFlg:    false,
+		Icon:         "",
+		Value:        false,
+		Endpoint:     "",
+		Count:        0,
 		HubUrl:       s.HubUrl,
 		Secret:       s.createSecret(),
+		Type:         s.Type,
 	}
 }
 

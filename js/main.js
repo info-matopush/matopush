@@ -53,7 +53,7 @@ window.addEventListener('load', function() {
             _('subscribe').addEventListener('click', togglePushSubscription, false);
             _('test').addEventListener('click', testPush, false);
             _('addSite').addEventListener('click', addSite, false);
-            _('searchSite').addEventListener('click', searchSite, false);
+//            _('searchSite').addEventListener('click', searchSite, false);
             fetch('./api/key').then(getServerKey).then(setServerKey);
             navigator.serviceWorker.register('push.js');
         }
