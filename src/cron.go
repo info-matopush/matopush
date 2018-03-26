@@ -56,15 +56,21 @@ func cronHandler(_ http.ResponseWriter, r *http.Request) {
 		log.Errorf(ctx, "get site failed. %v", err)
 	}
 
-	for _, sui := range siteList {
-		err := sui.CheckSite(ctx)
+	for _, ui := range siteList {
+		err := ui.CheckSite(ctx)
 		if err != nil {
 			// Feedの読み込みに失敗
-			log.Warningf(ctx, "feedの読み込みに失敗 url:%s", sui.FeedUrl)
+			log.Warningf(ctx, "feedの読み込みに失敗 url:%s", ui.FeedUrl)
 			return
 		}
-		sendPushWhenSiteUpdate(ctx, &sui)
-		sui.Update(ctx)
+		sendPushWhenSiteUpdate(ctx, &ui)
+
+		// huburlが設定されていた場合は積極的に利用する
+		if ui.UpdateFlg && ui.HubUrl != "" {
+			log.Infof(ctx, "use pubsub %v", ui.FeedUrl)
+			SubscribeRequest(ctx, SubscribeUrl+ui.FeedUrl, ui.FeedUrl, ui.HubUrl, ui.Secret)
+		}
+		ui.Update(ctx)
 	}
 
 	log.Infof(ctx, "site num:%d", len(siteList))
