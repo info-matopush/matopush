@@ -3,19 +3,21 @@ package site
 import (
 	"encoding/xml"
 	"errors"
-	"github.com/mjibson/goon"
-	"golang.org/x/net/context"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/urlfetch"
 	"io/ioutil"
 	"net/http"
+	"src/content"
 	"src/xml/atom"
 	"src/xml/html"
 	"src/xml/rdf"
 	"src/xml/rss"
 	"strings"
 	"time"
+
+	"github.com/mjibson/goon"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/urlfetch"
 )
 
 type Result struct {
@@ -26,6 +28,7 @@ type Result struct {
 	HasHub       bool
 	HubUrl       string
 	Type         string
+	Contents     []content.Content
 }
 
 type Content struct {
@@ -35,18 +38,19 @@ type Content struct {
 
 // KeyはFeedUrl
 type physicalSite struct {
-	Key           string    `datastore:"-" goon:"id"`
-	Type          string    `datastore:"type,noindex"`
-	SiteTitle     string    `datastore:"site_title,noindex"`
-	LatestContent Content   `datastore:"latest,noindex"`
-	Public        bool      `datastore:"public"`
-	HubUrl        string    `datastore:"hub_url,noindex"`
-	ContentList   []Content `datastore:"content,noindex"`
-	Count         int64     `datastore:"count,noindex"`
-	CreateDate    time.Time `datastore:"create_date,noindex"`
-	UpdateDate    time.Time `datastore:"update_date,noindex"`
-	DeleteFlag    bool      `datastore:"delete_flag"`
-	DeleteDate    time.Time `datastore:"delete_date,noindex"`
+	Key           string            `datastore:"-" goon:"id"`
+	Type          string            `datastore:"type,noindex"`
+	SiteTitle     string            `datastore:"site_title,noindex"`
+	LatestContent Content           `datastore:"latest,noindex"`
+	Public        bool              `datastore:"public"`
+	HubUrl        string            `datastore:"hub_url,noindex"`
+	ContentList   []Content         `datastore:"content,noindex"`
+	Count         int64             `datastore:"count,noindex"`
+	CreateDate    time.Time         `datastore:"create_date,noindex"`
+	UpdateDate    time.Time         `datastore:"update_date,noindex"`
+	DeleteFlag    bool              `datastore:"delete_flag"`
+	DeleteDate    time.Time         `datastore:"delete_date,noindex"`
+	Contents      []content.Content `datastore:"contents,noindex"`
 }
 
 // サイト更新情報
@@ -63,6 +67,7 @@ type UpdateInfo struct {
 	HubUrl       string
 	Secret       string // pubsubhubbubで使用する秘密鍵
 	Type         string
+	Contents     []content.Content `datastore:"contents,noindex"`
 }
 
 func (s *physicalSite) createSecret() string {
@@ -177,6 +182,7 @@ func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	s.SiteTitle = info.SiteTitle
 	s.LatestContent.Url = info.ContentUrl
 	s.LatestContent.Title = info.ContentTitle
+	s.Contents = info.Contents
 	s.HubUrl = info.HubUrl
 	s.CreateDate = time.Now()
 	s.UpdateDate = time.Now()
@@ -299,6 +305,17 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 			}
 			result.ContentTitle = feed.Entry[0].Title
 			result.Type = "atom"
+
+			var c []content.Content
+			for _, i := range feed.ListContentFromFeed() {
+				con, err := content.New(ctx, i)
+				if err == nil {
+					c = append(c, *con)
+				}
+			}
+			log.Infof(ctx, "contents: %v", c)
+			result.Contents = c
+
 			return &result, nil
 		}
 	}

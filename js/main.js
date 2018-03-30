@@ -156,7 +156,6 @@ function testPush() {
         method: 'post',
         body: data
     });
-    document.activeElement.blur();
 }
 
 function encodeBase64URL(buffer) {
@@ -257,11 +256,11 @@ function requestPushUnsubscription() {
         fetch(unregistURL, {
             method: 'post',
             body:   data
+        }).then(function(){
+            subscription = null;
+            disablePushRequest();
+            location.reload();
         });
-
-        subscription = null;
-        disablePushRequest();
-        location.reload();
     }
 }
 
@@ -289,8 +288,8 @@ function enablePushRequest(sub) {
     fetch(registURL, {
         method: 'post',
         body:   data
+    }).then(function(){
+        refreshMyList();
     });
-
-    refreshMyList();
 }
 
