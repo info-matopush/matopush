@@ -5,15 +5,18 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 )
 
+// ServerKey はキーペアを保持する.
 type ServerKey struct {
 	Name  string `datastore:"-" goon:"id"`
 	Value []byte `datastore:"value,noindex"`
 }
 
+// GetPublicKey は公開鍵を取得する.
 func GetPublicKey(ctx context.Context) (*ecdsa.PublicKey, error) {
 	pri, err := getPrivateKey(ctx)
 	if err != nil {

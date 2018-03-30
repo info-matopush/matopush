@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
+	"github.com/info-matopush/matopush/src/conf"
+	"github.com/info-matopush/matopush/src/site"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
-	"net/http"
-	"src/conf"
-	"src/site"
 )
 
 func confListHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func confSiteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	endpoint := r.FormValue("endpoint")
-	siteUrl := r.FormValue("siteUrl")
+	siteURL := r.FormValue("siteUrl")
 	value := r.FormValue("value")
 
 	enabled := true

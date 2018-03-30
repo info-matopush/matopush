@@ -6,16 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/info-matopush/matopush/src/endpoint"
+	"github.com/info-matopush/matopush/src/site"
+
 	"github.com/SherClockHolmes/webpush-go"
+	"github.com/info-matopush/matopush/src/conf"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
-	"io/ioutil"
-	"net/http"
-	"src/conf"
-	"src/endpoint"
-	"src/site"
 )
 
 func testHandler(_ http.ResponseWriter, r *http.Request) {

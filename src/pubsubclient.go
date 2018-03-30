@@ -2,14 +2,15 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+
+	"github.com/info-matopush/matopush/src/site"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"src/site"
 )
 
 func subscriberHandler(w http.ResponseWriter, r *http.Request) {

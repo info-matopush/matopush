@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"google.golang.org/appengine"
 	"net/http"
-	"src/conf"
-	"src/site"
+
+	"github.com/info-matopush/matopush/src/conf"
+	"github.com/info-matopush/matopush/src/site"
+	"google.golang.org/appengine"
 )
 
-var SubscribeUrl = "https://matopush.appspot.com/api/subscriber?site="
+var SubscribeURL = "https://matopush.appspot.com/api/subscriber?site="
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)

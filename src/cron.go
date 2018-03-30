@@ -1,12 +1,13 @@
 package main
 
 import (
+	"net/http"
+
+	"github.com/info-matopush/matopush/src/conf"
+	"github.com/info-matopush/matopush/src/endpoint"
+	"github.com/info-matopush/matopush/src/site"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
-	"net/http"
-	"src/conf"
-	"src/endpoint"
-	"src/site"
 )
 
 func cleanupHandler(_ http.ResponseWriter, r *http.Request) {

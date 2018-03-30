@@ -1,10 +1,11 @@
 package main
 
 import (
+	"net/http"
+
+	"github.com/info-matopush/matopush/src/site"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
-	"net/http"
-	"src/site"
 )
 
 func mainteHandler(_ http.ResponseWriter, r *http.Request) {
