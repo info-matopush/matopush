@@ -1,13 +1,14 @@
-package main
+package src
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"golang.org/x/oauth2/google"
 	customsearch "google.golang.org/api/customsearch/v1"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
-	"net/http"
-	"strconv"
 )
 
 var j = `{
@@ -23,7 +24,7 @@ var j = `{
   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/matopush%40appspot.gserviceaccount.com"
 }`
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	p := NewFromContext(ctx)

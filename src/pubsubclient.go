@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-func subscriberHandler(w http.ResponseWriter, r *http.Request) {
+func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	if r.Method == "GET" {

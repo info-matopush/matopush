@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
-func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
+func CleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	// 削除済み通知先のリストを取得する
@@ -38,7 +38,7 @@ func cleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	LogCleanup(ctx)
 }
 
-func healthHandler(_ http.ResponseWriter, r *http.Request) {
+func HealthHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	sui := site.UpdateInfo{SiteTitle: "まとプ", ContentTitle: ""}
@@ -49,7 +49,7 @@ func healthHandler(_ http.ResponseWriter, r *http.Request) {
 	log.Infof(ctx, "有効なendpoint数. %d", endpoint.Count(ctx))
 }
 
-func cronHandler(_ http.ResponseWriter, r *http.Request) {
+func CronHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	siteList, err := site.List(ctx)
@@ -69,7 +69,7 @@ func cronHandler(_ http.ResponseWriter, r *http.Request) {
 		// huburlが設定されていた場合は積極的に利用する
 		if ui.UpdateFlg && ui.HubUrl != "" {
 			log.Infof(ctx, "use pubsub %v", ui.FeedUrl)
-			SubscribeRequest(ctx, SubscribeUrl+ui.FeedUrl, ui.FeedUrl, ui.HubUrl, ui.Secret)
+			SubscribeRequest(ctx, SubscribeURL+ui.FeedUrl, ui.FeedUrl, ui.HubUrl, ui.Secret)
 		}
 		ui.Update(ctx)
 	}

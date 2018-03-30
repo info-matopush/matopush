@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
-func confListHandler(w http.ResponseWriter, r *http.Request) {
+func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	endpoint := r.FormValue("endpoint")
@@ -32,7 +32,7 @@ func confListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func confSiteHandler(w http.ResponseWriter, r *http.Request) {
+func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	endpoint := r.FormValue("endpoint")
@@ -43,7 +43,7 @@ func confSiteHandler(w http.ResponseWriter, r *http.Request) {
 	if value == "false" {
 		enabled = false
 	}
-	sui, _, err := site.FromUrl(ctx, siteUrl)
+	sui, _, err := site.FromUrl(ctx, siteURL)
 	if err == nil {
 		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedUrl, enabled)
 		if err == nil {
@@ -58,7 +58,7 @@ func confSiteHandler(w http.ResponseWriter, r *http.Request) {
 			log.Infof(ctx, "conf.Updateに失敗 %v", err)
 		}
 	} else {
-		log.Infof(ctx, "site.Getに失敗 %s, %v", siteUrl, err)
+		log.Infof(ctx, "site.Getに失敗 %s, %v", siteURL, err)
 	}
 	fmt.Fprint(w, "設定の更新に失敗しました。")
 }

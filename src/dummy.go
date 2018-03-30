@@ -1,9 +1,9 @@
-package main
+package src
 
 import (
 	"net/http"
 )
 
-func dummyHander(_ http.ResponseWriter, _ *http.Request) {
+func DummyHander(_ http.ResponseWriter, _ *http.Request) {
 
 }

@@ -1,15 +1,16 @@
-package main
+package src
 
 import (
 	"encoding/base64"
+	"hash/fnv"
+	"net/http"
+	"time"
+
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	"hash/fnv"
-	"net/http"
-	"time"
 )
 
 type logInfo struct {
@@ -79,7 +80,7 @@ func LogClick(ctx context.Context, endpoint, contentUrl string) {
 	}
 }
 
-func logHandler(_ http.ResponseWriter, r *http.Request) {
+func LogHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	// プッシュ通知を契機にウェブ遷移した。ログする。
 	endpoint := r.FormValue("endpoint")

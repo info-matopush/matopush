@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 var SubscribeURL = "https://matopush.appspot.com/api/subscriber?site="
 
-func listHandler(w http.ResponseWriter, r *http.Request) {
+func ListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	list, err := site.PublicList(ctx)
 	if err != nil {
@@ -23,7 +23,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func addHandler(w http.ResponseWriter, r *http.Request) {
+func AddHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	url := r.FormValue("siteUrl")
@@ -37,7 +37,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	if isNewSite {
 		if ui.HubUrl != "" {
 			SubscribeRequest(ctx,
-				SubscribeUrl+ui.FeedUrl,
+				SubscribeURL+ui.FeedUrl,
 				ui.FeedUrl,
 				ui.HubUrl,
 				ui.Secret)

@@ -1,7 +1,7 @@
 package atom
 
 import (
-	"src/content"
+	"github.com/info-matopush/matopush/src/content"
 )
 
 type Feed struct {

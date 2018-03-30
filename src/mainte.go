@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
-func mainteHandler(_ http.ResponseWriter, r *http.Request) {
+func MainteHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	siteList, err := site.List(ctx)
 	if err != nil {
@@ -17,7 +17,7 @@ func mainteHandler(_ http.ResponseWriter, r *http.Request) {
 
 	for _, ui := range siteList {
 		if ui.HubUrl != "" {
-			SubscribeRequest(ctx, SubscribeUrl+ui.FeedUrl, ui.FeedUrl, ui.HubUrl, ui.Secret)
+			SubscribeRequest(ctx, SubscribeURL+ui.FeedUrl, ui.FeedUrl, ui.HubUrl, ui.Secret)
 		}
 	}
 }

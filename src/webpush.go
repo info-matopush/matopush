@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"crypto/elliptic"
@@ -20,7 +20,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-func testHandler(_ http.ResponseWriter, r *http.Request) {
+func TestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	sui := site.UpdateInfo{SiteTitle: "まとプ", ContentTitle: "これはテスト通知です。"}
@@ -31,7 +31,7 @@ func testHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registHandler(_ http.ResponseWriter, r *http.Request) {
+func RegistHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	auth, _ := base64.RawURLEncoding.DecodeString(r.FormValue("auth"))
@@ -46,7 +46,7 @@ func registHandler(_ http.ResponseWriter, r *http.Request) {
 	ei.Touch(ctx)
 }
 
-func unregistHandler(_ http.ResponseWriter, r *http.Request) {
+func UnregistHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	e, err := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if err != nil {
@@ -55,7 +55,7 @@ func unregistHandler(_ http.ResponseWriter, r *http.Request) {
 	e.Delete(ctx)
 }
 
-func keyHandler(w http.ResponseWriter, r *http.Request) {
+func KeyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	publicKey, err := GetPublicKey(ctx)
