@@ -35,16 +35,16 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isNewSite {
-		if ui.HubUrl != "" {
+		if ui.HubURL != "" {
 			SubscribeRequest(ctx,
-				SubscribeURL+ui.FeedUrl,
-				ui.FeedUrl,
-				ui.HubUrl,
+				SubscribeURL+ui.FeedURL,
+				ui.FeedURL,
+				ui.HubURL,
 				ui.Secret)
 		}
 	}
 	fmt.Fprintf(w, "「%s」を追加しました。\n", ui.SiteTitle)
-	err = conf.Update(ctx, endpoint, ui.FeedUrl, true)
+	err = conf.Update(ctx, endpoint, ui.FeedURL, true)
 	if err != nil {
 		fmt.Fprint(w, "設定の更新に失敗しました。")
 	} else {

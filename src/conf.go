@@ -45,7 +45,7 @@ func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	sui, _, err := site.FromUrl(ctx, siteURL)
 	if err == nil {
-		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedUrl, enabled)
+		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedURL, enabled)
 		if err == nil {
 			siteTitle := sui.SiteTitle
 			if value == "true" {
@@ -53,12 +53,12 @@ func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 			} else if value == "false" {
 				fmt.Fprintf(w, "サイト「%s」の更新を「通知しない」に設定しました。", siteTitle)
 			}
-			return
 		} else {
 			log.Infof(ctx, "conf.Updateに失敗 %v", err)
+			fmt.Fprint(w, "設定の更新に失敗しました。")
 		}
 	} else {
 		log.Infof(ctx, "site.Getに失敗 %s, %v", siteURL, err)
+		fmt.Fprint(w, "設定の更新に失敗しました。")
 	}
-	fmt.Fprint(w, "設定の更新に失敗しました。")
 }

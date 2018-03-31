@@ -14,23 +14,23 @@ type pysicalContent struct {
 	Key        string    `datastore:"-" goon:"id"`
 	Title      string    `datastore:"title,noindex"`
 	Summary    string    `datastore:"desc,noindex"`
-	ImageUrl   string    `datastore:"image_url,noindex"`
+	ImageURL   string    `datastore:"image_url,noindex"`
 	ModifyDate time.Time `datastore:"modify_date,noindex"`
 	CreateDate time.Time `datastore:"create_date,noindex"`
 }
 
 type ContentFromFeed struct {
-	Url        string
+	URL        string
 	Title      string
 	Summary    string
 	ModifyDate time.Time
 }
 
 type Content struct {
-	Url        string
+	URL        string `json:"Url"`
 	Title      string
 	Summary    string
-	ImageUrl   string
+	ImageURL   string `json:"ImageUrl"`
 	ModifyDate time.Time
 }
 
@@ -40,13 +40,13 @@ type ContentInterface interface {
 
 func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 	g := goon.FromContext(ctx)
-	p := pysicalContent{Key: cff.Url}
+	p := pysicalContent{Key: cff.URL}
 	err := g.Get(&p)
 	if err == datastore.ErrNoSuchEntity {
 		return create(ctx, cff)
 	}
 	if err != nil {
-		log.Infof(ctx, "goon get error %v, %v", cff.Url, err)
+		log.Infof(ctx, "goon get error %v, %v", cff.URL, err)
 		return nil, err
 	}
 	c := p.makeContent()
@@ -54,16 +54,16 @@ func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 }
 
 func create(ctx context.Context, cff ContentFromFeed) (*Content, error) {
-	h, err := htmlParse(ctx, cff.Url)
+	h, err := HtmlParse(ctx, cff.URL)
 	if err != nil {
 		return nil, err
 	}
 
 	p := pysicalContent{
-		Key:        cff.Url,
+		Key:        cff.URL,
 		Title:      cff.Title,
 		Summary:    cff.Summary,
-		ImageUrl:   h.ImageUrl,
+		ImageURL:   h.ImageURL,
 		ModifyDate: cff.ModifyDate,
 		CreateDate: time.Now(),
 	}
@@ -75,10 +75,10 @@ func create(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 
 func (p *pysicalContent) makeContent() Content {
 	return Content{
-		Url:        p.Key,
+		URL:        p.Key,
 		Title:      p.Title,
 		Summary:    p.Summary,
-		ImageUrl:   p.ImageUrl,
+		ImageURL:   p.ImageURL,
 		ModifyDate: p.ModifyDate,
 	}
 }

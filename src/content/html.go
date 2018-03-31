@@ -7,11 +7,11 @@ import (
 )
 
 type Html struct {
-	FeedUrl  string
-	ImageUrl string
+	FeedURL  string
+	ImageURL string
 }
 
-func htmlParse(ctx context.Context, url string) (*Html, error) {
+func HtmlParse(ctx context.Context, url string) (*Html, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
@@ -30,9 +30,9 @@ func htmlParse(ctx context.Context, url string) (*Html, error) {
 		typ, _ := s.Attr("type")
 		if rel == "alternate" {
 			if typ == "application/rss+xml" {
-				h.FeedUrl = ref
+				h.FeedURL = ref
 			} else if typ == "application/atom+xml" {
-				h.FeedUrl = ref
+				h.FeedURL = ref
 			}
 		}
 	})
@@ -40,7 +40,7 @@ func htmlParse(ctx context.Context, url string) (*Html, error) {
 		pro, _ := s.Attr("property")
 		con, _ := s.Attr("content")
 		if pro == "og:image" {
-			h.ImageUrl = con
+			h.ImageURL = con
 		}
 	})
 	return &h, nil

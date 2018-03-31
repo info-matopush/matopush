@@ -123,7 +123,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei *endpoint.Endpoint) 
 
 func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err error) {
 	// 通知先のリストを取得する
-	s := conf.ListForPush(ctx, sui.FeedUrl)
+	s := conf.ListForPush(ctx, sui.FeedURL)
 
 	// 更新があれば通知
 	if sui.UpdateFlg {
@@ -143,7 +143,7 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err erro
 	}
 	// 購読数を記録
 	sui.Count = int64(len(s))
-	log.Infof(ctx, "url %v, count %v", sui.FeedUrl, sui.Count)
+	log.Infof(ctx, "url %v, count %v", sui.FeedURL, sui.Count)
 	return
 }
 

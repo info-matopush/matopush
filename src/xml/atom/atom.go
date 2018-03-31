@@ -5,16 +5,16 @@ import (
 )
 
 type Feed struct {
-	Title string   `xml:"title"`
-	Entry []*Entry `xml:"entry"`
-	Link  []*Link  `xml:"link"`
+	Title string  `xml:"title"`
+	Entry []Entry `xml:"entry"`
+	Link  []Link  `xml:"link"`
 }
 
 type Entry struct {
-	Title    string  `xml:"title"`
-	Link     []*Link `xml:"link"`
-	Modified string  `xml:"modified"`
-	Summary  string  `xml:"summary"`
+	Title    string `xml:"title"`
+	Link     []Link `xml:"link"`
+	Modified string `xml:"modified"`
+	Summary  string `xml:"summary"`
 }
 
 type Link struct {
@@ -33,14 +33,17 @@ func (e *Entry) getContentUrl() string {
 
 func (f *Feed) ListContentFromFeed() []content.ContentFromFeed {
 	var cff []content.ContentFromFeed
-	for _, e := range f.Entry {
-		u := e.getContentUrl()
+	for count, entry := range f.Entry {
+		u := entry.getContentUrl()
 		if u != "" {
 			cff = append(cff, content.ContentFromFeed{
-				Url:     e.getContentUrl(),
-				Title:   e.Title,
-				Summary: e.Summary,
+				URL:     entry.getContentUrl(),
+				Title:   entry.Title,
+				Summary: entry.Summary,
 			})
+		}
+		if count > 5 {
+			break
 		}
 	}
 	return cff

@@ -27,6 +27,16 @@ window.addEventListener('load', function() {
     });
 
     new Vue({
+        el: '#content-list',
+        data: myList,
+        methods: {
+            onclick: function (url) {
+                window.open(url);
+            }
+        }
+    });
+
+    new Vue({
         el: '#public-list',
         data: publicList,
         methods: {

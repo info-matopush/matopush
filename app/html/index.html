@@ -56,6 +56,43 @@
                 <input type="text" id="keyword" placeholder="キーワード">
             </div>
 -->
+            <br>
+            <div id="content-list">
+                <template v-for="(site, siteid) in items">
+                    <h6><a v-bind:href="site.SiteUrl">{{site.SiteTitle}}</a></h5>
+                    <div style="height: 200px;">
+                    <b-carousel class="h-100" v-bind:id="site.FeedUrl"
+                                style="text-shadow: 1px 1px 2px #333;"
+                                background="rgb(76, 76, 76)"
+                                :interval="0"
+                                controls
+                                indicators
+                        >
+                        <template v-for="(content, contentid) in site.Contents">
+                            <b-carousel-slide
+                                        style="height: 200px; "
+                                        v-bind:id="content.Url"
+                                        v-bind:img-src="content.ImageUrl"
+                                        fluid-grow
+                                        >
+                                <div style="height: 130px; background-color: rgba(0, 0, 0, 0.3); color:white; display: flex;" 
+                                            v-on:click="onclick(content.Url)">
+                                <div style="margin: auto; flex: 0 1 auto;">
+                                    <h6 style="font-size: small;">
+                                        {{content.Title}}
+                                    </h6>
+                                    <p style="max-height: 80px; line-height: 100%; font-size: x-small;">
+                                        {{content.Summary}}
+                                    </p>
+                                </div>
+                                </div>
+                            </b-carousel-slide>
+                        </template>
+                    </b-carousel>
+                    </div>
+                    <br>
+                </template>
+            </div>            
             <h2>マイ・サイト</h2>
             現在通知対象、または過去に通知対象としてチェックしたことのあるサイトです。
             <table class="table">

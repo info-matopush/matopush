@@ -10,7 +10,6 @@ import (
 
 	"github.com/info-matopush/matopush/src/content"
 	"github.com/info-matopush/matopush/src/xml/atom"
-	"github.com/info-matopush/matopush/src/xml/html"
 	"github.com/info-matopush/matopush/src/xml/rdf"
 	"github.com/info-matopush/matopush/src/xml/rss"
 	"github.com/mjibson/goon"
@@ -21,29 +20,31 @@ import (
 )
 
 type Result struct {
+	SiteURL      string
 	SiteTitle    string
 	ContentTitle string
-	ContentUrl   string
-	FeedUrl      string
+	ContentURL   string
+	FeedURL      string
 	HasHub       bool
-	HubUrl       string
+	HubURL       string
 	Type         string
 	Contents     []content.Content
 }
 
 type Content struct {
 	Title string `datastore:"title,noindex"`
-	Url   string `datastore:"url,noindex"`
+	URL   string `datastore:"url,noindex"`
 }
 
 // KeyはFeedUrl
 type physicalSite struct {
 	Key           string            `datastore:"-" goon:"id"`
 	Type          string            `datastore:"type,noindex"`
+	SiteURL       string            `datastore:"site_url,noindex"`
 	SiteTitle     string            `datastore:"site_title,noindex"`
 	LatestContent Content           `datastore:"latest,noindex"`
 	Public        bool              `datastore:"public"`
-	HubUrl        string            `datastore:"hub_url,noindex"`
+	HubURL        string            `datastore:"hub_url,noindex"`
 	ContentList   []Content         `datastore:"content,noindex"`
 	Count         int64             `datastore:"count,noindex"`
 	CreateDate    time.Time         `datastore:"create_date,noindex"`
@@ -55,19 +56,20 @@ type physicalSite struct {
 
 // サイト更新情報
 type UpdateInfo struct {
-	FeedUrl      string
+	FeedURL      string `json:"FeedUrl"`
+	SiteURL      string `json:"SiteUrl"`
 	SiteTitle    string
-	ContentUrl   string
+	ContentURL   string `json:"ContentUrl"`
 	ContentTitle string
 	UpdateFlg    bool
 	Icon         string
 	Value        bool
 	Endpoint     string
 	Count        int64
-	HubUrl       string
+	HubURL       string `json:"HubUrl"`
 	Secret       string // pubsubhubbubで使用する秘密鍵
 	Type         string
-	Contents     []content.Content `datastore:"contents,noindex"`
+	Contents     []content.Content
 }
 
 func (s *physicalSite) createSecret() string {
@@ -77,7 +79,7 @@ func (s *physicalSite) createSecret() string {
 func (ui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
 	g := goon.FromContext(ctx)
 
-	s := &physicalSite{Key: ui.FeedUrl}
+	s := &physicalSite{Key: ui.FeedURL}
 	err := g.Get(s)
 	if err != nil {
 		return
@@ -104,18 +106,20 @@ func DeleteUnnecessarySite(ctx context.Context) error {
 
 func fromPhysicalSite(s physicalSite) UpdateInfo {
 	return UpdateInfo{
-		FeedUrl:      s.Key,
+		FeedURL:      s.Key,
+		SiteURL:      s.SiteURL,
 		SiteTitle:    s.SiteTitle,
-		ContentUrl:   s.LatestContent.Url,
+		ContentURL:   s.LatestContent.URL,
 		ContentTitle: s.LatestContent.Title,
 		UpdateFlg:    false,
 		Icon:         "",
 		Value:        false,
 		Endpoint:     "",
 		Count:        0,
-		HubUrl:       s.HubUrl,
+		HubURL:       s.HubURL,
 		Secret:       s.createSecret(),
 		Type:         s.Type,
+		Contents:     s.Contents,
 	}
 }
 
@@ -154,12 +158,13 @@ func PublicList(ctx context.Context) ([]UpdateInfo, error) {
 
 func (ui *UpdateInfo) Update(ctx context.Context) {
 	g := goon.FromContext(ctx)
-	s := &physicalSite{Key: ui.FeedUrl}
+	s := &physicalSite{Key: ui.FeedURL}
 	g.Get(s)
-	s.LatestContent.Url = ui.ContentUrl
+	s.LatestContent.URL = ui.ContentURL
 	s.LatestContent.Title = ui.ContentTitle
 	s.Count = ui.Count
 	s.UpdateDate = time.Now()
+	s.Contents = ui.Contents
 	g.Put(s)
 }
 
@@ -177,13 +182,14 @@ func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 		// 初回読み込み失敗はエラーとみなす
 		return nil, false, err
 	}
-	s.Key = info.FeedUrl
+	s.Key = info.FeedURL
 	s.Type = info.Type
+	s.SiteURL = info.SiteURL
 	s.SiteTitle = info.SiteTitle
-	s.LatestContent.Url = info.ContentUrl
+	s.LatestContent.URL = info.ContentURL
 	s.LatestContent.Title = info.ContentTitle
 	s.Contents = info.Contents
-	s.HubUrl = info.HubUrl
+	s.HubURL = info.HubURL
 	s.CreateDate = time.Now()
 	s.UpdateDate = time.Now()
 	g.Put(&s)
@@ -198,16 +204,16 @@ func getBodyByUrl(ctx context.Context, url string) ([]byte, error) {
 		log.Infof(ctx, "get error %v, %v", url, err)
 		return nil, err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		log.Infof(ctx, "url %s, resp %v", url, resp)
 		return nil, errors.New("unknown status code")
 	}
+	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
 }
 
 func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
-	body, err := getBodyByUrl(ctx, ui.FeedUrl)
+	body, err := getBodyByUrl(ctx, ui.FeedURL)
 	if err != nil {
 		return err
 	}
@@ -216,10 +222,12 @@ func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
 		return err
 	}
 	// 読み込んだ情報を前回値と比較する
-	if ui.ContentUrl != info.ContentUrl {
+	if ui.ContentURL != info.ContentURL {
+		ui.SiteURL = info.SiteURL
 		ui.SiteTitle = info.SiteTitle
 		ui.ContentTitle = info.ContentTitle
-		ui.ContentUrl = info.ContentUrl
+		ui.ContentURL = info.ContentURL
+		ui.Contents = info.Contents
 		ui.UpdateFlg = true
 	}
 	return nil
@@ -236,9 +244,12 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo,
 		return nil, err
 	}
 	// 読み込んだ情報を前回値と比較する
-	if ui.ContentUrl != info.ContentUrl {
-		ui.ContentUrl = info.ContentUrl
+	if ui.ContentURL != info.ContentURL {
+		ui.SiteURL = info.SiteURL
+		ui.SiteTitle = info.SiteTitle
+		ui.ContentURL = info.ContentURL
 		ui.ContentTitle = info.ContentTitle
+		ui.Contents = info.Contents
 		ui.UpdateFlg = true
 	}
 	return ui, nil
@@ -252,25 +263,16 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	result, err := getFeedInfo(ctx, body)
 	if err == nil {
 		// feed解析成功
-		result.FeedUrl = url
+		result.FeedURL = url
 		return result, nil
 	}
 
 	// html形式か？
-	h := html.Html{}
-	err = xml.Unmarshal(body, &h)
-	if err != nil {
-		log.Infof(ctx, "html形式で解析:%s, %v", url, h)
-		// head -> linkの中からRSSもしくはAtomを探す
-		for _, link := range h.Head.Link {
-			log.Infof(ctx, "Link:%v", link)
-			if link.Type == "application/rss+xml" {
-				return getContentsInfo(ctx, link.Href)
-			} else if link.Type == "application/atom+xml" {
-				return getContentsInfo(ctx, link.Href)
-			}
-		}
+	h, err := content.HtmlParse(ctx, url)
+	if err == nil && h.FeedURL != "" {
+		return getContentsInfo(ctx, h.FeedURL)
 	}
+
 	// 過去の経緯から[url]atom.xmlをチェックする
 	if len(url)-1 == strings.LastIndex(url, "/") {
 		return getContentsInfo(ctx, url+"atom.xml")
@@ -293,14 +295,15 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 			// linkの中の"alternate"を探す
 			for _, link := range feed.Entry[0].Link {
 				if link.Rel == "alternate" {
-					result.ContentUrl = link.Href
+					result.ContentURL = link.Href
 				}
 			}
-			// linkの中の"hub"を探す
 			for _, link := range feed.Link {
-				if link.Rel == "hub" {
+				if link.Rel == "alternate" {
+					result.SiteURL = link.Href
+				} else if link.Rel == "hub" {
 					result.HasHub = true
-					result.HubUrl = link.Href
+					result.HubURL = link.Href
 				}
 			}
 			result.ContentTitle = feed.Entry[0].Title
@@ -313,7 +316,6 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 					c = append(c, *con)
 				}
 			}
-			log.Infof(ctx, "contents: %v", c)
 			result.Contents = c
 
 			return &result, nil
@@ -321,38 +323,67 @@ func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
 	}
 
 	// atom.xmlでないならばRSS1.0か?
-	rss1 := rdf.RDF{}
-	err = xml.Unmarshal(body, &rss1)
+	rdf := rdf.RDF{}
+	err = xml.Unmarshal(body, &rdf)
 	if err == nil {
-		log.Infof(ctx, "RSS v1.0形式で解析:%v", rss1)
-		result.SiteTitle = rss1.Channel.Title
-		if len(rss1.Item) > 0 {
-			result.ContentTitle = rss1.Item[0].Title
-			result.ContentUrl = rss1.Item[0].Link
-			if rss1.Channel.AtomLink.Rel == "hub" {
-				result.HasHub = true
-				result.HubUrl = rss1.Channel.AtomLink.Href
+		log.Infof(ctx, "RSS v1.0形式で解析:%v", rdf)
+		result.SiteTitle = rdf.Channel.Title
+		if len(rdf.Item) > 0 {
+			result.ContentTitle = rdf.Item[0].Title
+			result.ContentURL = rdf.Item[0].Link
+			for _, l := range rdf.Channel.Link {
+				if l.Rel == "hub" {
+					result.HasHub = true
+					result.HubURL = l.Href
+				} else if l.Data != "" {
+					result.SiteURL = l.Data
+				}
 			}
 			result.Type = "rss1.0"
+
+			var c []content.Content
+			for _, i := range rdf.ListContentFromFeed() {
+				con, err := content.New(ctx, i)
+				if err == nil {
+					c = append(c, *con)
+				}
+			}
+			result.Contents = c
+
 			return &result, nil
 		}
 	}
 
 	// RSS2.0か?
-	rss2 := rss.RSS{}
-	err = xml.Unmarshal(body, &rss2)
+	rss := rss.RSS{}
+	err = xml.Unmarshal(body, &rss)
 	if err == nil {
-		log.Infof(ctx, "RSS v2.0形式で解析:%v", rss2)
-		result.SiteTitle = rss2.Channel.Title
-		if len(rss2.Channel.Item) > 0 {
-			result.ContentTitle = rss2.Channel.Item[0].Title
-			result.ContentUrl = rss2.Channel.Item[0].Link
+		log.Infof(ctx, "RSS v2.0形式で解析:%v", rss)
+		result.SiteTitle = rss.Channel.Title
+		if len(rss.Channel.Item) > 0 {
+			result.ContentTitle = rss.Channel.Item[0].Title
+			result.ContentURL = rss.Channel.Item[0].Link
 
-			if rss2.Channel.AtomLink.Rel == "hub" {
-				result.HasHub = true
-				result.HubUrl = rss1.Channel.AtomLink.Href
+			for _, l := range rdf.Channel.Link {
+				if l.Rel == "hub" {
+					result.HasHub = true
+					result.HubURL = l.Href
+				} else if l.Data != "" {
+					result.SiteURL = l.Data
+				}
 			}
+
 			result.Type = "rss2.0"
+
+			var c []content.Content
+			for _, i := range rss.ListContentFromFeed() {
+				con, err := content.New(ctx, i)
+				if err == nil {
+					c = append(c, *con)
+				}
+			}
+			result.Contents = c
+
 			return &result, nil
 		}
 	}

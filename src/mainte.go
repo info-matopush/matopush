@@ -16,8 +16,8 @@ func MainteHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ui := range siteList {
-		if ui.HubUrl != "" {
-			SubscribeRequest(ctx, SubscribeURL+ui.FeedUrl, ui.FeedUrl, ui.HubUrl, ui.Secret)
+		if ui.HubURL != "" {
+			SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
 		}
 	}
 }
