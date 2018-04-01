@@ -1,41 +1,74 @@
 package rdf
 
-import "github.com/info-matopush/matopush/src/content"
+import (
+	"encoding/xml"
+	"errors"
+	"time"
 
-type RDF struct {
-	Channel Channel `xml:"channel"`
-	Item    []Item  `xml:"item"`
+	"github.com/info-matopush/matopush/src/content"
+)
+
+type rdf struct {
+	Channel channel `xml:"channel"`
+	Item    []item  `xml:"item"`
 }
 
-type Channel struct {
+type channel struct {
 	Title string `xml:"title"`
-	Link  []Link `xml:"link"`
+	Link  []link `xml:"link"`
 }
 
-type Item struct {
+type item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
 	Date        string `xml:"date"`
 }
 
-type Link struct {
+type link struct {
 	Rel  string `xml:"rel,attr"`
 	Href string `xml:"href,attr"`
 	Data string `xml:",chardata"`
 }
 
-func (r *RDF) ListContentFromFeed() []content.ContentFromFeed {
-	var cff []content.ContentFromFeed
-	for count, item := range r.Item {
-		cff = append(cff, content.ContentFromFeed{
+// Analyze はXMLデータをFeed型へ変換する
+// RDFのスキーマについては下記を参照
+// https://qiita.com/you88/items/e903fd463cf770688e1e
+func Analyze(bytes []byte) (content.Feed, error) {
+	feed := content.Feed{Type: "RSS 1.0"}
+	rdf := rdf{}
+	err := xml.Unmarshal(bytes, &rdf)
+	if err != nil {
+		return feed, err
+	}
+
+	feed.SiteTitle = rdf.Channel.Title
+
+	for _, item := range rdf.Item {
+		cff := content.ContentFromFeed{
 			URL:     item.Link,
 			Title:   item.Title,
 			Summary: item.Description,
-		})
-		if count > 5 {
-			break
+		}
+
+		// 2018-03-31T10:02:32+09:00
+		layout1 := "2006-01-02T15:04:05-07:00"
+		cff.ModifyDate, err = time.Parse(layout1, item.Date)
+		// エラーは無視する
+
+		feed.Contents = append(feed.Contents, cff)
+	}
+
+	for _, l := range rdf.Channel.Link {
+		if l.Rel == "hub" {
+			feed.HubURL = l.Href
+		} else if l.Data != "" {
+			feed.SiteURL = l.Data
 		}
 	}
-	return cff
+
+	if len(feed.Contents) == 0 {
+		return feed, errors.New("Can't find contents")
+	}
+	return feed, nil
 }

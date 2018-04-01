@@ -1,7 +1,6 @@
 package site
 
 import (
-	"encoding/xml"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -160,6 +159,8 @@ func (ui *UpdateInfo) Update(ctx context.Context) {
 	g := goon.FromContext(ctx)
 	s := &physicalSite{Key: ui.FeedURL}
 	g.Get(s)
+	s.SiteURL = ui.SiteURL
+	s.SiteTitle = ui.SiteTitle
 	s.LatestContent.URL = ui.ContentURL
 	s.LatestContent.Title = ui.ContentTitle
 	s.Count = ui.Count
@@ -217,17 +218,17 @@ func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	info, err := getFeedInfo(ctx, body)
+	feed, err := getFeedInfo(ctx, body)
 	if err != nil {
 		return err
 	}
 	// 読み込んだ情報を前回値と比較する
-	if ui.ContentURL != info.ContentURL {
-		ui.SiteURL = info.SiteURL
-		ui.SiteTitle = info.SiteTitle
-		ui.ContentTitle = info.ContentTitle
-		ui.ContentURL = info.ContentURL
-		ui.Contents = info.Contents
+	ui.SiteURL = feed.SiteURL
+	ui.SiteTitle = feed.SiteTitle
+	if ui.ContentURL != feed.Contents[0].URL {
+		ui.ContentURL = feed.Contents[0].URL
+		ui.ContentTitle = feed.Contents[0].Title
+		ui.Contents = content.Convert(ctx, feed.Contents)
 		ui.UpdateFlg = true
 	}
 	return nil
@@ -239,17 +240,17 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo,
 		return nil, err
 	}
 	// bodyの内容がfeedか判定する
-	info, err := getFeedInfo(ctx, body)
+	feed, err := getFeedInfo(ctx, body)
 	if err != nil {
 		return nil, err
 	}
 	// 読み込んだ情報を前回値と比較する
-	if ui.ContentURL != info.ContentURL {
-		ui.SiteURL = info.SiteURL
-		ui.SiteTitle = info.SiteTitle
-		ui.ContentURL = info.ContentURL
-		ui.ContentTitle = info.ContentTitle
-		ui.Contents = info.Contents
+	if ui.ContentURL != feed.Contents[0].URL {
+		ui.SiteURL = feed.SiteURL
+		ui.SiteTitle = feed.SiteTitle
+		ui.ContentURL = feed.Contents[0].URL
+		ui.ContentTitle = feed.Contents[0].Title
+		ui.Contents = content.Convert(ctx, feed.Contents)
 		ui.UpdateFlg = true
 	}
 	return ui, nil
@@ -260,11 +261,25 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	result, err := getFeedInfo(ctx, body)
+	feed, err := getFeedInfo(ctx, body)
 	if err == nil {
 		// feed解析成功
-		result.FeedURL = url
-		return result, nil
+		var hasHub = false
+		if feed.HubURL != "" {
+			hasHub = true
+		}
+		result := Result{
+			SiteURL:      feed.SiteURL,
+			SiteTitle:    feed.SiteTitle,
+			ContentURL:   feed.Contents[0].URL,
+			ContentTitle: feed.Contents[0].Title,
+			Contents:     content.Convert(ctx, feed.Contents),
+			FeedURL:      url,
+			HasHub:       hasHub,
+			HubURL:       feed.HubURL,
+			Type:         feed.Type,
+		}
+		return &result, nil
 	}
 
 	// html形式か？
@@ -281,111 +296,24 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	return nil, errors.New("can't read information")
 }
 
-func getFeedInfo(ctx context.Context, body []byte) (*Result, error) {
-	result := Result{HasHub: false}
-
-	// atom.xmlか?
-	feed := atom.Feed{}
-	err := xml.Unmarshal(body, &feed)
+func getFeedInfo(ctx context.Context, body []byte) (*content.Feed, error) {
+	// ATOM形式か?
+	feed, err := atom.Analyze(body)
 	if err == nil {
-		log.Infof(ctx, "atom形式で解析:%v", feed)
-		result.SiteTitle = feed.Title
-		if len(feed.Entry) > 0 {
-			// 最初のエントリを返す
-			// linkの中の"alternate"を探す
-			for _, link := range feed.Entry[0].Link {
-				if link.Rel == "alternate" {
-					result.ContentURL = link.Href
-				}
-			}
-			for _, link := range feed.Link {
-				if link.Rel == "alternate" {
-					result.SiteURL = link.Href
-				} else if link.Rel == "hub" {
-					result.HasHub = true
-					result.HubURL = link.Href
-				}
-			}
-			result.ContentTitle = feed.Entry[0].Title
-			result.Type = "atom"
-
-			var c []content.Content
-			for _, i := range feed.ListContentFromFeed() {
-				con, err := content.New(ctx, i)
-				if err == nil {
-					c = append(c, *con)
-				}
-			}
-			result.Contents = c
-
-			return &result, nil
-		}
+		return &feed, nil
 	}
 
-	// atom.xmlでないならばRSS1.0か?
-	rdf := rdf.RDF{}
-	err = xml.Unmarshal(body, &rdf)
+	// RSS 1.0形式か?
+	feed, err = rdf.Analyze(body)
 	if err == nil {
-		log.Infof(ctx, "RSS v1.0形式で解析:%v", rdf)
-		result.SiteTitle = rdf.Channel.Title
-		if len(rdf.Item) > 0 {
-			result.ContentTitle = rdf.Item[0].Title
-			result.ContentURL = rdf.Item[0].Link
-			for _, l := range rdf.Channel.Link {
-				if l.Rel == "hub" {
-					result.HasHub = true
-					result.HubURL = l.Href
-				} else if l.Data != "" {
-					result.SiteURL = l.Data
-				}
-			}
-			result.Type = "rss1.0"
-
-			var c []content.Content
-			for _, i := range rdf.ListContentFromFeed() {
-				con, err := content.New(ctx, i)
-				if err == nil {
-					c = append(c, *con)
-				}
-			}
-			result.Contents = c
-
-			return &result, nil
-		}
+		return &feed, nil
 	}
 
-	// RSS2.0か?
-	rss := rss.RSS{}
-	err = xml.Unmarshal(body, &rss)
+	// RSS 2.0形式か?
+	feed, err = rss.Analyze(body)
 	if err == nil {
-		log.Infof(ctx, "RSS v2.0形式で解析:%v", rss)
-		result.SiteTitle = rss.Channel.Title
-		if len(rss.Channel.Item) > 0 {
-			result.ContentTitle = rss.Channel.Item[0].Title
-			result.ContentURL = rss.Channel.Item[0].Link
-
-			for _, l := range rdf.Channel.Link {
-				if l.Rel == "hub" {
-					result.HasHub = true
-					result.HubURL = l.Href
-				} else if l.Data != "" {
-					result.SiteURL = l.Data
-				}
-			}
-
-			result.Type = "rss2.0"
-
-			var c []content.Content
-			for _, i := range rss.ListContentFromFeed() {
-				con, err := content.New(ctx, i)
-				if err == nil {
-					c = append(c, *con)
-				}
-			}
-			result.Contents = c
-
-			return &result, nil
-		}
+		return &feed, nil
 	}
+
 	return nil, errors.New("not feed")
 }

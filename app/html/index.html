@@ -59,7 +59,7 @@
             <br>
             <div id="content-list">
                 <template v-for="(site, siteid) in items">
-                    <h6><a v-bind:href="site.SiteUrl">{{site.SiteTitle}}</a></h5>
+                    <h6><a v-bind:href="site.SiteUrl" target="_blank">{{site.SiteTitle}}</a></h5>
                     <div style="height: 200px;">
                     <b-carousel class="h-100" v-bind:id="site.FeedUrl"
                                 style="text-shadow: 1px 1px 2px #333;"
@@ -70,7 +70,7 @@
                         >
                         <template v-for="(content, contentid) in site.Contents">
                             <b-carousel-slide
-                                        style="height: 200px; "
+                                        style="height: 200px;"
                                         v-bind:id="content.Url"
                                         v-bind:img-src="content.ImageUrl"
                                         fluid-grow

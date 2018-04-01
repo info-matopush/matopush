@@ -11,14 +11,20 @@ type keyValue struct {
 	Int64Value  int64  `datastore:"int_val,noindex"`
 }
 
+// Property はデフォルト値を持つプロパティ
+// 値はdatastoreに持つ.
 type Property struct {
 	ctx context.Context
 }
 
+// NewFromContext はコンテキストを元にPropertyを作成する
 func NewFromContext(ctx context.Context) *Property {
 	return &Property{ctx}
 }
 
+// GetString は文字列のプロパティ値を取得する
+// もしdatastore上にEntityがなければ、デフォルト値を返却するのと同時に
+// デフォルト値でEntityを作成する
 func (p *Property) GetString(name string, def string) string {
 	q := datastore.NewQuery("property").Filter("Name=", name)
 	it := q.Run(p.ctx)
@@ -32,6 +38,9 @@ func (p *Property) GetString(name string, def string) string {
 	return def
 }
 
+// GetInt64 は数値(int64)のプロパティ値を取得する
+// もしdatastore上にEntityがなければ、デフォルト値を返却するのと同時に
+// デフォルト値でEntityを作成する
 func (p *Property) GetInt64(name string, def int64) int64 {
 	q := datastore.NewQuery("property").Filter("Name=", name)
 	it := q.Run(p.ctx)

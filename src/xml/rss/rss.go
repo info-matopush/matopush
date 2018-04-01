@@ -1,41 +1,77 @@
 package rss
 
-import "github.com/info-matopush/matopush/src/content"
+import (
+	"encoding/xml"
+	"errors"
+	"time"
 
-type RSS struct {
-	Channel Channel `xml:"channel"`
+	"github.com/info-matopush/matopush/src/content"
+)
+
+type rss struct {
+	Channel channel `xml:"channel"`
 }
 
-type Channel struct {
+type channel struct {
 	Title string `xml:"title"`
-	Link  []Link `xml:"link"`
-	Item  []Item `xml:"item"`
+	Link  []link `xml:"link"`
+	Item  []item `xml:"item"`
 }
 
-type Item struct {
+type item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
 	PubDate     string `xml:"pubDate"`
 }
 
-type Link struct {
+type link struct {
 	Rel  string `xml:"rel,attr"`
 	Href string `xml:"href,attr"`
 	Data string `xml:",chardata"`
 }
 
-func (r *RSS) ListContentFromFeed() []content.ContentFromFeed {
-	var cff []content.ContentFromFeed
-	for count, item := range r.Channel.Item {
-		cff = append(cff, content.ContentFromFeed{
+// Analyze はXMLデータをFeed型へ変換する
+// RSS 2.0のスキーマについては下記を参照
+// http://www.futomi.com/lecture/japanese/rss20.html
+func Analyze(bytes []byte) (content.Feed, error) {
+	feed := content.Feed{Type: "RSS 2.0"}
+	rss := rss{}
+	err := xml.Unmarshal(bytes, &rss)
+	if err != nil {
+		return feed, err
+	}
+
+	feed.SiteTitle = rss.Channel.Title
+
+	for _, item := range rss.Channel.Item {
+		cff := content.ContentFromFeed{
 			URL:     item.Link,
 			Title:   item.Title,
 			Summary: item.Description,
-		})
-		if count > 5 {
-			break
+		}
+
+		layout1 := "Mon, 02 Jan 2006 15:04:05 -0700"
+		layout2 := "Mon, 02 Jan 2006 15:04:05 MST"
+		cff.ModifyDate, err = time.Parse(layout1, item.PubDate)
+		if err != nil {
+			cff.ModifyDate, err = time.Parse(layout2, item.PubDate)
+			// エラーは無視する
+		}
+
+		feed.Contents = append(feed.Contents, cff)
+	}
+
+	for _, l := range rss.Channel.Link {
+		if l.Rel == "hub" {
+			feed.HubURL = l.Href
+		} else if l.Data != "" {
+			feed.SiteURL = l.Data
 		}
 	}
-	return cff
+
+	if len(feed.Contents) == 0 {
+		return feed, errors.New("Can't find contents")
+	}
+	return feed, nil
 }

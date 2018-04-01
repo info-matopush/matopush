@@ -1,4 +1,4 @@
-package rss
+package atom
 
 import (
 	"reflect"
@@ -9,34 +9,33 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	data := `<rss>
-	<channel>
+	data := `<feed>
+	<link rel="alternate" href="http://sample.com"/>
+	<link rel="hub" href="http://pubsubhubbub.appspot.com"/>
 	<title>Title</title>
-	<link>http://sample.com</link>
-	<atom:link href="http://sample.com/feed" rel="self" type="application/rss+xml" />
-	<item>
+	<entry>
 		<title>Content Title</title>
-		<link>http://sample.com/content.html</link>
-		<description><![CDATA[description]]></description>
-		<pubDate>Sat, 31 Mar 2018 14:08:32 +0900</pubDate>
-		</item>
-	</channel>
-	</rss>`
+		<link rel="alternate" href="http://sample.com/content.html"/>
+		<summary><![CDATA[description]]></summary>
+		<modified>2018-03-31T10:02:32Z</modified>
+	</entry>
+	</feed>`
 	feed, err := Analyze([]byte(data))
 	if err != nil {
 		t.Fatalf("xml.Unmarshal error: %+v", err)
 	}
 
 	expect := content.Feed{
-		Type:      "RSS 2.0",
+		Type:      "ATOM",
 		SiteTitle: "Title",
 		SiteURL:   "http://sample.com",
+		HubURL:    "http://pubsubhubbub.appspot.com",
 		Contents: []content.ContentFromFeed{
 			content.ContentFromFeed{
 				Title:      "Content Title",
 				URL:        "http://sample.com/content.html",
 				Summary:    "description",
-				ModifyDate: time.Date(2018, time.March, 31, 14, 8, 32, 0, time.Local),
+				ModifyDate: time.Date(2018, time.March, 31, 10, 2, 32, 0, time.Local),
 			},
 		},
 	}

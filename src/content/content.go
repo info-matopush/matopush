@@ -9,6 +9,10 @@ import (
 	"google.golang.org/appengine/log"
 )
 
+const (
+	maxContents int = 5
+)
+
 type pysicalContent struct {
 	// KeyはコンテンツURLとする
 	Key        string    `datastore:"-" goon:"id"`
@@ -19,23 +23,12 @@ type pysicalContent struct {
 	CreateDate time.Time `datastore:"create_date,noindex"`
 }
 
-type ContentFromFeed struct {
-	URL        string
-	Title      string
-	Summary    string
-	ModifyDate time.Time
-}
-
 type Content struct {
 	URL        string `json:"Url"`
 	Title      string
 	Summary    string
 	ImageURL   string `json:"ImageUrl"`
 	ModifyDate time.Time
-}
-
-type ContentInterface interface {
-	GetContents() []Content
 }
 
 func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
@@ -81,4 +74,20 @@ func (p *pysicalContent) makeContent() Content {
 		ImageURL:   p.ImageURL,
 		ModifyDate: p.ModifyDate,
 	}
+}
+
+func Convert(ctx context.Context, cffs []ContentFromFeed) []Content {
+	clist := []Content{}
+	for _, cff := range cffs {
+		c, err := New(ctx, cff)
+		if err != nil {
+			continue
+		}
+		clist = append(clist, *c)
+
+		if len(clist) > maxContents {
+			break
+		}
+	}
+	return clist
 }

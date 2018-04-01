@@ -1,28 +1,32 @@
 package atom
 
 import (
+	"encoding/xml"
+	"errors"
+	"time"
+
 	"github.com/info-matopush/matopush/src/content"
 )
 
-type Feed struct {
+type atom struct {
 	Title string  `xml:"title"`
-	Entry []Entry `xml:"entry"`
-	Link  []Link  `xml:"link"`
+	Entry []entry `xml:"entry"`
+	Link  []link  `xml:"link"`
 }
 
-type Entry struct {
+type entry struct {
 	Title    string `xml:"title"`
-	Link     []Link `xml:"link"`
+	Link     []link `xml:"link"`
 	Modified string `xml:"modified"`
 	Summary  string `xml:"summary"`
 }
 
-type Link struct {
+type link struct {
 	Rel  string `xml:"rel,attr"`
 	Href string `xml:"href,attr"`
 }
 
-func (e *Entry) getContentUrl() string {
+func (e *entry) getContentURL() string {
 	for _, link := range e.Link {
 		if link.Rel == "alternate" {
 			return link.Href
@@ -31,20 +35,44 @@ func (e *Entry) getContentUrl() string {
 	return ""
 }
 
-func (f *Feed) ListContentFromFeed() []content.ContentFromFeed {
-	var cff []content.ContentFromFeed
-	for count, entry := range f.Entry {
-		u := entry.getContentUrl()
-		if u != "" {
-			cff = append(cff, content.ContentFromFeed{
-				URL:     entry.getContentUrl(),
-				Title:   entry.Title,
-				Summary: entry.Summary,
-			})
+// Analyze はXMLデータをFeed型へ変換する
+// ATOMのスキーマについては下記を参照
+// https://qiita.com/you88/items/e903fd463cf770688e1e
+func Analyze(bytes []byte) (content.Feed, error) {
+	feed := content.Feed{Type: "ATOM"}
+	atom := atom{}
+	err := xml.Unmarshal(bytes, &atom)
+	if err != nil {
+		return feed, err
+	}
+
+	feed.SiteTitle = atom.Title
+
+	for _, item := range atom.Entry {
+		cff := content.ContentFromFeed{
+			URL:     item.getContentURL(),
+			Title:   item.Title,
+			Summary: item.Summary,
 		}
-		if count > 5 {
-			break
+
+		// 2018-03-31T10:02:32+09:00
+		layout1 := "2006-01-02T15:04:05Z MST"
+		cff.ModifyDate, err = time.Parse(layout1, item.Modified+" JST")
+		// エラーは無視する
+
+		feed.Contents = append(feed.Contents, cff)
+	}
+
+	for _, l := range atom.Link {
+		if l.Rel == "hub" {
+			feed.HubURL = l.Href
+		} else if l.Rel == "alternate" {
+			feed.SiteURL = l.Href
 		}
 	}
-	return cff
+
+	if len(feed.Contents) == 0 {
+		return feed, errors.New("Can't find contents")
+	}
+	return feed, nil
 }

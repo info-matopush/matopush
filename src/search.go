@@ -11,25 +11,23 @@ import (
 	"google.golang.org/appengine/log"
 )
 
-var j = ``
-
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	p := NewFromContext(ctx)
-	//key := p.GetString("google.custom.search.apikey", "undefined")
+	key := p.GetString("google.custom.search.apikey", "undefined")
 	id := p.GetString("google.search.engine.id", "undefined")
 
 	log.Infof(ctx, "google.search.engine.id: %v", id)
 
-	// endpoint := r.FormValue("endpoint")
+	_ = r.FormValue("endpoint")
 	keyword := r.FormValue("keyword")
 	pos, err := strconv.Atoi(r.FormValue("position"))
 	if err != nil {
 		pos = 1
 	}
 
-	conf, err := google.JWTConfigFromJSON([]byte(j), "https://www.googleapis.com/auth/cse")
+	conf, err := google.JWTConfigFromJSON([]byte(key), "https://www.googleapis.com/auth/cse")
 	if err != nil {
 		log.Infof(ctx, "JWTConfigFromJSON error. %v", err)
 		w.WriteHeader(http.StatusForbidden)
