@@ -166,6 +166,7 @@ func (ui *UpdateInfo) Update(ctx context.Context) {
 	s.Count = ui.Count
 	s.UpdateDate = time.Now()
 	s.Contents = ui.Contents
+	s.Type = ui.Type
 	g.Put(s)
 }
 
@@ -225,10 +226,12 @@ func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
 	// 読み込んだ情報を前回値と比較する
 	ui.SiteURL = feed.SiteURL
 	ui.SiteTitle = feed.SiteTitle
+	ui.Type = feed.Type
+	ui.HubURL = feed.HubURL
+	ui.Contents = content.Convert(ctx, feed.Contents)
 	if ui.ContentURL != feed.Contents[0].URL {
 		ui.ContentURL = feed.Contents[0].URL
 		ui.ContentTitle = feed.Contents[0].Title
-		ui.Contents = content.Convert(ctx, feed.Contents)
 		ui.UpdateFlg = true
 	}
 	return nil
@@ -245,9 +248,11 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo,
 		return nil, err
 	}
 	// 読み込んだ情報を前回値と比較する
+	ui.SiteURL = feed.SiteURL
+	ui.SiteTitle = feed.SiteTitle
+	ui.Type = feed.Type
+	ui.HubURL = feed.HubURL
 	if ui.ContentURL != feed.Contents[0].URL {
-		ui.SiteURL = feed.SiteURL
-		ui.SiteTitle = feed.SiteTitle
 		ui.ContentURL = feed.Contents[0].URL
 		ui.ContentTitle = feed.Contents[0].Title
 		ui.Contents = content.Convert(ctx, feed.Contents)
@@ -306,6 +311,7 @@ func getFeedInfo(ctx context.Context, body []byte) (*content.Feed, error) {
 	// RSS 1.0形式か?
 	feed, err = rdf.Analyze(body)
 	if err == nil {
+		log.Debugf(ctx, "Feed(RDF) %v", feed)
 		return &feed, nil
 	}
 

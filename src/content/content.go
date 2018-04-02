@@ -90,6 +90,7 @@ func Convert(ctx context.Context, cffs []ContentFromFeed) []Content {
 	for _, cff := range cffs {
 		c, err := New(ctx, cff)
 		if err != nil {
+			log.Warningf(ctx, "contents New error %v", err)
 			continue
 		}
 		clist = append(clist, *c)
