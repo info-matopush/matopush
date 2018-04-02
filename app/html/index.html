@@ -59,7 +59,10 @@
             <br>
             <div id="content-list">
                 <template v-for="(site, siteid) in items">
-                    <h6><img v-bind:src="site.SiteIcon"/>
+                    <h6>
+                        <template v-if="site.SiteIcon!=''">
+                            <img v-bind:src="site.SiteIcon" style="width: 1.2rem; height: 1.2rem;"/>
+                        </template>
                         <a v-bind:href="site.SiteUrl" target="_blank">{{site.SiteTitle}}</a>
                     </h6>
                     <div style="height: 200px;">

@@ -1,6 +1,8 @@
 package content
 
 import (
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/urlfetch"
@@ -39,6 +41,10 @@ func HTMLParse(ctx context.Context, url string) (HTML, error) {
 				h.FeedURL = ref
 			}
 		} else if rel == "icon" {
+			if !strings.HasPrefix(ref, "http") {
+				ref = resp.Request.URL.Scheme +
+					"://" + resp.Request.Host + ref
+			}
 			h.IconURL = ref
 		}
 	})
