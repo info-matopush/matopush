@@ -31,6 +31,15 @@ type Content struct {
 	ModifyDate time.Time
 }
 
+// ContentFromFeed はフィードに含まれる
+// コンテンツ(HTML)の情報
+type ContentFromFeed struct {
+	URL        string
+	Title      string
+	Summary    string
+	ModifyDate time.Time
+}
+
 func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 	g := goon.FromContext(ctx)
 	p := pysicalContent{Key: cff.URL}
@@ -47,7 +56,7 @@ func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 }
 
 func create(ctx context.Context, cff ContentFromFeed) (*Content, error) {
-	h, err := HtmlParse(ctx, cff.URL)
+	h, err := HTMLParse(ctx, cff.URL)
 	if err != nil {
 		return nil, err
 	}

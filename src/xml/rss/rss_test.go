@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/info-matopush/matopush/src/content"
+	"github.com/info-matopush/matopush/src/site"
 )
 
 func TestRead(t *testing.T) {
@@ -27,12 +27,12 @@ func TestRead(t *testing.T) {
 		t.Fatalf("xml.Unmarshal error: %+v", err)
 	}
 
-	expect := content.Feed{
+	expect := site.Feed{
 		Type:      "RSS 2.0",
 		SiteTitle: "Title",
 		SiteURL:   "http://sample.com",
-		Contents: []content.ContentFromFeed{
-			content.ContentFromFeed{
+		Contents: []site.ContentFromFeed{
+			site.ContentFromFeed{
 				Title:      "Content Title",
 				URL:        "http://sample.com/content.html",
 				Summary:    "description",

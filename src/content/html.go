@@ -6,12 +6,16 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-type Html struct {
+// HTML はhtmlから取得できる情報を持つ
+type HTML struct {
 	FeedURL  string
 	ImageURL string
+	IconURL  string
 }
 
-func HtmlParse(ctx context.Context, url string) (*Html, error) {
+// HTMLParse はurlで取得したHTMLを解析して
+// 中に含まれる情報を返す
+func HTMLParse(ctx context.Context, url string) (*HTML, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
@@ -23,7 +27,7 @@ func HtmlParse(ctx context.Context, url string) (*Html, error) {
 		return nil, err
 	}
 
-	h := Html{}
+	h := HTML{}
 	doc.Find("link").Each(func(i int, s *goquery.Selection) {
 		rel, _ := s.Attr("rel")
 		ref, _ := s.Attr("href")
@@ -34,6 +38,8 @@ func HtmlParse(ctx context.Context, url string) (*Html, error) {
 			} else if typ == "application/atom+xml" {
 				h.FeedURL = ref
 			}
+		} else if rel == "icon" {
+			h.IconURL = ref
 		}
 	})
 	doc.Find("meta").Each(func(i int, s *goquery.Selection) {

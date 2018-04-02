@@ -283,7 +283,7 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	}
 
 	// html形式か？
-	h, err := content.HtmlParse(ctx, url)
+	h, err := content.HTMLParse(ctx, url)
 	if err == nil && h.FeedURL != "" {
 		return getContentsInfo(ctx, h.FeedURL)
 	}
@@ -297,6 +297,28 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 }
 
 func getFeedInfo(ctx context.Context, body []byte) (*content.Feed, error) {
+	// ATOM形式か?
+	feed, err := atom.Analyze(body)
+	if err == nil {
+		return &feed, nil
+	}
+
+	// RSS 1.0形式か?
+	feed, err = rdf.Analyze(body)
+	if err == nil {
+		return &feed, nil
+	}
+
+	// RSS 2.0形式か?
+	feed, err = rss.Analyze(body)
+	if err == nil {
+		return &feed, nil
+	}
+
+	return nil, errors.New("not feed")
+}
+
+func getFeed(ctx context.Context, body []byte) (*content.Feed, error) {
 	// ATOM形式か?
 	feed, err := atom.Analyze(body)
 	if err == nil {
