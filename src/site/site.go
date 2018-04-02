@@ -45,7 +45,6 @@ type physicalSite struct {
 	LatestContent Content           `datastore:"latest,noindex"`
 	Public        bool              `datastore:"public"`
 	HubURL        string            `datastore:"hub_url,noindex"`
-	ContentList   []Content         `datastore:"content,noindex"`
 	Count         int64             `datastore:"count,noindex"`
 	CreateDate    time.Time         `datastore:"create_date,noindex"`
 	UpdateDate    time.Time         `datastore:"update_date,noindex"`
