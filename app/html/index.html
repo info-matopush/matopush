@@ -59,7 +59,9 @@
             <br>
             <div id="content-list">
                 <template v-for="(site, siteid) in items">
-                    <h6><a v-bind:href="site.SiteUrl" target="_blank">{{site.SiteTitle}}</a></h5>
+                    <h6><img v-bind:src="site.SiteIcon"/>
+                        <a v-bind:href="site.SiteUrl" target="_blank">{{site.SiteTitle}}</a>
+                    </h6>
                     <div style="height: 200px;">
                     <b-carousel class="h-100" v-bind:id="site.FeedUrl"
                                 style="text-shadow: 1px 1px 2px #333;"

@@ -15,16 +15,16 @@ type HTML struct {
 
 // HTMLParse はurlで取得したHTMLを解析して
 // 中に含まれる情報を返す
-func HTMLParse(ctx context.Context, url string) (*HTML, error) {
+func HTMLParse(ctx context.Context, url string) (HTML, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
-		return nil, err
+		return HTML{}, err
 	}
 
 	doc, err := goquery.NewDocumentFromResponse(resp)
 	if err != nil {
-		return nil, err
+		return HTML{}, err
 	}
 
 	h := HTML{}
@@ -49,5 +49,5 @@ func HTMLParse(ctx context.Context, url string) (*HTML, error) {
 			h.ImageURL = con
 		}
 	})
-	return &h, nil
+	return h, nil
 }

@@ -21,10 +21,10 @@ import (
 type Result struct {
 	SiteURL      string
 	SiteTitle    string
+	SiteIcon     string
 	ContentTitle string
 	ContentURL   string
 	FeedURL      string
-	HasHub       bool
 	HubURL       string
 	Type         string
 	Contents     []content.Content
@@ -183,10 +183,12 @@ func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 		// 初回読み込み失敗はエラーとみなす
 		return nil, false, err
 	}
+
 	s.Key = info.FeedURL
 	s.Type = info.Type
 	s.SiteURL = info.SiteURL
 	s.SiteTitle = info.SiteTitle
+	s.SiteIcon = info.SiteIcon
 	s.LatestContent.URL = info.ContentURL
 	s.LatestContent.Title = info.ContentTitle
 	s.Contents = info.Contents
@@ -268,18 +270,15 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	feed, err := getFeedInfo(ctx, body)
 	if err == nil {
 		// feed解析成功
-		var hasHub = false
-		if feed.HubURL != "" {
-			hasHub = true
-		}
+		h, _ := content.HTMLParse(ctx, feed.SiteURL)
 		result := Result{
 			SiteURL:      feed.SiteURL,
 			SiteTitle:    feed.SiteTitle,
+			SiteIcon:     h.IconURL,
 			ContentURL:   feed.Contents[0].URL,
 			ContentTitle: feed.Contents[0].Title,
 			Contents:     content.Convert(ctx, feed.Contents),
 			FeedURL:      url,
-			HasHub:       hasHub,
 			HubURL:       feed.HubURL,
 			Type:         feed.Type,
 		}
