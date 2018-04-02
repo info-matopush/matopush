@@ -41,6 +41,7 @@ type physicalSite struct {
 	Type          string            `datastore:"type,noindex"`
 	SiteURL       string            `datastore:"site_url,noindex"`
 	SiteTitle     string            `datastore:"site_title,noindex"`
+	SiteIcon      string            `datastore:"site_icon,noindex"`
 	LatestContent Content           `datastore:"latest,noindex"`
 	Public        bool              `datastore:"public"`
 	HubURL        string            `datastore:"hub_url,noindex"`
@@ -58,10 +59,11 @@ type UpdateInfo struct {
 	FeedURL      string `json:"FeedUrl"`
 	SiteURL      string `json:"SiteUrl"`
 	SiteTitle    string
+	SiteIcon     string
 	ContentURL   string `json:"ContentUrl"`
 	ContentTitle string
-	UpdateFlg    bool
 	Icon         string
+	UpdateFlg    bool
 	Value        bool
 	Endpoint     string
 	Count        int64
@@ -108,10 +110,10 @@ func fromPhysicalSite(s physicalSite) UpdateInfo {
 		FeedURL:      s.Key,
 		SiteURL:      s.SiteURL,
 		SiteTitle:    s.SiteTitle,
+		SiteIcon:     s.SiteIcon,
 		ContentURL:   s.LatestContent.URL,
 		ContentTitle: s.LatestContent.Title,
 		UpdateFlg:    false,
-		Icon:         "",
 		Value:        false,
 		Endpoint:     "",
 		Count:        0,

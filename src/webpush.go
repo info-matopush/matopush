@@ -20,6 +20,16 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
+type pushMessage struct {
+	FeedURL      string `json:"FeedUrl"`
+	SiteURL      string `json:"SiteUrl"`
+	SiteTitle    string
+	ContentURL   string `json:"ContentUrl"`
+	ContentTitle string
+	Icon         string
+	Endpoint     string
+}
+
 func TestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
@@ -69,10 +79,19 @@ func KeyHandler(w http.ResponseWriter, r *http.Request) {
 
 func sendPush(ctx context.Context, sui *site.UpdateInfo, ei *endpoint.Endpoint) (err error) {
 	// payloadの固定値はここで設定する
-	sui.Icon = "/img/news.png"
-	sui.Endpoint = ei.Endpoint // ログ用
-
-	message, _ := json.Marshal(sui)
+	m := pushMessage{
+		FeedURL:      sui.FeedURL,
+		SiteURL:      sui.SiteURL,
+		SiteTitle:    sui.SiteTitle,
+		ContentURL:   sui.ContentURL,
+		ContentTitle: sui.ContentTitle,
+		Icon:         "/img/news.png",
+		Endpoint:     ei.Endpoint, // クライアントでログするのに使用
+	}
+	message, err := json.Marshal(m)
+	if err != nil {
+		return
+	}
 
 	client := urlfetch.Client(ctx)
 	b64 := base64.RawURLEncoding
