@@ -61,10 +61,8 @@ type UpdateInfo struct {
 	SiteIcon     string
 	ContentURL   string `json:"ContentUrl"`
 	ContentTitle string
-	Icon         string
 	UpdateFlg    bool
 	Value        bool
-	Endpoint     string
 	Count        int64
 	HubURL       string `json:"HubUrl"`
 	Secret       string // pubsubhubbubで使用する秘密鍵
@@ -114,7 +112,6 @@ func fromPhysicalSite(s physicalSite) UpdateInfo {
 		ContentTitle: s.LatestContent.Title,
 		UpdateFlg:    false,
 		Value:        false,
-		Endpoint:     "",
 		Count:        0,
 		HubURL:       s.HubURL,
 		Secret:       s.createSecret(),
@@ -162,6 +159,7 @@ func (ui *UpdateInfo) Update(ctx context.Context) {
 	g.Get(s)
 	s.SiteURL = ui.SiteURL
 	s.SiteTitle = ui.SiteTitle
+	s.SiteIcon = ui.SiteIcon
 	s.LatestContent.URL = ui.ContentURL
 	s.LatestContent.Title = ui.ContentTitle
 	s.Count = ui.Count
