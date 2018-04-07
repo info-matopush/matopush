@@ -11,7 +11,7 @@ func init() {
 	http.HandleFunc("/api/unregist", src.UnregistHandler)
 	http.HandleFunc("/api/add", src.AddHandler)
 	http.HandleFunc("/api/key", src.KeyHandler)
-	http.HandleFunc("/api/dummy", src.DummyHander)
+	http.HandleFunc("/api/dummy", src.DummyHandler)
 	http.HandleFunc("/api/cron", src.CronHandler)
 	http.HandleFunc("/api/list", src.ListHandler)
 	http.HandleFunc("/api/cleanup", src.CleanupHandler)

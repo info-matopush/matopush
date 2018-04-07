@@ -4,6 +4,7 @@ import (
 	"net/http"
 )
 
-func DummyHander(_ http.ResponseWriter, _ *http.Request) {
+// DummyHandler はテストに用いる
+func DummyHandler(_ http.ResponseWriter, _ *http.Request) {
 
 }

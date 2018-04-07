@@ -11,6 +11,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
+// ConfListHandler は購読しているサイト購読情報を返却する
 func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
@@ -32,6 +33,7 @@ func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+// ConfSiteHandler はサイト購読情報の更新を処理する
 func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
