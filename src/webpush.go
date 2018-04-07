@@ -142,7 +142,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei *endpoint.Endpoint) 
 
 func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err error) {
 	// 通知先のリストを取得する
-	s := conf.ListForPush(ctx, sui.FeedURL)
+	s := conf.ListFromFeedURL(ctx, sui.FeedURL)
 
 	// 更新があれば通知
 	if sui.UpdateFlg {

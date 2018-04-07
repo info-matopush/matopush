@@ -19,7 +19,7 @@ func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 
 	var sList []site.UpdateInfo
 	for _, c := range cList {
-		sui, _, err := site.FromUrl(ctx, c.FeedUrl)
+		sui, _, err := site.FromUrl(ctx, c.FeedURL)
 		if err != nil {
 			continue
 		}

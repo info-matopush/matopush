@@ -3,15 +3,16 @@ package endpoint
 import (
 	"encoding/base64"
 	"errors"
+	"hash/fnv"
+	"time"
+
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
-	"hash/fnv"
-	"time"
 )
 
-// 通知先識別情報(論理モデル)
+// Endpoint は通知先識別情報(論理モデル)
 type Endpoint struct {
 	Endpoint string `json:"endpoint"`
 	P256dh   []byte `json:"p256dh"`
@@ -63,6 +64,7 @@ func getDeletedEndpointsQuery() *datastore.Query {
 	return query
 }
 
+// Touch はアクセス日時の更新を行う
 func (e *Endpoint) Touch(ctx context.Context) error {
 	pei := getPhysicalEndpointInfo(ctx, e.Endpoint)
 	if pei == nil {
@@ -77,6 +79,7 @@ func (e *Endpoint) Touch(ctx context.Context) error {
 	return err
 }
 
+// Create はEndpointをDatastoreに保存する
 func (e *Endpoint) Create(ctx context.Context) error {
 	pei := &physicalEndpointInfo{
 		Key:        endpointToKeyString(e.Endpoint),
@@ -91,6 +94,7 @@ func (e *Endpoint) Create(ctx context.Context) error {
 	return err
 }
 
+// NewFromDatastore はphysicalEndpointからEndpointを作成する
 func NewFromDatastore(ctx context.Context, endpoint string) (*Endpoint, error) {
 	pei := getPhysicalEndpointInfo(ctx, endpoint)
 	if pei == nil {
@@ -106,6 +110,7 @@ func NewFromDatastore(ctx context.Context, endpoint string) (*Endpoint, error) {
 	}, nil
 }
 
+// Delete はEndpointを論理削除する
 func (e *Endpoint) Delete(ctx context.Context) error {
 	pei := &physicalEndpointInfo{
 		Key: endpointToKeyString(e.Endpoint),
@@ -121,12 +126,14 @@ func (e *Endpoint) Delete(ctx context.Context) error {
 	return err
 }
 
+// Count はDatastore上のEndpoint数を返却する
 func Count(ctx context.Context) int {
 	g := goon.FromContext(ctx)
 	num, _ := g.Count(getAllEndpointsQuery())
 	return num
 }
 
+// GetAll はDatastore上のEndpointを全て返却する
 func GetAll(ctx context.Context) (dst []Endpoint) {
 	g := goon.FromContext(ctx)
 	query := getAllEndpointsQuery()
@@ -144,6 +151,8 @@ func GetAll(ctx context.Context) (dst []Endpoint) {
 	return
 }
 
+// GetAllDeleted はDatastore上の論理削除されたEndpointを
+// 全て取得する
 func GetAllDeleted(ctx context.Context) (dst []Endpoint) {
 	g := goon.FromContext(ctx)
 	query := getDeletedEndpointsQuery()
@@ -161,6 +170,7 @@ func GetAllDeleted(ctx context.Context) (dst []Endpoint) {
 	return
 }
 
+// Cleanup は論理削除されたデータを物理削除する
 func (e *Endpoint) Cleanup(ctx context.Context) {
 	g := goon.FromContext(ctx)
 	ei := physicalEndpointInfo{Key: endpointToKeyString(e.Endpoint)}
