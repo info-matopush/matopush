@@ -11,6 +11,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
+// SearchHandler はWeb検索を行い結果を返す
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 

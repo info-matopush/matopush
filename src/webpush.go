@@ -30,6 +30,7 @@ type pushMessage struct {
 	Endpoint     string
 }
 
+// TestHandler はEndpointに対してテスト通知を行う
 func TestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
@@ -41,6 +42,7 @@ func TestHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// RegistHandler はEndpointを登録する
 func RegistHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
@@ -56,6 +58,7 @@ func RegistHandler(_ http.ResponseWriter, r *http.Request) {
 	ei.Touch(ctx)
 }
 
+// UnregistHandler はEndpointを解除する
 func UnregistHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	e, err := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
@@ -65,6 +68,7 @@ func UnregistHandler(_ http.ResponseWriter, r *http.Request) {
 	e.Delete(ctx)
 }
 
+// KeyHandler は公開鍵を返却する
 func KeyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 

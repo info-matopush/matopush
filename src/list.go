@@ -10,8 +10,10 @@ import (
 	"google.golang.org/appengine"
 )
 
+// SubscribeURL はHubからの通知を受信するURL
 var SubscribeURL = "https://matopush.appspot.com/api/subscriber?site="
 
+// ListHandler は登録済（公開用）のサイトを返却する
 func ListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	list, err := site.PublicList(ctx)
@@ -23,6 +25,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+// AddHandler はサイト情報を追加する
 func AddHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 

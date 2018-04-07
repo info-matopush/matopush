@@ -9,6 +9,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
+// MainteHandler はメンテナンス用の処理を行う
 func MainteHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	siteList, err := site.List(ctx)
@@ -29,6 +30,7 @@ func MainteHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// SubscribeRequestHandler はHubURLを持つサイトに対し購読を要求する
 func SubscribeRequestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	siteList, err := site.List(ctx)

@@ -13,6 +13,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
+// SubscriberHandler はHubから通知された購読情報を処理する
 func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
@@ -59,11 +60,12 @@ func verify(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func SubscribeRequest(ctx context.Context, callbackUrl, topic, hub, secret string) {
+// SubscribeRequest はHubに購読を要求する
+func SubscribeRequest(ctx context.Context, callbackURL, topic, hub, secret string) {
 	body := url.Values{}
 	body.Set("hub.mode", "subscribe")
 	body.Add("hub.topic", topic)
-	body.Add("hub.callback", callbackUrl)
+	body.Add("hub.callback", callbackURL)
 	body.Add("hub.verify", "async")
 	body.Add("hub.verify_token", secret)
 

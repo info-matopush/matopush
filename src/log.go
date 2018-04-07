@@ -16,13 +16,14 @@ import (
 type logInfo struct {
 	Key        string    `datastore:"-" goon:"id"`
 	Endpoint   string    `datastore:"endpoint,noindex"`
-	SiteUrl    string    `datastore:"site_url,noindex"`
-	ContentUrl string    `datastore:"content_url,noindex"`
+	SiteURL    string    `datastore:"site_url,noindex"`
+	ContentURL string    `datastore:"content_url,noindex"`
 	PushDate   time.Time `datastore:"push_date"`
 	ReachDate  time.Time `datastore:"reach_date,noindex"`
 	ClickDate  time.Time `datastore:"click_date,noindex"`
 }
 
+// LogCleanup は古いログを削除する
 func LogCleanup(ctx context.Context) {
 	limit := time.Now().Add(time.Duration(-7*24) * time.Hour)
 	query := datastore.NewQuery("logInfo").Filter("push_date<", limit).KeysOnly()
@@ -39,19 +40,24 @@ func LogCleanup(ctx context.Context) {
 	}
 }
 
-func endpointToKeyString(endpoint, contentUrl string) string {
+func endpointToKeyString(endpoint, contentURL string) string {
 	h := fnv.New64a()
-	h.Write([]byte(endpoint + ":" + contentUrl))
+	h.Write([]byte(endpoint + ":" + contentURL))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func LogPush(ctx context.Context, endpoint, siteUrl, contentUrl string) {
+// LogPush はPushしたログを記録する
+func LogPush(ctx context.Context, endpoint, siteURL, contentURL string) {
+	if true {
+		return
+	}
+
 	g := goon.FromContext(ctx)
 	l := &logInfo{
-		Key:        endpointToKeyString(endpoint, contentUrl),
+		Key:        endpointToKeyString(endpoint, contentURL),
 		Endpoint:   endpoint,
-		SiteUrl:    siteUrl,
-		ContentUrl: contentUrl,
+		SiteURL:    siteURL,
+		ContentURL: contentURL,
 		PushDate:   time.Now(),
 	}
 	_, err := g.Put(l)
@@ -60,9 +66,10 @@ func LogPush(ctx context.Context, endpoint, siteUrl, contentUrl string) {
 	}
 }
 
-func LogReach(ctx context.Context, endpoint, contentUrl string) {
+// LogReach はEndpointに到達したことをログする
+func LogReach(ctx context.Context, endpoint, contentURL string) {
 	g := goon.FromContext(ctx)
-	l := &logInfo{Key: endpointToKeyString(endpoint, contentUrl)}
+	l := &logInfo{Key: endpointToKeyString(endpoint, contentURL)}
 	err := g.Get(l)
 	if err == nil {
 		l.ReachDate = time.Now()
@@ -70,9 +77,10 @@ func LogReach(ctx context.Context, endpoint, contentUrl string) {
 	}
 }
 
-func LogClick(ctx context.Context, endpoint, contentUrl string) {
+// LogClick はEndpoint(Notification)でクリックされたことをログする
+func LogClick(ctx context.Context, endpoint, contentURL string) {
 	g := goon.FromContext(ctx)
-	l := &logInfo{Key: endpointToKeyString(endpoint, contentUrl)}
+	l := &logInfo{Key: endpointToKeyString(endpoint, contentURL)}
 	err := g.Get(l)
 	if err == nil {
 		l.ClickDate = time.Now()
@@ -80,17 +88,20 @@ func LogClick(ctx context.Context, endpoint, contentUrl string) {
 	}
 }
 
+// LogHandler はEndpointへの通知結果及び通知起因のユーザ操作をログする
 func LogHandler(_ http.ResponseWriter, r *http.Request) {
+	if true {
+		return
+	}
 	ctx := appengine.NewContext(r)
-	// プッシュ通知を契機にウェブ遷移した。ログする。
+
 	endpoint := r.FormValue("endpoint")
 	url := r.FormValue("url")
 	command := r.FormValue("command")
-	log.Infof(ctx, "プッシュ通知からWebページ閲覧した。%s, %s", url, endpoint)
 
 	if command == "click" {
-		//		LogClick(ctx, endpoint, url)
+		LogClick(ctx, endpoint, url)
 	} else if command == "reach" {
-		//		LogReach(ctx, endpoint, url)
+		LogReach(ctx, endpoint, url)
 	}
 }
