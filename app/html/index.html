@@ -82,14 +82,14 @@
                                         >
                                 <div style="height: 130px; background-color: rgba(0, 0, 0, 0.3); color:white; display: flex;" 
                                             v-on:click="onclick(content.Url)">
-                                <div style="margin: auto; flex: 0 1 auto;">
-                                    <h6 style="font-size: small;">
-                                        {{content.Title}}
-                                    </h6>
-                                    <p style="max-height: 80px; line-height: 100%; font-size: x-small;">
-                                        {{content.Summary}}
-                                    </p>
-                                </div>
+                                    <div style="margin: auto; flex: 0 1 auto;">
+                                        <h6 style="font-size: small;"
+                                            v-text="content.Title" >
+                                        </h6>
+                                        <p style="max-height: 80px; line-height: 100%; font-size: x-small;"
+                                            v-text="content.Summary">
+                                        </p>
+                                    </div>
                                 </div>
                             </b-carousel-slide>
                         </template>

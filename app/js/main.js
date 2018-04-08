@@ -1,5 +1,9 @@
 'use strict';
 
+Vue.prototype.$sanitize = function (str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+
 var _ = function(id) {return document.getElementById(id);};
 var registURL = '/api/regist';
 var unregistURL = 'api/unregist';
@@ -16,22 +20,22 @@ var myList = {
 
 window.addEventListener('load', function() {
     new Vue({
+        el: '#content-list',
+        data: myList,
+        methods: {
+            onclick: function (url) {
+                window.open(url);
+            }
+        }
+    });
+
+    new Vue({
         el: '#my-list',
         data: myList,
         methods: {
             onclick: function (index) {
                 var sel = myList.items[index];
                 toggleSubscribe(sel);
-            }
-        }
-    });
-
-    new Vue({
-        el: '#content-list',
-        data: myList,
-        methods: {
-            onclick: function (url) {
-                window.open(url);
             }
         }
     });
