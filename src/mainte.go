@@ -19,7 +19,7 @@ func MainteHandler(_ http.ResponseWriter, r *http.Request) {
 
 	for _, ui := range siteList {
 		if ui.SiteIcon == "" {
-			h, err := content.HTMLParse(ctx, ui.SiteURL)
+			h, err := content.ParseHTML(ctx, ui.SiteURL)
 			if err != nil {
 				log.Infof(ctx, "HTMLParse error %v", err)
 				continue

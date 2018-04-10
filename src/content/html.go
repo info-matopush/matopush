@@ -15,9 +15,9 @@ type HTML struct {
 	IconURL  string
 }
 
-// HTMLParse はurlで取得したHTMLを解析して
+// ParseHTML はurlで取得したHTMLを解析して
 // 中に含まれる情報を返す
-func HTMLParse(ctx context.Context, url string) (HTML, error) {
+func ParseHTML(ctx context.Context, url string) (HTML, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {

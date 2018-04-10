@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"github.com/info-matopush/matopush/src"
+	"google.golang.org/appengine"
 )
 
-func init() {
+func main() {
 	http.HandleFunc("/api/regist", src.RegistHandler)
 	http.HandleFunc("/api/unregist", src.UnregistHandler)
 	http.HandleFunc("/api/add", src.AddHandler)
@@ -23,4 +24,5 @@ func init() {
 	http.HandleFunc("/api/log", src.LogHandler)
 	http.HandleFunc("/api/subscriber", src.SubscriberHandler)
 	http.HandleFunc("/api/search", src.SearchHandler)
+	appengine.Main()
 }

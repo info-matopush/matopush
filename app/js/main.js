@@ -1,9 +1,5 @@
 'use strict';
 
-Vue.prototype.$sanitize = function (str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-};
-
 var _ = function(id) {return document.getElementById(id);};
 var registURL = '/api/regist';
 var unregistURL = 'api/unregist';
@@ -15,6 +11,10 @@ var publicList = {
 };
 
 var myList = {
+    items: []
+};
+
+var searchList = {
     items: []
 };
 
@@ -53,6 +53,11 @@ window.addEventListener('load', function() {
         }
     });
 
+    new Vue({
+        el: "#search-list",
+        data: searchList,
+    })
+
     fetch('api/list', {
         method: 'get'
     }).then(function(resp) {
@@ -67,7 +72,7 @@ window.addEventListener('load', function() {
             _('subscribe').addEventListener('click', togglePushSubscription, false);
             _('test').addEventListener('click', testPush, false);
             _('addSite').addEventListener('click', addSite, false);
-//            _('searchSite').addEventListener('click', searchSite, false);
+            _('searchSite').addEventListener('click', searchSite, false);
             fetch('./api/key').then(getServerKey).then(setServerKey);
             navigator.serviceWorker.register('push.js');
         }
@@ -112,8 +117,6 @@ function toggleSubscribe(item) {
     });
 }
 
-var searchResult;
-
 function searchSite() {
     var data = new FormData();
     data.append('endpoint', subscription.endpoint);
@@ -125,7 +128,7 @@ function searchSite() {
     }).then(function(resp) {
         return resp.json();
     }).then(function(json) {
-        searchResult = json;
+        searchList.items = json.items;
     });
 }
 

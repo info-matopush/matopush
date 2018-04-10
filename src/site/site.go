@@ -270,7 +270,7 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	feed, err := getFeedInfo(ctx, body)
 	if err == nil {
 		// feed解析成功
-		h, _ := content.HTMLParse(ctx, feed.SiteURL)
+		h, _ := content.ParseHTML(ctx, feed.SiteURL)
 		result := Result{
 			SiteURL:      feed.SiteURL,
 			SiteTitle:    feed.SiteTitle,
@@ -286,7 +286,7 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	}
 
 	// html形式か？
-	h, err := content.HTMLParse(ctx, url)
+	h, err := content.ParseHTML(ctx, url)
 	if err == nil && h.FeedURL != "" {
 		return getContentsInfo(ctx, h.FeedURL)
 	}

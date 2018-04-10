@@ -56,7 +56,7 @@ func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 }
 
 func create(ctx context.Context, cff ContentFromFeed) (*Content, error) {
-	h, err := HTMLParse(ctx, cff.URL)
+	h, err := ParseHTML(ctx, cff.URL)
 	if err != nil {
 		return nil, err
 	}
