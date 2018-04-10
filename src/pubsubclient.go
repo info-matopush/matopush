@@ -30,8 +30,13 @@ func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 	// 購読情報があればpushを行う
 	sui, _ := site.CheckSiteByFeed(ctx, params.Get("site"), body)
 	if sui != nil {
-		sendPushWhenSiteUpdate(ctx, sui)
-		sui.Update(ctx)
+		// hubで送られてくるフィード情報には十分なコンテンツが記載されていない
+		// 場合があるため、直接サイトに情報を取りに行く
+		err := sui.CheckSite(ctx)
+		if err != nil {
+			sendPushWhenSiteUpdate(ctx, sui)
+			sui.Update(ctx)
+		}
 		return
 	}
 	// 購読対象外の場合はステータスコードを4xxにする
