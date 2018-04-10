@@ -5,6 +5,6 @@ type Feed struct {
 	Type      string
 	SiteURL   string
 	SiteTitle string
-	Contents  []ContentFromFeed
+	Contents  []FromFeed
 	HubURL    string
 }

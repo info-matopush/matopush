@@ -45,7 +45,7 @@ func Analyze(bytes []byte) (content.Feed, error) {
 	feed.SiteTitle = rss.Channel.Title
 
 	for _, item := range rss.Channel.Item {
-		cff := content.ContentFromFeed{
+		cff := content.FromFeed{
 			URL:     item.Link,
 			Title:   item.Title,
 			Summary: item.Description,

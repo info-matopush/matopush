@@ -49,7 +49,7 @@ func Analyze(bytes []byte) (content.Feed, error) {
 	feed.SiteTitle = atom.Title
 
 	for _, item := range atom.Entry {
-		cff := content.ContentFromFeed{
+		cff := content.FromFeed{
 			URL:     item.getContentURL(),
 			Title:   item.Title,
 			Summary: item.Summary,

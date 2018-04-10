@@ -45,7 +45,7 @@ func Analyze(bytes []byte) (content.Feed, error) {
 	feed.SiteTitle = rdf.Channel.Title
 
 	for _, item := range rdf.Item {
-		cff := content.ContentFromFeed{
+		cff := content.FromFeed{
 			URL:     item.Link,
 			Title:   item.Title,
 			Summary: item.Description,

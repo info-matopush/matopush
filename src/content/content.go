@@ -13,7 +13,7 @@ const (
 	maxContents int = 5
 )
 
-type pysicalContent struct {
+type physicalContent struct {
 	// KeyはコンテンツURLとする
 	Key        string    `datastore:"-" goon:"id"`
 	Title      string    `datastore:"title,noindex"`
@@ -23,6 +23,7 @@ type pysicalContent struct {
 	CreateDate time.Time `datastore:"create_date,noindex"`
 }
 
+// Content コンテンツ情報
 type Content struct {
 	URL        string `json:"Url"`
 	Title      string
@@ -31,42 +32,43 @@ type Content struct {
 	ModifyDate time.Time
 }
 
-// ContentFromFeed はフィードに含まれる
+// FromFeed はフィードに含まれる
 // コンテンツ(HTML)の情報
-type ContentFromFeed struct {
+type FromFeed struct {
 	URL        string
 	Title      string
 	Summary    string
 	ModifyDate time.Time
 }
 
-func New(ctx context.Context, cff ContentFromFeed) (*Content, error) {
+// NewFromFeed はフィードで得た情報を元にコンテンツ情報を作成する
+func NewFromFeed(ctx context.Context, ff FromFeed) (*Content, error) {
 	g := goon.FromContext(ctx)
-	p := pysicalContent{Key: cff.URL}
+	p := physicalContent{Key: ff.URL}
 	err := g.Get(&p)
 	if err == datastore.ErrNoSuchEntity {
-		return create(ctx, cff)
+		return create(ctx, ff)
 	}
 	if err != nil {
-		log.Infof(ctx, "goon get error %v, %v", cff.URL, err)
+		log.Infof(ctx, "goon get error %v, %v", ff.URL, err)
 		return nil, err
 	}
 	c := p.makeContent()
 	return &c, nil
 }
 
-func create(ctx context.Context, cff ContentFromFeed) (*Content, error) {
-	h, err := ParseHTML(ctx, cff.URL)
+func create(ctx context.Context, ff FromFeed) (*Content, error) {
+	h, err := ParseHTML(ctx, ff.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	p := pysicalContent{
-		Key:        cff.URL,
-		Title:      cff.Title,
-		Summary:    cff.Summary,
+	p := physicalContent{
+		Key:        ff.URL,
+		Title:      ff.Title,
+		Summary:    ff.Summary,
 		ImageURL:   h.ImageURL,
-		ModifyDate: cff.ModifyDate,
+		ModifyDate: ff.ModifyDate,
 		CreateDate: time.Now(),
 	}
 	g := goon.FromContext(ctx)
@@ -75,7 +77,7 @@ func create(ctx context.Context, cff ContentFromFeed) (*Content, error) {
 	return &c, nil
 }
 
-func (p *pysicalContent) makeContent() Content {
+func (p *physicalContent) makeContent() Content {
 	return Content{
 		URL:        p.Key,
 		Title:      p.Title,
@@ -85,10 +87,11 @@ func (p *pysicalContent) makeContent() Content {
 	}
 }
 
-func Convert(ctx context.Context, cffs []ContentFromFeed) []Content {
+// Convert はFromFeed配列をContent配列に変換する
+func Convert(ctx context.Context, ffs []FromFeed) []Content {
 	clist := []Content{}
-	for _, cff := range cffs {
-		c, err := New(ctx, cff)
+	for _, ff := range ffs {
+		c, err := NewFromFeed(ctx, ff)
 		if err != nil {
 			log.Warningf(ctx, "contents New error %v", err)
 			continue
