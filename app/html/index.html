@@ -11,13 +11,13 @@
         <link rel="stylesheet" href="style/webpush.css" />
         <link rel="icon" type="image/x-icon" href="/img/hira_31.ico" />
 
-        <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
-        <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/vue@2.5.15/dist/vue.js"></script>
-        <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
-        <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+        <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+        <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
         <script src="js/main.js"></script>
     </head>
 
@@ -60,6 +60,10 @@
                     <template v-for="(site, siteid) in items">
                         <b-card v-bind:header="site.title">
                             <p v-text="site.snippet"></p>
+                            <b-button size="sm"
+                                    variant="outline-success"
+                                    v-on:click="onclick(site.feedURL)">登録する
+                            </b-button>
                         </b-card>
                     </template>
                 </b-card-group>
@@ -94,7 +98,7 @@
                                         <h6 style="font-size: small;"
                                             v-text="content.Title" >
                                         </h6>
-                                        <p style="max-height: 80px; line-height: 100%; font-size: x-small;"
+                                        <p style="max-height: 80px; line-height: 100%; font-size: x-small; word-break: break-all;"
                                             v-text="content.Summary">
                                         </p>
                                     </div>

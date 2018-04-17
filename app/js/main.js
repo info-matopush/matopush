@@ -56,6 +56,22 @@ window.addEventListener('load', function() {
     new Vue({
         el: "#search-list",
         data: searchList,
+        methods: {
+            onclick: function (feedURL) {
+                var data = new FormData();
+                data.append('endpoint', subscription.endpoint);
+                data.append('siteUrl', feedURL);
+                fetch('api/add', {
+                    method: 'post',
+                    body: data
+                }).then(function(resp) {
+                    return resp.text();
+                }).then(function(text) {
+                    alert(text);
+                    refreshMyList();
+                });            
+            }
+        }
     })
 
     fetch('api/list', {
