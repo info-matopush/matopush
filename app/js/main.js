@@ -2,7 +2,7 @@
 
 var _ = function(id) {return document.getElementById(id);};
 var registURL = '/api/regist';
-var unregistURL = 'api/unregist';
+var unregistURL = '/api/unregist';
 var subscription = null;
 var serverKey = null;
 
