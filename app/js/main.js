@@ -58,40 +58,47 @@ window.addEventListener('load', function() {
         data: searchList,
         methods: {
             onclick: function (feedURL) {
-                var data = new FormData();
-                data.append('endpoint', subscription.endpoint);
-                data.append('siteUrl', feedURL);
-                fetch('api/add', {
-                    method: 'post',
-                    body: data
-                }).then(function(resp) {
-                    return resp.text();
-                }).then(function(text) {
-                    alert(text);
-                    refreshMyList();
-                });            
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('siteUrl', feedURL);
+
+                $.ajax({
+                    url: "/api/add",
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            alert(resp);
+                            refreshMyList();
+                        },
+                });
             }
         }
-    })
+    });
 
-    fetch('api/list', {
-        method: 'get'
-    }).then(function(resp) {
-        return resp.json();
-    }).then(function(json) {
-        if (json != null) {
-            publicList.items = json;
-        }
-
-        // 画面が作られたらWebPushの準備を行う
-        if ('serviceWorker' in navigator) {
-            _('subscribe').addEventListener('click', togglePushSubscription, false);
-            _('test').addEventListener('click', testPush, false);
-            _('addSite').addEventListener('click', addSite, false);
-            _('searchSite').addEventListener('click', searchSite, false);
-            fetch('./api/key').then(getServerKey).then(setServerKey);
-            navigator.serviceWorker.register('push.js');
-        }
+    $.ajax({
+        url: "/api/list",
+        type: "GET",
+        dataType: "json",
+        processData: false,
+        contentData: false,
+        success:
+            function (resp) {
+                if (resp != null) {
+                    publicList.item = resp;
+                }
+                // 画面が作られたらWebPushの準備を行う
+                if ('serviceWorker' in navigator) {
+                    _('subscribe').addEventListener('click', togglePushSubscription, false);
+                    _('test').addEventListener('click', testPush, false);
+                    _('addSite').addEventListener('click', addSite, false);
+                    _('searchSite').addEventListener('click', searchSite, false);
+                    fetch('./api/key').then(getServerKey).then(setServerKey);
+                    navigator.serviceWorker.register('push.js');
+                }
+            },
     });
 }, false);
 
@@ -109,85 +116,104 @@ function setMyList(items) {
 
 function toggleSubscribe(item) {
     console.log(item);
-    var data = new FormData();
     if (subscription == null) {
         alert('プッシュ通知が有効になっていません。');
         location.reload();
         return;
     }
-    data.append('endpoint', subscription.endpoint);
-    data.append('siteUrl', item.FeedUrl);
+
+    // 
+    var sendData = new FormData();
+    sendData.append('endpoint', subscription.endpoint);
+    sendData.append('siteUrl', item.FeedUrl);
     if (item.Value) {
-        data.append('value', "true");
+        sendData.append('value', "true");
     } else {
-        data.append('value', "false");
+        sendData.append('value', "false");
     }
 
-    fetch('api/conf/site', {
-        method: 'post',
-        body: data
-    }).then(function(resp) {
-        return resp.text();
-    }).then(function(text) {
-        alert(text);
+    $.ajax({
+        url: "/api/conf/site",
+        type: "POST",
+        data: sendData,
+        processData: false,
+        contentType: false,
+        success:
+            function (resp) {
+                alert(resp);
+            },
     });
 }
 
 function searchSite() {
-    var data = new FormData();
-    data.append('endpoint', subscription.endpoint);
-    data.append('keyword', _('keyword').value);
+    var sendData = new FormData();
+    sendData.append('endpoint', subscription.endpoint);
+    sendData.append('keyword', _('keyword').value);
 
-    fetch('api/search', {
-        method: 'post',
-        body: data
-    }).then(function(resp) {
-        return resp.json();
-    }).then(function(json) {
-        searchList.items = json.items;
+    $.ajax({
+        url: "api/search",
+        type: "POST",
+        data: sendData,
+        processData: false,
+        contentType: false,
+        success:
+            function (resp) {
+                searchList.item = resp.item;
+            },
     });
 }
 
 function addSite() {
-    var data = new FormData();
-    data.append('endpoint', subscription.endpoint);
-    data.append('siteUrl', _('siteUrl').value);
+    var sendData = new FormData();
+    sendData.append('endpoint', subscription.endpoint);
+    sendData.append('siteUrl', _('siteUrl').value);
 
     _('siteUrl').value = '';
 
-    fetch('api/add', {
-        method: 'post',
-        body: data
-    }).then(function(resp) {
-        return resp.text();
-    }).then(function(text) {
-        alert(text);
-        refreshMyList();
+    $.ajax({
+        url: "/api/add",
+        type: "POST",
+        data: sendData,
+        processData: false,
+        contentType: false,
+        success:
+            function (resp) {
+                alert(resp);
+                refreshMyList();
+            },
     });
 }
 
 function refreshMyList() {
-    var data = new FormData();
-    data.append('endpoint', subscription.endpoint);
-    fetch('api/conf/list', {
-        method: 'post',
-        body: data
-    }).then(function(resp) {
-        return resp.json();
-    }).then(function(json) {
-        if (json != null) {
-            setMyList(json);
-        }
+    var sendData = new FormData();
+    sendData.append('endpoint', subscription.endpoint);
+
+    $.ajax({
+        url: "/api/conf/list",
+        type: "POST",
+        data: sendData,
+        dataType: "json",
+        processData: false,
+        contentType: false,
+        success:
+            function (resp) {
+                if (resp != null) {
+                    setMyList(resp);
+                }
+            },
     });
 }
 
 function testPush() {
-    var data = new FormData();
-    data.append('endpoint', subscription.endpoint);
+    var sendData = new FormData();
+    sendData.append('endpoint', subscription.endpoint);
 
-    fetch('api/test', {
-        method: 'post',
-        body: data
+    $.ajax({
+        url: "/api/test",
+        type: "POST",
+        data: sendData,
+        processData: false,
+        contentType: false, 
     });
 }
 
@@ -284,15 +310,22 @@ function requestPushUnsubscription() {
         subscription.unsubscribe();
 
         // subscriptionを削除する
-        var data = new FormData();
-        data.append('endpoint', subscription.endpoint);
-        fetch(unregistURL, {
-            method: 'post',
-            body:   data
-        }).then(function(){
-            subscription = null;
-            disablePushRequest();
-            location.reload();
+        var sendData = new FormData();
+        sendData.append('endpoint', subscription.endpoint);
+
+        $.ajax({
+            url: unregistURL,
+            type: "POST",
+            data: sendData,
+            processData: false,
+            contentTYpe: false,
+            success:
+                function () {
+                    subscription = null;
+                    disablePushRequest();
+                    // todo:
+                    location.reload();                            
+                }
         });
     }
 }
@@ -314,15 +347,21 @@ function enablePushRequest(sub) {
     _('siteUrl').disabled = false;
 
     // subscriptionを登録する
-    var data = new FormData();
-    data.append('endpoint', subscription.endpoint);
-    data.append('auth',     encodeBase64URL(subscription.getKey('auth')));
-    data.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
-    fetch(registURL, {
-        method: 'post',
-        body:   data
-    }).then(function(){
-        refreshMyList();
+    var sendData = new FormData();
+    sendData.append('endpoint', subscription.endpoint);
+    sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+    sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+
+    $.ajax({
+        url: registURL,
+        type: "POST",
+        data: sendData,
+        processData: false,
+        contentType: false,
+        success:
+            function (resp) {
+                refreshMyList();
+            },
     });
 }
 
