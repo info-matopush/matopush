@@ -87,7 +87,7 @@ window.addEventListener('load', function() {
         success:
             function (resp) {
                 if (resp != null) {
-                    publicList.item = resp;
+                    publicList.items = resp;
                 }
                 // 画面が作られたらWebPushの準備を行う
                 if ('serviceWorker' in navigator) {
@@ -154,11 +154,12 @@ function searchSite() {
         url: "api/search",
         type: "POST",
         data: sendData,
+        dataType: "json",
         processData: false,
         contentType: false,
         success:
             function (resp) {
-                searchList.item = resp.item;
+                searchList.items = resp.items;
             },
     });
 }
