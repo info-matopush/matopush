@@ -1,5 +1,3 @@
-application: matopush
-version: v2
 runtime: go
 api_version: go1
 
