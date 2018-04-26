@@ -18,46 +18,30 @@ var searchList = {
     items: []
 };
 
+var timelineList = {
+    items: []
+};
+
 window.addEventListener('load', function() {
     new Vue({
-        el: '#content-list',
-        data: myList,
+        el: '#matopush',
+        data: {
+            searchList,
+            myList,
+            publicList,
+            timelineList,
+        },
         methods: {
-            onclick: function (url) {
+            openUrl: function (url) {
                 window.open(url);
-            }
-        }
-    });
-
-    new Vue({
-        el: '#my-list',
-        data: myList,
-        methods: {
-            onclick: function (index) {
-                var sel = myList.items[index];
-                toggleSubscribe(sel);
-            }
-        }
-    });
-
-    new Vue({
-        el: '#public-list',
-        data: publicList,
-        methods: {
-            onclick: function (index) {
+            },
+            toggleAtPublicList: function (index) {
                 var sel = publicList.items[index];
                 myList.items.push(sel);
                 publicList.items.splice(index, 1);
                 toggleSubscribe(sel);
-            }
-        }
-    });
-
-    new Vue({
-        el: "#search-list",
-        data: searchList,
-        methods: {
-            onclick: function (feedURL) {
+            },
+            addSite: function (feedURL) {
                 var sendData = new FormData();
                 sendData.append('endpoint', subscription.endpoint);
                 sendData.append('siteUrl', feedURL);
@@ -74,7 +58,11 @@ window.addEventListener('load', function() {
                             refreshMyList();
                         },
                 });
-            }
+            },
+            toggleAtMyList: function (index) {
+                var sel = myList.items[index];
+                toggleSubscribe(sel);
+            }            
         }
     });
 
@@ -102,20 +90,36 @@ window.addEventListener('load', function() {
     });
 }, false);
 
+function compare(a, b) {
+    const timea = a.ModifyDate;
+    const timeb = b.ModifyDate;
+    if (timea < timeb) {
+        return 1;
+    } else if (timea > timeb) {
+        return -1;
+    }
+    return 0;
+}
+
 function setMyList(items) {
     // 重複する登録済みリストから消し込みを行う
     for (var i=0; i<items.length; i++) {
+        // サイト別表示用
         for (var j=0; j<publicList.items.length; j++) {
             if (publicList.items[j].FeedUrl === items[i].FeedUrl) {
                 publicList.items.splice(j, 1);
             }
+        }
+        // タイムライン表示用
+        for (var j=0; j<items[i].Contents.length; j++) {
+            timelineList.items.push(items[i].Contents[j]);
+            timelineList.items.sort(compare)
         }
     }
     myList.items = items;
 }
 
 function toggleSubscribe(item) {
-    console.log(item);
     if (subscription == null) {
         alert('プッシュ通知が有効になっていません。');
         location.reload();
@@ -141,6 +145,7 @@ function toggleSubscribe(item) {
         success:
             function (resp) {
                 alert(resp);
+                refreshMyList();
             },
     });
 }
