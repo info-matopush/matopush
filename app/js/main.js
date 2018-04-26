@@ -102,6 +102,7 @@ function compare(a, b) {
 }
 
 function setMyList(items) {
+    timelineList.items.splice(0);
     // 重複する登録済みリストから消し込みを行う
     for (var i=0; i<items.length; i++) {
         // サイト別表示用
