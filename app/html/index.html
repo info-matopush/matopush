@@ -42,7 +42,6 @@
                 </dl>
             </div>
             <div id="matopush">
-                    <span class="text-muted">Current Tab: {{tabIndex}}</span>
                 <b-tabs small card v-model="tabIndex">
                     <b-tab title="サイト別" v-on:click="ontabclick('site')">
                         <template v-for="(site, siteid) in myList.items">
