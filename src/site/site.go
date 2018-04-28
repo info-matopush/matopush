@@ -18,6 +18,7 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
+// Result はサイト情報の取得結果を示す
 type Result struct {
 	SiteURL      string
 	SiteTitle    string
@@ -30,6 +31,7 @@ type Result struct {
 	Contents     []content.Content
 }
 
+// Content は将来的に削除したい
 type Content struct {
 	Title string `datastore:"title,noindex"`
 	URL   string `datastore:"url,noindex"`
@@ -53,7 +55,7 @@ type physicalSite struct {
 	Contents      []content.Content `datastore:"contents,noindex"`
 }
 
-// サイト更新情報
+// UpdateInfo はサイト更新情報
 type UpdateInfo struct {
 	FeedURL      string `json:"FeedUrl"`
 	SiteURL      string `json:"SiteUrl"`
@@ -74,6 +76,7 @@ func (s *physicalSite) createSecret() string {
 	return s.CreateDate.Format("20060102031605")
 }
 
+// UpdateCount はPush通知した件数を更新する
 func (ui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
 	g := goon.FromContext(ctx)
 
@@ -86,7 +89,7 @@ func (ui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
 	g.Put(s)
 }
 
-// 三ヶ月以上更新がないサイトを抽出し削除する
+// DeleteUnnecessarySite は三ヶ月以上更新がないサイトを抽出し削除する
 func DeleteUnnecessarySite(ctx context.Context) error {
 	g := goon.FromContext(ctx)
 	query := datastore.NewQuery("physicalSite").Filter("UpdateDate <=", time.Now().AddDate(0, -3, 0)).KeysOnly()
@@ -120,6 +123,7 @@ func fromPhysicalSite(s physicalSite) UpdateInfo {
 	}
 }
 
+// List は全サイト情報を取得する
 func List(ctx context.Context) ([]UpdateInfo, error) {
 	g := goon.FromContext(ctx)
 
@@ -136,6 +140,7 @@ func List(ctx context.Context) ([]UpdateInfo, error) {
 	return ui, nil
 }
 
+// PublicList は公開サイトリストを取得する
 func PublicList(ctx context.Context) ([]UpdateInfo, error) {
 	g := goon.FromContext(ctx)
 
@@ -153,6 +158,7 @@ func PublicList(ctx context.Context) ([]UpdateInfo, error) {
 	return sui, nil
 }
 
+// Update はサイト情報を更新する
 func (ui *UpdateInfo) Update(ctx context.Context) {
 	g := goon.FromContext(ctx)
 	s := &physicalSite{Key: ui.FeedURL}
@@ -169,7 +175,8 @@ func (ui *UpdateInfo) Update(ctx context.Context) {
 	g.Put(s)
 }
 
-func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
+// FromURL はURLから更新情報を作成する
+func FromURL(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	g := goon.FromContext(ctx)
 	s := physicalSite{Key: url}
 	err := g.Get(&s)
@@ -200,7 +207,7 @@ func FromUrl(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	return &ui, true, nil
 }
 
-func getBodyByUrl(ctx context.Context, url string) ([]byte, error) {
+func getBodyByURL(ctx context.Context, url string) ([]byte, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
@@ -215,8 +222,9 @@ func getBodyByUrl(ctx context.Context, url string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
+// CheckSite はサイトにアクセスして更新情報を取得する
 func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
-	body, err := getBodyByUrl(ctx, ui.FeedURL)
+	body, err := getBodyByURL(ctx, ui.FeedURL)
 	if err != nil {
 		return err
 	}
@@ -238,8 +246,9 @@ func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
 	return nil
 }
 
+// CheckSiteByFeed はフィード内容から更新情報を出力する
 func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo, error) {
-	ui, _, err := FromUrl(ctx, url)
+	ui, _, err := FromURL(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +272,7 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo,
 }
 
 func getContentsInfo(ctx context.Context, url string) (*Result, error) {
-	body, err := getBodyByUrl(ctx, url)
+	body, err := getBodyByURL(ctx, url)
 	if err != nil {
 		return nil, err
 	}
