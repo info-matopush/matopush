@@ -117,16 +117,16 @@
                         <table class="table">
                             <thead>
                             <tr class="d-flex">
-                                <th class="col-3">通知</th>
-                                <th class="col-9">サイト名</th>
+                                <th class="col-2">通知</th>
+                                <th class="col-10">サイト名</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr class="d-flex" v-for="(item, index) in myList.items">
-                                <td class="col-3" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">
+                                <td class="col-1" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">
                                     <input type="checkbox" v-model="item.Value">
                                 </td>
-                                <td class="col-7" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">{{item.SiteTitle}}
+                                <td class="col-9" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">{{item.SiteTitle}}
                                     <span class="badge badge-pill badge-secondary">{{item.Type}}</span>
                                 </td>
                                 <td class="col-2">

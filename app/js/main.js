@@ -45,8 +45,10 @@ window.addEventListener('load', function() {
             },
             addfeed: function (index) {
                 var sel = publicList.items[index];
+                sel.Value = true;
                 myList.items.push(sel);
                 publicList.items.splice(index, 1);
+                toggleSubscribe(sel);
             },
             addSite: function (feedURL) {
                 var sendData = new FormData();
@@ -80,7 +82,7 @@ window.addEventListener('load', function() {
                     contentType: false,
                     success:
                         function (resp) {
-                            refreshMyList();
+                            myList.items.splice(index, 1);
                         },
                 });
             },
