@@ -22,14 +22,22 @@ var timelineList = {
     items: []
 };
 
+var tabIndex = 0;
+
+var db = new Dexie("key_value_database");
+db.version(1).stores({
+    keyvalue: 'key, value'
+});
+
 window.addEventListener('load', function() {
-    new Vue({
+    var vue = new Vue({
         el: '#matopush',
         data: {
             searchList,
             myList,
             publicList,
             timelineList,
+            tabIndex
         },
         methods: {
             openUrl: function (url) {
@@ -62,7 +70,10 @@ window.addEventListener('load', function() {
             toggleAtMyList: function (index) {
                 var sel = myList.items[index];
                 toggleSubscribe(sel);
-            }            
+            },
+            ontabclick: function(index) {
+                db.keyvalue.put({key: "latest_tab", value: index});
+            },
         }
     });
 
@@ -88,6 +99,15 @@ window.addEventListener('load', function() {
                 }
             },
     });
+
+    db.keyvalue.get('latest_tab').then(function(tab) {
+        if (tab.value === 'site') {
+            vue.tabIndex = 0;
+        } else {
+            vue.tabIndex = 1;
+        }    
+    });
+
 }, false);
 
 function compare(a, b) {

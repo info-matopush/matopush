@@ -18,6 +18,7 @@
         <script src="https://cdn.jsdelivr.net/npm/vue@2.5.15/dist/vue.js"></script>
         <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
         <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+        <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
         <script src="js/main.js"></script>
     </head>
 
@@ -41,8 +42,9 @@
                 </dl>
             </div>
             <div id="matopush">
-                <b-tabs small>
-                    <b-tab title="サイト別">
+                    <span class="text-muted">Current Tab: {{tabIndex}}</span>
+                <b-tabs small card v-model="tabIndex">
+                    <b-tab title="サイト別" v-on:click="ontabclick('site')">
                         <template v-for="(site, siteid) in myList.items">
                             <br>
                             <h6>
@@ -84,12 +86,11 @@
                         </template>                
                     </b-tab>
 
-                    <b-tab title="タイムライン">
+                    <b-tab title="タイムライン" v-on:click="ontabclick('timeline')">
                         <template v-for="(content, contentid) in timelineList.items">
                             <br>
-                            <b-card v-on:click="openUrl(content.Url)">
-                                <b-card-header v-bind:header="content.Title">
-                                </b-card-header>
+                            <b-card v-on:click="openUrl(content.Url)"
+                                v-bind:title="content.Title">
                                 <template v-if="content.ImageUrl !== ''">
                                 <div style="height: 200px; overflow: hidden;">
                                     <b-card-img
