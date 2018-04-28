@@ -133,6 +133,10 @@ function setMyList(items) {
         }
         // タイムライン表示用
         for (var j=0; j<items[i].Contents.length; j++) {
+            var date = items[i].Contents[j].ModifyDate;
+            date = date.replace('T', ' ');
+            date = date.replace('Z', '');
+            items[i].Contents[j].ModifyDate = date;
             timelineList.items.push(items[i].Contents[j]);
             timelineList.items.sort(compare)
         }

@@ -89,7 +89,10 @@
                         <template v-for="(content, contentid) in timelineList.items">
                             <br>
                             <b-card v-on:click="openUrl(content.Url)"
-                                v-bind:title="content.Title">
+                                v-bind:header="content.Title"
+                                v-bind:footer="content.ModifyDate"
+                                footer-text-variant="right"
+                                footer-class="small">
                                 <template v-if="content.ImageUrl !== ''">
                                 <div style="height: 200px; overflow: hidden;">
                                     <b-card-img
