@@ -32,7 +32,7 @@ func AddHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("siteUrl")
 	endpoint := r.FormValue("endpoint")
 
-	ui, isNewSite, err := site.FromUrl(ctx, url)
+	ui, isNewSite, err := site.FromURL(ctx, url)
 	if err != nil {
 		fmt.Fprint(w, "サイトの登録に失敗しました。")
 		return

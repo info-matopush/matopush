@@ -20,7 +20,7 @@ func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 
 	var sList []site.UpdateInfo
 	for _, c := range cList {
-		sui, _, err := site.FromUrl(ctx, c.FeedURL)
+		sui, _, err := site.FromURL(ctx, c.FeedURL)
 		if err != nil {
 			continue
 		}
@@ -45,7 +45,7 @@ func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 	if value == "false" {
 		enabled = false
 	}
-	sui, _, err := site.FromUrl(ctx, siteURL)
+	sui, _, err := site.FromURL(ctx, siteURL)
 	if err == nil {
 		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedURL, enabled)
 		if err == nil {

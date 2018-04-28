@@ -52,7 +52,7 @@ func verify(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	params := r.URL.Query()
-	ui, isNewSite, err := site.FromUrl(ctx, params.Get("site"))
+	ui, isNewSite, err := site.FromURL(ctx, params.Get("site"))
 	if err == nil && !isNewSite {
 		// 購読対象URLの場合
 		if params.Get("hub.verify_token") == ui.Secret {
