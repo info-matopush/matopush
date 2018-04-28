@@ -34,6 +34,18 @@ func makeKeyString(endpoint, FeedURL string) string {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
+// Delete は購読情報を削除する
+func Delete(ctx context.Context, endpoint, feedURL string) {
+	g := goon.FromContext(ctx)
+	ss := physicalSiteSubscribe{
+		Key: makeKeyString(endpoint, feedURL),
+	}
+	err := g.Delete(g.Key(&ss))
+	if err != nil {
+		log.Errorf(ctx, "g.Delete error: %v", err)
+	}
+}
+
 // Update はユーザ固有設定(サイト購読情報)を更新する
 func Update(ctx context.Context, endpoint, feedURL string, enabled bool) error {
 	g := goon.FromContext(ctx)
@@ -81,7 +93,7 @@ func (s *SiteSubscribe) Delete(ctx context.Context) {
 func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
 	g := goon.FromContext(ctx)
 
-	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint)
+	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint).Filter("delete_flag=", false)
 	var confs []physicalSiteSubscribe
 	var subs []SiteSubscribe
 	_, err := g.GetAll(query, &confs)

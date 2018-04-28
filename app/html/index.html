@@ -126,29 +126,41 @@
                                 <td class="col-3" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">
                                     <input type="checkbox" v-model="item.Value">
                                 </td>
-                                <td class="col-9" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">{{item.SiteTitle}}
+                                <td class="col-7" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">{{item.SiteTitle}}
                                     <span class="badge badge-pill badge-secondary">{{item.Type}}</span>
+                                </td>
+                                <td class="col-2">
+                                    <b-button
+                                        class="float-right"
+                                        v-on:click="remove(index)"
+                                        size="sm"
+                                        variant="danger">削除
+                                    </b-button>
                                 </td>
                             </tr>
                             </tbody>
                         </table>
             
                         <h4>登録済みサンプルサイト</h4>
-                        各行にある左端にあるチェックをつけることで、すぐに通知が行われるようになります。
                         <table class="table">
                             <thead>
                             <tr class="d-flex">
-                                <th class="col-3">通知</th>
-                                <th class="col-9">サイト名</th>
+                                <th class="col-12">サイト名</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr class="d-flex" v-for="(item, index) in publicList.items">
-                                <td class="col-3" v-on:click="item.Value=!item.Value; toggleAtPublicList(index)">
-                                    <input type="checkbox" v-model="item.Value">
-                                </td>
-                                <td class="col-9" v-on:click="item.Value=!item.Value; toggleAtPublicList(index)">{{item.SiteTitle}}
+                                <td class="col-10" v-on:click="item.Value=!item.Value;">{{item.SiteTitle}}
                                     <span class="badge badge-pill badge-secondary">{{item.Type}}</span>
+                                </td>
+                                <td class="col-2" v-on:click="item.Value=!item.Value;">
+                                    <b-button
+                                        class="float-right"
+                                        v-on:click="addfeed(index)"
+                                        size="sm"
+                                        variant="success"
+                                        >購読する
+                                    </b-button>
                                 </td>
                             </tr>
                             </tbody>

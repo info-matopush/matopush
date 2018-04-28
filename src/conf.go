@@ -11,6 +11,16 @@ import (
 	"google.golang.org/appengine/log"
 )
 
+// ConfRemoveHandler は購読情報を削除する
+func ConfRemoveHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
+	endpoint := r.FormValue("endpoint")
+	feedURL := r.FormValue("feedUrl")
+
+	conf.Delete(ctx, endpoint, feedURL)
+}
+
 // ConfListHandler は購読しているサイト購読情報を返却する
 func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
@@ -20,6 +30,7 @@ func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 
 	var sList []site.UpdateInfo
 	for _, c := range cList {
+
 		sui, _, err := site.FromURL(ctx, c.FeedURL)
 		if err != nil {
 			continue

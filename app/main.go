@@ -19,6 +19,7 @@ func main() {
 	http.HandleFunc("/api/test", src.TestHandler)
 	http.HandleFunc("/api/conf/list", src.ConfListHandler)
 	http.HandleFunc("/api/conf/site", src.ConfSiteHandler)
+	http.HandleFunc("/api/conf/remove", src.ConfRemoveHandler)
 	http.HandleFunc("/api/mainte", src.MainteHandler)
 	http.HandleFunc("/api/health", src.HealthHandler)
 	http.HandleFunc("/api/log", src.LogHandler)

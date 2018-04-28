@@ -43,11 +43,10 @@ window.addEventListener('load', function() {
             openUrl: function (url) {
                 window.open(url);
             },
-            toggleAtPublicList: function (index) {
+            addfeed: function (index) {
                 var sel = publicList.items[index];
                 myList.items.push(sel);
                 publicList.items.splice(index, 1);
-                toggleSubscribe(sel);
             },
             addSite: function (feedURL) {
                 var sendData = new FormData();
@@ -63,6 +62,24 @@ window.addEventListener('load', function() {
                     success:
                         function (resp) {
                             alert(resp);
+                            refreshMyList();
+                        },
+                });
+            },
+            remove: function (index) {
+                var sel = myList.items[index];
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('feedUrl', sel.FeedUrl);
+
+                $.ajax({
+                    url: "/api/conf/remove",
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
                             refreshMyList();
                         },
                 });
@@ -122,7 +139,11 @@ function compare(a, b) {
 }
 
 function setMyList(items) {
+    myList.items.splice(0);
     timelineList.items.splice(0);
+    if (items == null) {
+        return
+    }
     // 重複する登録済みリストから消し込みを行う
     for (var i=0; i<items.length; i++) {
         // サイト別表示用
@@ -228,9 +249,7 @@ function refreshMyList() {
         contentType: false,
         success:
             function (resp) {
-                if (resp != null) {
-                    setMyList(resp);
-                }
+                setMyList(resp);
             },
     });
 }
