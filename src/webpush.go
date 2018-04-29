@@ -38,7 +38,7 @@ func TestHandler(_ http.ResponseWriter, r *http.Request) {
 
 	ei, _ := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if ei != nil {
-		sendPush(ctx, &sui, ei)
+		sendPush(ctx, &sui, *ei)
 	}
 }
 
@@ -81,7 +81,7 @@ func KeyHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, base64.RawURLEncoding.EncodeToString(byteArray))
 }
 
-func sendPush(ctx context.Context, sui *site.UpdateInfo, ei *endpoint.Endpoint) (err error) {
+func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (err error) {
 	// payloadの固定値はここで設定する
 	m := pushMessage{
 		FeedURL:      sui.FeedURL,
@@ -146,37 +146,30 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei *endpoint.Endpoint) 
 
 func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err error) {
 	// 通知先のリストを取得する
-	s := conf.ListFromFeedURL(ctx, sui.FeedURL)
+	endpoints := conf.EndpointsFromFeedURL(ctx, sui.FeedURL)
 
 	// 更新があれば通知
 	if sui.UpdateFlg {
-		for _, ss := range s {
-			ei, err := endpoint.NewFromDatastore(ctx, ss.Endpoint)
-			if err != nil {
-				// endpointが見つからなかった場合(cleanupミス？)はSiteSubscribeの削除フラグを立てる
-				ss.Delete(ctx)
-				continue
-			}
-
-			err = sendPush(ctx, sui, ei)
+		for _, e := range endpoints {
+			err = sendPush(ctx, sui, e)
 			if err == nil {
 				// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
 			}
 		}
 	}
 	// 購読数を記録
-	sui.Count = int64(len(s))
+	sui.Count = int64(len(endpoints))
 	log.Infof(ctx, "url %v, count %v", sui.FeedURL, sui.Count)
 	return
 }
 
 func sendPushAll(ctx context.Context, sui *site.UpdateInfo) {
 	// 通知先のリストを取得する
-	list := endpoint.GetAll(ctx)
+	endpoints := endpoint.GetAll(ctx)
 
-	for _, ei := range list {
-		sendPush(ctx, sui, &ei)
+	for _, e := range endpoints {
+		sendPush(ctx, sui, e)
 	}
-	log.Debugf(ctx, "通知した数 %d", len(list))
+	log.Debugf(ctx, "通知した数 %d", len(endpoints))
 	return
 }

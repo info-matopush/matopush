@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"time"
 
+	"github.com/info-matopush/matopush/src/endpoint"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
@@ -21,11 +22,11 @@ type SiteSubscribe struct {
 type physicalSiteSubscribe struct {
 	Key        string    `datastore:"-" goon:"id"`
 	Endpoint   string    `datastore:"endpoint"`
+	P256dh     []byte    `datastore:"p256dh,noindex"`
+	Auth       []byte    `datastore:"auth,noindex"`
 	FeedURL    string    `datastore:"feed_url"`
 	Enabled    bool      `datastore:"enabled"`
 	UpdateDate time.Time `datastore:"update_date,noindex"`
-	DeleteFlag bool      `datastore:"delete_flag"`
-	DeleteDate time.Time `datastore:"delete_date,noindex"`
 }
 
 func makeKeyString(endpoint, FeedURL string) string {
@@ -47,16 +48,23 @@ func Delete(ctx context.Context, endpoint, feedURL string) {
 }
 
 // Update はユーザ固有設定(サイト購読情報)を更新する
-func Update(ctx context.Context, endpoint, feedURL string, enabled bool) error {
+func Update(ctx context.Context, e, feedURL string, enabled bool) error {
+	ep, err := endpoint.NewFromDatastore(ctx, e)
+	if err != nil {
+		return err
+	}
+
 	g := goon.FromContext(ctx)
 	ss := physicalSiteSubscribe{
-		Key:        makeKeyString(endpoint, feedURL),
-		Endpoint:   endpoint,
+		Key:        makeKeyString(ep.Endpoint, feedURL),
+		Endpoint:   ep.Endpoint,
+		P256dh:     ep.P256dh,
+		Auth:       ep.Auth,
 		FeedURL:    feedURL,
 		Enabled:    enabled,
 		UpdateDate: time.Now(),
 	}
-	_, err := g.Put(&ss)
+	_, err = g.Put(&ss)
 	return err
 }
 
@@ -74,26 +82,16 @@ func Cleanup(ctx context.Context, endpoint string) error {
 	return g.DeleteMulti(keys)
 }
 
-// Delete は購読情報の削除フラグを立てる
+// Delete は購読情報を削除する
 func (s *SiteSubscribe) Delete(ctx context.Context) {
-	g := goon.FromContext(ctx)
-	pss := physicalSiteSubscribe{
-		Key: makeKeyString(s.Endpoint, s.FeedURL),
-	}
-	err := g.Get(&pss)
-	if err == nil {
-		pss.DeleteFlag = true
-		pss.DeleteDate = time.Now()
-		pss.UpdateDate = time.Now()
-		g.Put(&s)
-	}
+	Delete(ctx, s.Endpoint, s.FeedURL)
 }
 
 // ListFromEndpoint はendpointに紐づくサイト購読情報を取得する
 func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
 	g := goon.FromContext(ctx)
 
-	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint).Filter("delete_flag=", false)
+	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint)
 	var confs []physicalSiteSubscribe
 	var subs []SiteSubscribe
 	_, err := g.GetAll(query, &confs)
@@ -109,11 +107,34 @@ func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
 	return subs
 }
 
-// ListFromFeedURL はfeedURLに紐づく有効なサイト購読情報を全て取得する
-func ListFromFeedURL(ctx context.Context, feedURL string) []SiteSubscribe {
+// EndpointsFromFeedURL はfeedURLに紐づく有効なEndpointを全て取得する
+func EndpointsFromFeedURL(ctx context.Context, feedURL string) (dst []endpoint.Endpoint) {
 	g := goon.FromContext(ctx)
 
 	query := datastore.NewQuery("physicalSiteSubscribe").Filter("feed_url=", feedURL).Filter("enabled=", true)
+
+	var confs []physicalSiteSubscribe
+	var subs []SiteSubscribe
+	_, err := g.GetAll(query, &confs)
+	if err == nil {
+		return
+	}
+	for _, conf := range confs {
+		dst = append(dst, endpoint.Endpoint{
+			Endpoint: conf.Endpoint,
+			P256dh:   conf.P256dh,
+			Auth:     conf.Auth,
+		})
+	}
+	log.Infof(ctx, "conf.ListFromFeedURL %v, count %v", feedURL, len(subs))
+	return
+}
+
+// GetAll はDatastore上のSiteSubscribeを全て返却する
+func GetAll(ctx context.Context) (dst []SiteSubscribe) {
+	g := goon.FromContext(ctx)
+
+	query := datastore.NewQuery("physicalSiteSubscribe")
 
 	var confs []physicalSiteSubscribe
 	var subs []SiteSubscribe
@@ -122,12 +143,12 @@ func ListFromFeedURL(ctx context.Context, feedURL string) []SiteSubscribe {
 		return subs
 	}
 	for _, conf := range confs {
-		subs = append(subs, SiteSubscribe{
+		dst = append(dst, SiteSubscribe{
 			Endpoint: conf.Endpoint,
 			FeedURL:  conf.FeedURL,
 			Enabled:  conf.Enabled,
 		})
 	}
-	log.Infof(ctx, "conf.ListForPush %v, count %v", feedURL, len(subs))
-	return subs
+	log.Debugf(ctx, "conf.GetAll count %d", len(subs))
+	return
 }

@@ -3,6 +3,7 @@ package src
 import (
 	"net/http"
 
+	"github.com/info-matopush/matopush/src/conf"
 	"github.com/info-matopush/matopush/src/content"
 	"github.com/info-matopush/matopush/src/site"
 	"google.golang.org/appengine"
@@ -11,6 +12,18 @@ import (
 
 // MainteHandler はメンテナンス用の処理を行う
 func MainteHandler(_ http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+	subs := conf.GetAll(ctx)
+
+	for _, sub := range subs {
+		err := conf.Update(ctx, sub.Endpoint, sub.FeedURL, sub.Enabled)
+		if err != nil {
+			conf.Delete(ctx, sub.Endpoint, sub.FeedURL)
+		}
+	}
+}
+
+func siteUpdateHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	siteList, err := site.List(ctx)
 	if err != nil {
