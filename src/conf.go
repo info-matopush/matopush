@@ -26,11 +26,10 @@ func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	endpoint := r.FormValue("endpoint")
-	cList := conf.ListFromEndpoint(ctx, endpoint)
+	cList := conf.GetAllFromEndpoint(ctx, endpoint)
 
 	var sList []site.UpdateInfo
 	for _, c := range cList {
-
 		sui, _, err := site.FromURL(ctx, c.FeedURL)
 		if err != nil {
 			continue
@@ -58,7 +57,7 @@ func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	sui, _, err := site.FromURL(ctx, siteURL)
 	if err == nil {
-		err := conf.Update(appengine.NewContext(r), endpoint, sui.FeedURL, enabled)
+		err := conf.Update(ctx, endpoint, sui.FeedURL, enabled)
 		if err == nil {
 			siteTitle := sui.SiteTitle
 			if value == "true" {

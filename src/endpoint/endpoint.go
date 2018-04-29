@@ -34,18 +34,18 @@ type physicalEndpointInfo struct {
 }
 
 // endpointは長すぎるので、ハッシュを使ってキーを作成する
-func endpointToKeyString(endpoint string) string {
+func endpointToKeyString(ep string) string {
 	h := fnv.New64a()
-	h.Write([]byte(endpoint))
+	h.Write([]byte(ep))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
 // datastoreよりendpointを取得する
 // goonを使用して取得結果はmemcacheに載せるようにする
-func getPhysicalEndpointInfo(ctx context.Context, endpoint string) *physicalEndpointInfo {
+func getPhysicalEndpointInfo(ctx context.Context, ep string) *physicalEndpointInfo {
 	g := goon.FromContext(ctx)
 	pei := &physicalEndpointInfo{
-		Key: endpointToKeyString(endpoint),
+		Key: endpointToKeyString(ep),
 	}
 	err := g.Get(pei)
 	if err != nil {

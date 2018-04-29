@@ -5,7 +5,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/info-matopush/matopush/src/endpoint"
+	ep "github.com/info-matopush/matopush/src/endpoint"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
@@ -14,9 +14,9 @@ import (
 
 // SiteSubscribe はサイト購読情報
 type SiteSubscribe struct {
-	Endpoint string
-	FeedURL  string
-	Enabled  bool
+	ep.Endpoint
+	FeedURL string
+	Enabled bool
 }
 
 type physicalSiteSubscribe struct {
@@ -48,18 +48,18 @@ func Delete(ctx context.Context, endpoint, feedURL string) {
 }
 
 // Update はユーザ固有設定(サイト購読情報)を更新する
-func Update(ctx context.Context, e, feedURL string, enabled bool) error {
-	ep, err := endpoint.NewFromDatastore(ctx, e)
+func Update(ctx context.Context, endpoint string, feedURL string, enabled bool) error {
+	e, err := ep.NewFromDatastore(ctx, endpoint)
 	if err != nil {
 		return err
 	}
 
 	g := goon.FromContext(ctx)
 	ss := physicalSiteSubscribe{
-		Key:        makeKeyString(ep.Endpoint, feedURL),
-		Endpoint:   ep.Endpoint,
-		P256dh:     ep.P256dh,
-		Auth:       ep.Auth,
+		Key:        makeKeyString(e.Endpoint, feedURL),
+		Endpoint:   e.Endpoint,
+		P256dh:     e.P256dh,
+		Auth:       e.Auth,
 		FeedURL:    feedURL,
 		Enabled:    enabled,
 		UpdateDate: time.Now(),
@@ -84,49 +84,55 @@ func Cleanup(ctx context.Context, endpoint string) error {
 
 // Delete は購読情報を削除する
 func (s *SiteSubscribe) Delete(ctx context.Context) {
-	Delete(ctx, s.Endpoint, s.FeedURL)
+	Delete(ctx, s.Endpoint.Endpoint, s.FeedURL)
 }
 
-// ListFromEndpoint はendpointに紐づくサイト購読情報を取得する
-func ListFromEndpoint(ctx context.Context, endpoint string) []SiteSubscribe {
+// GetAllFromEndpoint はendpointに紐づくサイト購読情報を取得する
+func GetAllFromEndpoint(ctx context.Context, endpoint string) (dst []SiteSubscribe) {
 	g := goon.FromContext(ctx)
 
 	query := datastore.NewQuery("physicalSiteSubscribe").Filter("endpoint=", endpoint)
 	var confs []physicalSiteSubscribe
-	var subs []SiteSubscribe
 	_, err := g.GetAll(query, &confs)
-	if err == nil {
-		for _, conf := range confs {
-			subs = append(subs, SiteSubscribe{
-				Endpoint: conf.Endpoint,
-				FeedURL:  conf.FeedURL,
-				Enabled:  conf.Enabled,
-			})
-		}
+	if err != nil {
+		return
 	}
-	return subs
+	for _, conf := range confs {
+		dst = append(dst, SiteSubscribe{
+			Endpoint: ep.Endpoint{
+				Endpoint: conf.Endpoint,
+				P256dh:   conf.P256dh,
+				Auth:     conf.Auth,
+			},
+			FeedURL: conf.FeedURL,
+			Enabled: conf.Enabled,
+		})
+	}
+	return
 }
 
-// EndpointsFromFeedURL はfeedURLに紐づく有効なEndpointを全て取得する
-func EndpointsFromFeedURL(ctx context.Context, feedURL string) (dst []endpoint.Endpoint) {
+// GetAllFromFeedURL はfeedURLに紐づく有効なサイト購読情報を取得する
+func GetAllFromFeedURL(ctx context.Context, feedURL string) (dst []SiteSubscribe) {
 	g := goon.FromContext(ctx)
 
 	query := datastore.NewQuery("physicalSiteSubscribe").Filter("feed_url=", feedURL).Filter("enabled=", true)
-
 	var confs []physicalSiteSubscribe
-	var subs []SiteSubscribe
 	_, err := g.GetAll(query, &confs)
 	if err == nil {
 		return
 	}
 	for _, conf := range confs {
-		dst = append(dst, endpoint.Endpoint{
-			Endpoint: conf.Endpoint,
-			P256dh:   conf.P256dh,
-			Auth:     conf.Auth,
+		dst = append(dst, SiteSubscribe{
+			Endpoint: ep.Endpoint{
+				Endpoint: conf.Endpoint,
+				P256dh:   conf.P256dh,
+				Auth:     conf.Auth,
+			},
+			FeedURL: conf.FeedURL,
+			Enabled: conf.Enabled,
 		})
 	}
-	log.Infof(ctx, "conf.ListFromFeedURL %v, count %v", feedURL, len(subs))
+	log.Infof(ctx, "conf.ListFromFeedURL %v, count %v", feedURL, len(dst))
 	return
 }
 
@@ -137,18 +143,21 @@ func GetAll(ctx context.Context) (dst []SiteSubscribe) {
 	query := datastore.NewQuery("physicalSiteSubscribe")
 
 	var confs []physicalSiteSubscribe
-	var subs []SiteSubscribe
 	_, err := g.GetAll(query, &confs)
 	if err != nil {
-		return subs
+		return
 	}
 	for _, conf := range confs {
 		dst = append(dst, SiteSubscribe{
-			Endpoint: conf.Endpoint,
-			FeedURL:  conf.FeedURL,
-			Enabled:  conf.Enabled,
+			Endpoint: ep.Endpoint{
+				Endpoint: conf.Endpoint,
+				P256dh:   conf.P256dh,
+				Auth:     conf.Auth,
+			},
+			FeedURL: conf.FeedURL,
+			Enabled: conf.Enabled,
 		})
 	}
-	log.Debugf(ctx, "conf.GetAll count %d", len(subs))
+	log.Debugf(ctx, "conf.GetAll count %d", len(dst))
 	return
 }

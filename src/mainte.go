@@ -16,9 +16,9 @@ func MainteHandler(_ http.ResponseWriter, r *http.Request) {
 	subs := conf.GetAll(ctx)
 
 	for _, sub := range subs {
-		err := conf.Update(ctx, sub.Endpoint, sub.FeedURL, sub.Enabled)
+		err := conf.Update(ctx, sub.Endpoint.Endpoint, sub.FeedURL, sub.Enabled)
 		if err != nil {
-			conf.Delete(ctx, sub.Endpoint, sub.FeedURL)
+			conf.Delete(ctx, sub.Endpoint.Endpoint, sub.FeedURL)
 		}
 	}
 }
