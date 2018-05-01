@@ -28,6 +28,7 @@ func siteUpdateHandler(_ http.ResponseWriter, r *http.Request) {
 	siteList, err := site.List(ctx)
 	if err != nil {
 		log.Errorf(ctx, "get site failed. %v", err)
+		return
 	}
 
 	for _, ui := range siteList {
@@ -39,21 +40,6 @@ func siteUpdateHandler(_ http.ResponseWriter, r *http.Request) {
 			}
 			ui.SiteIcon = h.IconURL
 			ui.Update(ctx)
-		}
-	}
-}
-
-// SubscribeRequestHandler はHubURLを持つサイトに対し購読を要求する
-func SubscribeRequestHandler(_ http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-	siteList, err := site.List(ctx)
-	if err != nil {
-		log.Errorf(ctx, "get site failed. %v", err)
-	}
-
-	for _, ui := range siteList {
-		if ui.HubURL != "" {
-			SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
 		}
 	}
 }

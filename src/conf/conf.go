@@ -98,15 +98,7 @@ func GetAllFromEndpoint(ctx context.Context, endpoint string) (dst []SiteSubscri
 		return
 	}
 	for _, conf := range confs {
-		dst = append(dst, SiteSubscribe{
-			Endpoint: ep.Endpoint{
-				Endpoint: conf.Endpoint,
-				P256dh:   conf.P256dh,
-				Auth:     conf.Auth,
-			},
-			FeedURL: conf.FeedURL,
-			Enabled: conf.Enabled,
-		})
+		dst = append(dst, conf.SiteSubscribe())
 	}
 	return
 }
@@ -122,15 +114,7 @@ func GetAllFromFeedURL(ctx context.Context, feedURL string) (dst []SiteSubscribe
 		return
 	}
 	for _, conf := range confs {
-		dst = append(dst, SiteSubscribe{
-			Endpoint: ep.Endpoint{
-				Endpoint: conf.Endpoint,
-				P256dh:   conf.P256dh,
-				Auth:     conf.Auth,
-			},
-			FeedURL: conf.FeedURL,
-			Enabled: conf.Enabled,
-		})
+		dst = append(dst, conf.SiteSubscribe())
 	}
 	log.Infof(ctx, "conf.ListFromFeedURL %v, count %v", feedURL, len(dst))
 	return
@@ -148,16 +132,20 @@ func GetAll(ctx context.Context) (dst []SiteSubscribe) {
 		return
 	}
 	for _, conf := range confs {
-		dst = append(dst, SiteSubscribe{
-			Endpoint: ep.Endpoint{
-				Endpoint: conf.Endpoint,
-				P256dh:   conf.P256dh,
-				Auth:     conf.Auth,
-			},
-			FeedURL: conf.FeedURL,
-			Enabled: conf.Enabled,
-		})
+		dst = append(dst, conf.SiteSubscribe())
 	}
 	log.Debugf(ctx, "conf.GetAll count %d", len(dst))
 	return
+}
+
+func (p physicalSiteSubscribe) SiteSubscribe() SiteSubscribe {
+	return SiteSubscribe{
+		Endpoint: ep.Endpoint{
+			Endpoint: p.Endpoint,
+			P256dh:   p.P256dh,
+			Auth:     p.Auth,
+		},
+		FeedURL: p.FeedURL,
+		Enabled: p.Enabled,
+	}
 }

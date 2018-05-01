@@ -34,7 +34,14 @@ type pushMessage struct {
 func TestHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	sui := site.UpdateInfo{SiteTitle: "まとプ", ContentTitle: "これはテスト通知です。"}
+	sui := site.UpdateInfo{
+		Site: site.Site{
+			SiteTitle: "まとプ",
+			LatestContent: site.Content{
+				Title: "これはテスト通知です。",
+			},
+		},
+	}
 
 	ei, _ := endpoint.NewFromDatastore(ctx, r.FormValue("endpoint"))
 	if ei != nil {
@@ -87,8 +94,8 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 		FeedURL:      sui.FeedURL,
 		SiteURL:      sui.SiteURL,
 		SiteTitle:    sui.SiteTitle,
-		ContentURL:   sui.ContentURL,
-		ContentTitle: sui.ContentTitle,
+		ContentURL:   sui.LatestContent.URL,
+		ContentTitle: sui.LatestContent.Title,
 		Icon:         "/img/news.png",
 		Endpoint:     ei.Endpoint, // クライアントでログするのに使用
 	}

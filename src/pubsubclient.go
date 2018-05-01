@@ -13,6 +13,9 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
+// SubscribeURL はHubからの通知を受信するURL
+var SubscribeURL = "https://matopush.appspot.com/api/subscriber?site="
+
 // SubscriberHandler はHubから通知された購読情報を処理する
 func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)

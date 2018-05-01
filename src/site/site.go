@@ -18,25 +18,6 @@ import (
 	"google.golang.org/appengine/urlfetch"
 )
 
-// Result はサイト情報の取得結果を示す
-type Result struct {
-	SiteURL      string
-	SiteTitle    string
-	SiteIcon     string
-	ContentTitle string
-	ContentURL   string
-	FeedURL      string
-	HubURL       string
-	Type         string
-	Contents     []content.Content
-}
-
-// Content は将来的に削除したい
-type Content struct {
-	Title string `datastore:"title,noindex"`
-	URL   string `datastore:"url,noindex"`
-}
-
 // KeyはFeedUrl
 type physicalSite struct {
 	Key           string            `datastore:"-" goon:"id"`
@@ -55,38 +36,40 @@ type physicalSite struct {
 	Contents      []content.Content `datastore:"contents,noindex"`
 }
 
-// UpdateInfo はサイト更新情報
-type UpdateInfo struct {
-	FeedURL      string `json:"FeedUrl"`
-	SiteURL      string `json:"SiteUrl"`
-	SiteTitle    string
-	SiteIcon     string
-	ContentURL   string `json:"ContentUrl"`
-	ContentTitle string
-	UpdateFlg    bool
-	Value        bool
-	Count        int64
-	HubURL       string `json:"HubUrl"`
-	Secret       string // pubsubhubbubで使用する秘密鍵
-	Type         string
-	Contents     []content.Content
+// Site はサイト情報の取得結果を示す
+type Site struct {
+	FeedURL       string `json:"FeedUrl"`
+	Type          string
+	SiteURL       string `json:"SiteUrl"`
+	SiteTitle     string
+	SiteIcon      string
+	LatestContent Content
+	HubURL        string `json:"HubUrl"`
+	Contents      []content.Content
+}
+
+// Content コンテンツ情報
+type Content struct {
+	Title string `datastore:"title,noindex"`
+	URL   string `datastore:"url,noindex"`
 }
 
 func (s *physicalSite) createSecret() string {
 	return s.CreateDate.Format("20060102031605")
 }
 
-// UpdateCount はPush通知した件数を更新する
-func (ui *UpdateInfo) UpdateCount(ctx context.Context, count int64) {
-	g := goon.FromContext(ctx)
-
-	s := &physicalSite{Key: ui.FeedURL}
-	err := g.Get(s)
-	if err != nil {
-		return
+// Site はphysicalSiteからサイト情報(Site)への変換を行う
+func (s physicalSite) Site() Site {
+	return Site{
+		FeedURL:       s.Key,
+		Type:          s.Type,
+		SiteURL:       s.SiteURL,
+		SiteTitle:     s.SiteTitle,
+		SiteIcon:      s.SiteIcon,
+		LatestContent: s.LatestContent,
+		HubURL:        s.HubURL,
+		Contents:      s.Contents,
 	}
-	s.Count = count
-	g.Put(s)
 }
 
 // DeleteUnnecessarySite は三ヶ月以上更新がないサイトを抽出し削除する
@@ -105,173 +88,22 @@ func DeleteUnnecessarySite(ctx context.Context) error {
 	return nil
 }
 
-func fromPhysicalSite(s physicalSite) UpdateInfo {
-	return UpdateInfo{
-		FeedURL:      s.Key,
-		SiteURL:      s.SiteURL,
-		SiteTitle:    s.SiteTitle,
-		SiteIcon:     s.SiteIcon,
-		ContentURL:   s.LatestContent.URL,
-		ContentTitle: s.LatestContent.Title,
-		UpdateFlg:    false,
-		Value:        false,
-		Count:        0,
-		HubURL:       s.HubURL,
-		Secret:       s.createSecret(),
-		Type:         s.Type,
-		Contents:     s.Contents,
-	}
-}
-
-// List は全サイト情報を取得する
-func List(ctx context.Context) ([]UpdateInfo, error) {
-	g := goon.FromContext(ctx)
-
-	var ui []UpdateInfo
-	var list []physicalSite
-	query := datastore.NewQuery("physicalSite").Filter("delete_flag=", false)
-	_, err := g.GetAll(query, &list)
-	if err != nil {
-		return ui, nil
-	}
-	for _, s := range list {
-		ui = append(ui, fromPhysicalSite(s))
-	}
-	return ui, nil
-}
-
-// PublicList は公開サイトリストを取得する
-func PublicList(ctx context.Context) ([]UpdateInfo, error) {
-	g := goon.FromContext(ctx)
-
-	var sui []UpdateInfo
-	var list []physicalSite
-	query := datastore.NewQuery("physicalSite").Filter("delete_flag=", false).Filter("public=", true)
-	_, err := g.GetAll(query, &list)
-	if err != nil {
-		return sui, nil
-	}
-	for _, s := range list {
-		sui = append(sui, fromPhysicalSite(s))
-	}
-	log.Infof(ctx, "func PublicList count %v", len(list))
-	return sui, nil
-}
-
-// Update はサイト情報を更新する
-func (ui *UpdateInfo) Update(ctx context.Context) {
-	g := goon.FromContext(ctx)
-	s := &physicalSite{Key: ui.FeedURL}
-	g.Get(s)
-	s.SiteURL = ui.SiteURL
-	s.SiteTitle = ui.SiteTitle
-	s.SiteIcon = ui.SiteIcon
-	s.LatestContent.URL = ui.ContentURL
-	s.LatestContent.Title = ui.ContentTitle
-	s.Count = ui.Count
-	s.UpdateDate = time.Now()
-	s.Contents = ui.Contents
-	s.Type = ui.Type
-	g.Put(s)
-}
-
-// FromURL はURLから更新情報を作成する
-func FromURL(ctx context.Context, url string) (*UpdateInfo, bool, error) {
-	g := goon.FromContext(ctx)
-	s := physicalSite{Key: url}
-	err := g.Get(&s)
-	if err == nil {
-		ui := fromPhysicalSite(s)
-		return &ui, false, nil
-	}
-	// 未登録と見做す
-	info, err := getContentsInfo(ctx, url)
-	if err != nil {
-		// 初回読み込み失敗はエラーとみなす
-		return nil, false, err
-	}
-
-	s.Key = info.FeedURL
-	s.Type = info.Type
-	s.SiteURL = info.SiteURL
-	s.SiteTitle = info.SiteTitle
-	s.SiteIcon = info.SiteIcon
-	s.LatestContent.URL = info.ContentURL
-	s.LatestContent.Title = info.ContentTitle
-	s.Contents = info.Contents
-	s.HubURL = info.HubURL
-	s.CreateDate = time.Now()
-	s.UpdateDate = time.Now()
-	g.Put(&s)
-	ui := fromPhysicalSite(s)
-	return &ui, true, nil
-}
-
 func getBodyByURL(ctx context.Context, url string) ([]byte, error) {
 	client := urlfetch.Client(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
-		log.Infof(ctx, "get error %v, %v", url, err)
+		log.Infof(ctx, "client.Get error url:%v, err:%v", url, err)
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Infof(ctx, "url %s, resp %v", url, resp)
+		log.Infof(ctx, "http.Status NG url %s, resp %v", url, resp)
 		return nil, errors.New("unknown status code")
 	}
 	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
 }
 
-// CheckSite はサイトにアクセスして更新情報を取得する
-func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
-	body, err := getBodyByURL(ctx, ui.FeedURL)
-	if err != nil {
-		return err
-	}
-	feed, err := getFeedInfo(ctx, body)
-	if err != nil {
-		return err
-	}
-	// 読み込んだ情報を前回値と比較する
-	ui.SiteURL = feed.SiteURL
-	ui.SiteTitle = feed.SiteTitle
-	ui.Type = feed.Type
-	ui.HubURL = feed.HubURL
-	ui.Contents = content.Convert(ctx, feed.Contents)
-	if ui.ContentURL != feed.Contents[0].URL {
-		ui.ContentURL = feed.Contents[0].URL
-		ui.ContentTitle = feed.Contents[0].Title
-		ui.UpdateFlg = true
-	}
-	return nil
-}
-
-// CheckSiteByFeed はフィード内容から更新情報を出力する
-func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo, error) {
-	ui, _, err := FromURL(ctx, url)
-	if err != nil {
-		return nil, err
-	}
-	// bodyの内容がfeedか判定する
-	feed, err := getFeedInfo(ctx, body)
-	if err != nil {
-		return nil, err
-	}
-	// 読み込んだ情報を前回値と比較する
-	ui.SiteURL = feed.SiteURL
-	ui.SiteTitle = feed.SiteTitle
-	ui.Type = feed.Type
-	ui.HubURL = feed.HubURL
-	if ui.ContentURL != feed.Contents[0].URL {
-		ui.ContentURL = feed.Contents[0].URL
-		ui.ContentTitle = feed.Contents[0].Title
-		ui.Contents = content.Convert(ctx, feed.Contents)
-		ui.UpdateFlg = true
-	}
-	return ui, nil
-}
-
-func getContentsInfo(ctx context.Context, url string) (*Result, error) {
+func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 	body, err := getBodyByURL(ctx, url)
 	if err != nil {
 		return nil, err
@@ -280,16 +112,18 @@ func getContentsInfo(ctx context.Context, url string) (*Result, error) {
 	if err == nil {
 		// feed解析成功
 		h, _ := content.ParseHTML(ctx, feed.SiteURL)
-		result := Result{
-			SiteURL:      feed.SiteURL,
-			SiteTitle:    feed.SiteTitle,
-			SiteIcon:     h.IconURL,
-			ContentURL:   feed.Contents[0].URL,
-			ContentTitle: feed.Contents[0].Title,
-			Contents:     content.Convert(ctx, feed.Contents),
-			FeedURL:      url,
-			HubURL:       feed.HubURL,
-			Type:         feed.Type,
+		result := Site{
+			FeedURL:   url,
+			Type:      feed.Type,
+			SiteURL:   feed.SiteURL,
+			SiteTitle: feed.SiteTitle,
+			SiteIcon:  h.IconURL,
+			LatestContent: Content{
+				URL:   feed.Contents[0].URL,
+				Title: feed.Contents[0].Title,
+			},
+			Contents: content.Convert(ctx, feed.Contents),
+			HubURL:   feed.HubURL,
 		}
 		return &result, nil
 	}
@@ -319,28 +153,6 @@ func getFeedInfo(ctx context.Context, body []byte) (*content.Feed, error) {
 	feed, err = rdf.Analyze(body)
 	if err == nil {
 		log.Debugf(ctx, "Feed(RDF) %v", feed)
-		return &feed, nil
-	}
-
-	// RSS 2.0形式か?
-	feed, err = rss.Analyze(body)
-	if err == nil {
-		return &feed, nil
-	}
-
-	return nil, errors.New("not feed")
-}
-
-func getFeed(ctx context.Context, body []byte) (*content.Feed, error) {
-	// ATOM形式か?
-	feed, err := atom.Analyze(body)
-	if err == nil {
-		return &feed, nil
-	}
-
-	// RSS 1.0形式か?
-	feed, err = rdf.Analyze(body)
-	if err == nil {
 		return &feed, nil
 	}
 

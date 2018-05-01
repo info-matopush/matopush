@@ -44,7 +44,14 @@ func CleanupHandler(_ http.ResponseWriter, r *http.Request) {
 func HealthHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	sui := site.UpdateInfo{SiteTitle: "まとプ", ContentTitle: ""}
+	sui := site.UpdateInfo{
+		Site: site.Site{
+			SiteTitle: "まとプ",
+			LatestContent: site.Content{
+				Title: "",
+			},
+		},
+	}
 
 	sendPushAll(ctx, &sui)
 
@@ -60,6 +67,7 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 	siteList, err := site.List(ctx)
 	if err != nil {
 		log.Errorf(ctx, "get site failed. %v", err)
+		return
 	}
 
 	for _, ui := range siteList {
@@ -80,4 +88,20 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Infof(ctx, "site num:%d", len(siteList))
+}
+
+// SubscribeRequestHandler はHubURLを持つサイトに対し購読を要求する
+func SubscribeRequestHandler(_ http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+	siteList, err := site.List(ctx)
+	if err != nil {
+		log.Errorf(ctx, "get site failed. %v", err)
+		return
+	}
+
+	for _, ui := range siteList {
+		if ui.HubURL != "" {
+			SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
+		}
+	}
 }
