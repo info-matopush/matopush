@@ -8,22 +8,26 @@ import (
 )
 
 func main() {
+	// 登録・解除
 	http.HandleFunc("/api/regist", src.RegistHandler)
 	http.HandleFunc("/api/unregist", src.UnregistHandler)
-	http.HandleFunc("/api/add", src.AddHandler)
-	http.HandleFunc("/api/key", src.KeyHandler)
-	http.HandleFunc("/api/dummy", src.DummyHandler)
-	http.HandleFunc("/api/cron", src.CronHandler)
-	http.HandleFunc("/api/list", src.ListHandler)
-	http.HandleFunc("/api/cleanup", src.CleanupHandler)
-	http.HandleFunc("/api/test", src.TestHandler)
-	http.HandleFunc("/api/conf/list", src.ConfListHandler)
+	// ユーザ設定
 	http.HandleFunc("/api/conf/site", src.ConfSiteHandler)
+	http.HandleFunc("/api/conf/list", src.ConfListHandler)
 	http.HandleFunc("/api/conf/remove", src.ConfRemoveHandler)
-	http.HandleFunc("/api/mainte", src.MainteHandler)
-	http.HandleFunc("/api/health", src.HealthHandler)
-	http.HandleFunc("/api/log", src.LogHandler)
-	http.HandleFunc("/api/subscriber", src.SubscriberHandler)
+	// サービス補助
+	http.HandleFunc("/api/key", src.KeyHandler)
+	http.HandleFunc("/api/list", src.ListHandler)
+	http.HandleFunc("/api/test", src.TestHandler)
 	http.HandleFunc("/api/search", src.SearchHandler)
+	http.HandleFunc("/api/subscriber", src.SubscriberHandler)
+	http.HandleFunc("/api/log", src.LogHandler)
+	// cron起動
+	http.HandleFunc("/api/cron", src.CronHandler)
+	http.HandleFunc("/api/health", src.HealthHandler)
+	http.HandleFunc("/api/cleanup", src.CleanupHandler)
+	// メンテナンス
+	http.HandleFunc("/api/mainte", src.MainteHandler)
+	http.HandleFunc("/api/dummy", src.DummyHandler)
 	appengine.Main()
 }

@@ -225,7 +225,7 @@ function addSite() {
     _('siteUrl').value = '';
 
     $.ajax({
-        url: "/api/add",
+        url: "/api/conf/site",
         type: "POST",
         data: sendData,
         processData: false,

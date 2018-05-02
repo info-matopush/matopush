@@ -14,8 +14,123 @@ indexedDBはそのままでは使用しにくいので、ライブラリを使�
 http://dexie.org/
 
 -----
+## データ構造
+
+### テーブル一覧
+
+| テーブル名 | 役割 |
+| ---: | :--- |
+| Endpoint | エンドポイント=通知先(ブラウザ)を管理する |
+| Site | 巡回するサイトの情報を管理する |
+| SiteSubscribe | エンドポイントに紐づくサイト情報を管理する |
+| Content | サイトを巡回して得たコンテンツ情報を管理する |
+| Property | プロパティを管理する |
+| ServerKey | サーバのキー情報(鍵ペア)を管理する |
+
+-----
+### プロパティ一覧
+
+| プロパティ名 |  |
+| ---: | :--- |
+| google.custom.search.apikey | googleカスタムサーチAPIを使用するのに必要なキー情報 |
+| google.search.engine.id | google検索エンジンのID |
+
+-----
 ## API
 
+### エンドポイント登録
+
+endpointを登録する。
+
+#### インターフェース
+
+| 属性 | 値 | デフォルト |
+| --- | --- | --- |
+| パス | /api/regist | |
+| パラメータ(必須) | endpoint | |
+| パラメータ(必須) | p256dh | |
+| パラメータ(必須) | auth | |
+
+#### シーケンス
+
+```mermaid
+sequenceDiagram
+    participant A as ブラウザ
+    participant B as サーバ
+    participant C as Datastore(Endpoint)
+    
+    A->>B: /api/conf/site
+    B->>C: データ取得
+    C-->>B: データ応答
+    opt 失敗(新規登録)
+        B->>C: データ登録
+    end
+    B->>C: データ更新
+```
+
+
+-----
+### エンドポイント解除
+
+endpointを解除する。
+
+#### インターフェース
+
+| 属性 | 値 | デフォルト |
+| --- | --- | --- |
+| パス | /api/unregist | |
+| パラメータ(必須) | endpoint | |
+
+#### シーケンス
+
+```mermaid
+sequenceDiagram
+    participant A as ブラウザ
+    participant B as サーバ
+    participant C as Datastore(Endpoint)
+    
+    A->>B: /api/unregist
+    B->>C: データ削除(deleteフラグ=true)
+    B-->>A: 結果(bodyなし)
+```
+
+
+-----
+### 購読サイト設定
+
+endpointに紐づく購読中のサイト情報を設定する。
+
+#### インターフェース
+
+| 属性 | 値 | デフォルト |
+| --- | --- | --- |
+| パス | /api/conf/site | |
+| パラメータ(必須) | endpoint | |
+| パラメータ(必須) | siteUrl | |
+| パラメータ(オプション) | value | false |
+
+#### シーケンス
+
+```mermaid
+sequenceDiagram
+    participant A as ブラウザ
+    participant B as サーバ
+    participant C as Datastore(Site)
+    participant D as Datastore(SiteSubscribe)
+    participant E as 他サイト(siteUrl)
+    
+    A->>B: /api/conf/site
+    B->>C: データ取得
+    C-->>B: データ応答
+    opt データ取得失敗(新規登録)
+        B->>E: サイトデータ取得
+        B->>C: サイトデータ登録
+    end
+    B->>D: 購読情報更新
+    B-->>A: 結果返却
+```
+
+-----
 ### 購読サイトリスト取得
 
 endpointに紐づく購読中のサイト情報を全て返却する。
@@ -47,7 +162,7 @@ sequenceDiagram
     end
     B-->>A: リストを返却
 ```
-
+-----
 ### 購読サイト削除
 
 購読情報から指定されたサイトを削除する。
@@ -69,16 +184,45 @@ sequenceDiagram
     participant C as Datastore(SiteSubscribe)
     
     A->>B: /api/conf/remove
-    B->>C: データ削除
+    B->>C: データ更新
     B-->>A: 結果(bodyなし)
 ```
+-----
+## cron
 
+### サイト更新情報通知
 
-#### TODO
+サイトを巡回し、更新情報があれば登録されたendpointに通知する。
 
-リスト取得時にkeysOnlyを付与できれば取得コストが下げられる。
+#### インターフェース
 
+| 属性 | 値 |
+| --- | --- |
+| パス | /api/cron |
 
+-----
+### ヘルスチェック
+
+endpointに不可視の通知を行い、無効なendpointを検出する。
+
+#### インターフェース
+
+| 属性 | 値 |
+| --- | --- |
+| パス | /api/health |
+
+-----
+### サイト情報クリーンナップ
+
+不要な情報を削除する。
+
+#### インターフェース
+
+| 属性 | 値 |
+| --- | --- |
+| パス | /api/cleanup |
+
+-----
 ## markdown
 
 参考サイト
