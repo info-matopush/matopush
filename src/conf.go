@@ -60,9 +60,9 @@ func ConfSiteHandler(w http.ResponseWriter, r *http.Request) {
 		err := conf.Update(ctx, endpoint, sui.FeedURL, enabled)
 		if err == nil {
 			siteTitle := sui.SiteTitle
-			if value == "true" {
+			if enabled {
 				fmt.Fprintf(w, "サイト「%s」の更新を「通知する」に設定しました。", siteTitle)
-			} else if value == "false" {
+			} else {
 				fmt.Fprintf(w, "サイト「%s」の更新を「通知しない」に設定しました。", siteTitle)
 			}
 		} else {
