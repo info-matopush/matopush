@@ -37,6 +37,8 @@ self.addEventListener('push', function(evt) {
         });
     }
 
+    refreshMyList();
+
     if (body !== '') {
         evt.waitUntil(
             self.registration.showNotification(

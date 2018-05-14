@@ -54,9 +54,10 @@ window.addEventListener('load', function() {
                 var sendData = new FormData();
                 sendData.append('endpoint', subscription.endpoint);
                 sendData.append('siteUrl', feedURL);
+                sendData.append('value', 'true')
 
                 $.ajax({
-                    url: "/api/add",
+                    url: "/api/conf/site",
                     type: "POST",
                     data: sendData,
                     processData: false,
