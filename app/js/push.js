@@ -37,7 +37,12 @@ self.addEventListener('push', function(evt) {
         });
     }
 
-    refreshMyList();
+    // クライアントにメッセージを送る
+    self.clients.matchAll().then(
+        clients => clients.forEach(client => client.postMessage({
+            'matopush' :  'update'
+        }))
+    );
 
     if (body !== '') {
         evt.waitUntil(

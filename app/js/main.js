@@ -97,6 +97,8 @@ window.addEventListener('load', function() {
         }
     });
 
+    navigator.serviceWorker.addEventListener('message', onWorkerMessage);
+
     $.ajax({
         url: "/api/list",
         type: "GET",
@@ -129,6 +131,12 @@ window.addEventListener('load', function() {
     });
 
 }, false);
+
+// ServiceWorkerの通知を取得。
+// 画面を更新する
+function onWorkerMessage() {
+    refreshMyList();
+}
 
 function compare(a, b) {
     const timea = a.ModifyDate;
