@@ -153,19 +153,19 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 
 func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err error) {
 	// 通知先のリストを取得する
-	endpoints := conf.GetAllFromFeedURL(ctx, sui.FeedURL)
+	confs := conf.GetAllFromFeedURL(ctx, sui.FeedURL)
 
 	// 更新があれば通知
 	if sui.UpdateFlg {
-		for _, e := range endpoints {
-			err = sendPush(ctx, sui, e.Endpoint)
+		for _, conf := range confs {
+			err = sendPush(ctx, sui, conf.Endpoint)
 			if err == nil {
 				// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
 			}
 		}
 	}
 	// 購読数を記録
-	sui.Count = int64(len(endpoints))
+	sui.Count = int64(len(confs))
 	log.Infof(ctx, "url %v, count %v", sui.FeedURL, sui.Count)
 	return
 }

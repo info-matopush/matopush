@@ -110,7 +110,7 @@ func GetAllFromFeedURL(ctx context.Context, feedURL string) (dst []SiteSubscribe
 	query := datastore.NewQuery("physicalSiteSubscribe").Filter("feed_url=", feedURL).Filter("enabled=", true)
 	var confs []physicalSiteSubscribe
 	_, err := g.GetAll(query, &confs)
-	if err == nil {
+	if err != nil {
 		return
 	}
 	for _, conf := range confs {
