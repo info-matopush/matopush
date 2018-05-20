@@ -26,6 +26,8 @@ func main() {
 	http.HandleFunc("/api/cron", src.CronHandler)
 	http.HandleFunc("/api/health", src.HealthHandler)
 	http.HandleFunc("/api/cleanup", src.CleanupHandler)
+	// taskqueue起動
+	http.HandleFunc("/admin/api/publish", src.SendNotificationHandler)
 	// メンテナンス
 	http.HandleFunc("/api/mainte", src.MainteHandler)
 	http.HandleFunc("/api/dummy", src.DummyHandler)

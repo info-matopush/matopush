@@ -59,6 +59,37 @@ func HealthHandler(_ http.ResponseWriter, r *http.Request) {
 	log.Infof(ctx, "有効なendpoint数. %d", endpoint.Count(ctx))
 }
 
+// SendNotificationHandler はサイトの更新をPushで通知する
+func SendNotificationHandler(_ http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
+	params := r.URL.Query()
+	feedURL := params.Get("FeedURL")
+	if feedURL == "" {
+		log.Errorf(ctx, "FeedURL is empty")
+		return
+	}
+	log.Infof(ctx, "FeedURL:%v", feedURL)
+
+	ui, _, err := site.FromURL(ctx, feedURL)
+	if err != nil {
+		log.Errorf(ctx, "FromURL error %v", err)
+		return
+	}
+
+	err = ui.CheckSite(ctx)
+	if err != nil {
+		log.Errorf(ctx, "CheckSite error %v", err)
+		return
+	}
+
+	// 更新があればPushを行う
+	sendPushWhenSiteUpdate(ctx, ui)
+
+	// 更新された情報を保存する
+	ui.Update(ctx)
+}
+
 // CronHandler は全てのサイトのFeedを読み直し、
 // 更新があればPush送信を行う
 func CronHandler(_ http.ResponseWriter, r *http.Request) {

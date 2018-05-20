@@ -24,6 +24,7 @@ type pushMessage struct {
 	FeedURL      string `json:"FeedUrl"`
 	SiteURL      string `json:"SiteUrl"`
 	SiteTitle    string
+	SiteIcon     string
 	ContentURL   string `json:"ContentUrl"`
 	ContentTitle string
 	Icon         string
@@ -94,6 +95,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 		FeedURL:      sui.FeedURL,
 		SiteURL:      sui.SiteURL,
 		SiteTitle:    sui.SiteTitle,
+		SiteIcon:     sui.SiteIcon,
 		ContentURL:   sui.LatestContent.URL,
 		ContentTitle: sui.LatestContent.Title,
 		Icon:         "/img/news.png",
@@ -157,12 +159,16 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err erro
 
 	// 更新があれば通知
 	if sui.UpdateFlg {
+		log.Infof(ctx, "更新あり")
+
 		for _, conf := range confs {
 			err = sendPush(ctx, sui, conf.Endpoint)
 			if err == nil {
 				// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
 			}
 		}
+	} else {
+		log.Infof(ctx, "更新なし")
 	}
 	// 購読数を記録
 	sui.Count = int64(len(confs))

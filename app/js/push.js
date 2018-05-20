@@ -6,8 +6,12 @@ self.addEventListener('push', function(evt) {
     var icon = '/img/news.png';
     var tag = '';
     var endpoint = '';
+    var badge = '';
     if ('SiteTitle' in object) {
         title = object.SiteTitle;
+    }
+    if ('SiteIcon' in object) {
+        badge = object.SiteIcon;
     }
     if ('ContentTitle' in object) {
         body = object.ContentTitle;
@@ -55,7 +59,8 @@ self.addEventListener('push', function(evt) {
                         endpoint:  endpoint
                     },
                     icon:    icon,
-                    tag:     tag
+                    tag:     tag,
+                    badge:   badge
                 }
             )
         )
