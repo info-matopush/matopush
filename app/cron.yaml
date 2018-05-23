@@ -1,12 +1,21 @@
 cron:
-- description: site_cruising
-  url: /api/cron
-  schedule: every 1 hours
+- description: "site cruising"
+  url: /admin/api/cron
+  schedule: every 1 hours synchronized
+  timezone: Asia/Tokyo
 
-- description: health_check
-  url: /api/health
+- description: "health check"
+  url: /admin/api/health
   schedule: every day 00:30
+  timezone: Asia/Tokyo
 
-- description: cleanup
-  url: /api/cleanup
+- description: "datastore cleanup"
+  url: /admin/api/cleanup
   schedule: every day 01:30
+  timezone: Asia/Tokyo
+
+- description: "request subscription"
+  url: /admin/api/request/subscribe
+  schedule: 3,6,9,12,15,18,21,24,27,30 of month 02:30
+  timezone: Asia/Tokyo
+  

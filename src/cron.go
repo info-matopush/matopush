@@ -109,20 +109,14 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 			return
 		}
 		sendPushWhenSiteUpdate(ctx, &ui)
-
-		// huburlが設定されていた場合は積極的に利用する
-		if ui.UpdateFlg && ui.HubURL != "" {
-			log.Infof(ctx, "use pubsub %v", ui.FeedURL)
-			SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
-		}
 		ui.Update(ctx)
 	}
 
 	log.Infof(ctx, "site num:%d", len(siteList))
 }
 
-// SubscribeRequestHandler はHubURLを持つサイトに対し購読を要求する
-func SubscribeRequestHandler(_ http.ResponseWriter, r *http.Request) {
+// RequestSubscribeHandler はHubURLを持つサイトに対し購読を要求する
+func RequestSubscribeHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	siteList, err := site.List(ctx)
 	if err != nil {

@@ -23,13 +23,14 @@ func main() {
 	http.HandleFunc("/api/subscriber", src.SubscriberHandler)
 	http.HandleFunc("/api/log", src.LogHandler)
 	// cron起動
-	http.HandleFunc("/api/cron", src.CronHandler)
-	http.HandleFunc("/api/health", src.HealthHandler)
-	http.HandleFunc("/api/cleanup", src.CleanupHandler)
+	http.HandleFunc("/admin/api/cron", src.CronHandler)
+	http.HandleFunc("/admin/api/health", src.HealthHandler)
+	http.HandleFunc("/admin/api/cleanup", src.CleanupHandler)
 	// taskqueue起動
 	http.HandleFunc("/admin/api/publish", src.SendNotificationHandler)
+	http.HandleFunc("/admin/api/request/subscribe", src.RequestSubscribeHandler)
 	// メンテナンス
-	http.HandleFunc("/api/mainte", src.MainteHandler)
-	http.HandleFunc("/api/dummy", src.DummyHandler)
+	http.HandleFunc("/admin/api/mainte", src.MainteHandler)
+	http.HandleFunc("/admin/api/dummy", src.DummyHandler)
 	appengine.Main()
 }

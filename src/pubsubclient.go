@@ -93,5 +93,5 @@ func SubscribeRequest(ctx context.Context, callbackURL, topic, hub, secret strin
 	}
 	defer resp.Body.Close()
 	reason, _ := ioutil.ReadAll(resp.Body)
-	log.Infof(ctx, "reason %v", string(reason))
+	log.Infof(ctx, "reason %v, topic %v", string(reason), topic)
 }

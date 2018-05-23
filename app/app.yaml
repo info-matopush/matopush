@@ -55,32 +55,8 @@ handlers:
   static_dir: style
   secure: always
 
-# cron
-- url: /api/cron
-  secure: always
-  login: admin
-  script: _go_app
-
-# ヘルスチェック
-- url: /api/health
-  secure: always
-  login: admin
-  script: _go_app
-
-# クリーニング
-- url: /api/cleanup
-  secure: always
-  login: admin
-  script: _go_app
-
-# テストコマンド
-- url: /api/dummy
-  secure: always
-  login: admin
-  script: _go_app
-
-# データ移行用のコマンド
-- url: /api/mainte
+# 管理者用非公開API
+- url: /admin/.*
   secure: always
   login: admin
   script: _go_app
