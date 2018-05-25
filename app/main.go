@@ -22,6 +22,7 @@ func main() {
 	http.HandleFunc("/api/search", src.SearchHandler)
 	http.HandleFunc("/api/subscriber", src.SubscriberHandler)
 	http.HandleFunc("/api/log", src.LogHandler)
+	http.HandleFunc("/api/tunnel", src.TunnelHandler)
 	// cron起動
 	http.HandleFunc("/admin/api/cron", src.CronHandler)
 	http.HandleFunc("/admin/api/health", src.HealthHandler)

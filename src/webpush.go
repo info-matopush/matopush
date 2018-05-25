@@ -95,7 +95,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 		FeedURL:      sui.FeedURL,
 		SiteURL:      sui.SiteURL,
 		SiteTitle:    sui.SiteTitle,
-		SiteIcon:     sui.SiteIcon,
+		SiteIcon:     sui.SiteIcon.TunneledURL(),
 		ContentURL:   sui.LatestContent.URL,
 		ContentTitle: sui.LatestContent.Title,
 		Icon:         "/img/news.png",

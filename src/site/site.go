@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/info-matopush/matopush/src/content"
+	"github.com/info-matopush/matopush/src/remodel"
 	"github.com/info-matopush/matopush/src/xml/atom"
 	"github.com/info-matopush/matopush/src/xml/rdf"
 	"github.com/info-matopush/matopush/src/xml/rss"
@@ -42,7 +43,7 @@ type Site struct {
 	Type          string
 	SiteURL       string `json:"SiteUrl"`
 	SiteTitle     string
-	SiteIcon      string
+	SiteIcon      remodel.ExURL
 	LatestContent Content
 	HubURL        string `json:"HubUrl"`
 	Contents      []content.Content
@@ -65,7 +66,7 @@ func (s physicalSite) Site() Site {
 		Type:          s.Type,
 		SiteURL:       s.SiteURL,
 		SiteTitle:     s.SiteTitle,
-		SiteIcon:      s.SiteIcon,
+		SiteIcon:      remodel.ExURL(s.SiteIcon),
 		LatestContent: s.LatestContent,
 		HubURL:        s.HubURL,
 		Contents:      s.Contents,
@@ -117,7 +118,7 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 			Type:      feed.Type,
 			SiteURL:   feed.SiteURL,
 			SiteTitle: feed.SiteTitle,
-			SiteIcon:  h.IconURL,
+			SiteIcon:  remodel.ExURL(h.IconURL),
 			LatestContent: Content{
 				URL:   feed.Contents[0].URL,
 				Title: feed.Contents[0].Title,

@@ -3,6 +3,7 @@ package content
 import (
 	"time"
 
+	"github.com/info-matopush/matopush/src/remodel"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
@@ -28,7 +29,7 @@ type Content struct {
 	URL        string `json:"Url"`
 	Title      string
 	Summary    string
-	ImageURL   string `json:"ImageUrl"`
+	ImageURL   remodel.ExURL `json:"ImageUrl"`
 	ModifyDate time.Time
 }
 
@@ -82,7 +83,7 @@ func (p *physicalContent) makeContent() Content {
 		URL:        p.Key,
 		Title:      p.Title,
 		Summary:    p.Summary,
-		ImageURL:   p.ImageURL,
+		ImageURL:   remodel.ExURL(p.ImageURL),
 		ModifyDate: p.ModifyDate,
 	}
 }

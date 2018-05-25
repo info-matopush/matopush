@@ -72,7 +72,7 @@ func (ui *UpdateInfo) Update(ctx context.Context) {
 	s.Type = ui.Type
 	s.SiteURL = ui.SiteURL
 	s.SiteTitle = ui.SiteTitle
-	s.SiteIcon = ui.SiteIcon
+	s.SiteIcon = string(ui.SiteIcon)
 	s.LatestContent = ui.LatestContent
 	s.Count = ui.Count
 	s.Contents = ui.Contents
@@ -124,7 +124,7 @@ func FromURL(ctx context.Context, url string) (*UpdateInfo, bool, error) {
 	s.Type = info.Type
 	s.SiteURL = info.SiteURL
 	s.SiteTitle = info.SiteTitle
-	s.SiteIcon = info.SiteIcon
+	s.SiteIcon = string(info.SiteIcon)
 	s.LatestContent = info.LatestContent
 	s.Contents = info.Contents
 	s.HubURL = info.HubURL
