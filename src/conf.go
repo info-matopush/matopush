@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/info-matopush/matopush/src/conf"
 	"github.com/info-matopush/matopush/src/site"
@@ -35,6 +36,11 @@ func ConfListHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		sui.Value = c.Enabled
+		for i, con := range sui.Contents {
+			utc := con.ModifyDate.UTC()
+			jst := time.FixedZone("Asis/Tokyo", 9*60*60)
+			sui.Contents[i].ModifyDate = utc.In(jst)
+		}
 		sList = append(sList, *sui)
 		log.Infof(ctx, "UpdateInfo %v", sui)
 	}

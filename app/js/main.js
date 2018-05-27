@@ -167,7 +167,7 @@ function setMyList(items) {
         for (var j=0; j<items[i].Contents.length; j++) {
             var date = items[i].Contents[j].ModifyDate;
             date = date.replace('T', ' ');
-            date = date.replace('Z', '');
+            date = date.replace('+09:00', '');
             items[i].Contents[j].ModifyDate = date;
             timelineList.items.push(items[i].Contents[j]);
             timelineList.items.sort(compare)
