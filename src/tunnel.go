@@ -37,8 +37,8 @@ func TunnelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 	copyHeaders(w.Header(), resp.Header)
-	io.Copy(w, resp.Body)
 	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }
 
 func copyHeaders(dst, src http.Header) {
