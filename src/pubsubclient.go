@@ -32,18 +32,14 @@ func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 購読情報があればpushを行う
 	sui, _ := site.CheckSiteByFeed(ctx, params.Get("site"), body)
-	if sui != nil {
-		// hubで送られてくるフィード情報には十分なコンテンツが記載されていない
-		// 場合があるため、直接サイトに情報を取りに行く
-		err := sui.CheckSite(ctx)
-		if err != nil {
-			sendPushWhenSiteUpdate(ctx, sui)
-			sui.Update(ctx)
-		}
+	if sui == nil {
+		// 購読対象外の場合はステータスコードを4xxにする
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	// 購読対象外の場合はステータスコードを4xxにする
-	w.WriteHeader(http.StatusNotFound)
+
+	// サイト更新情報をWebPushで通知するためのタスクをキューに積む
+	PutTaskSendNotifiation(ctx, sui.FeedURL)
 }
 
 // https://www.w3.org/TR/websub

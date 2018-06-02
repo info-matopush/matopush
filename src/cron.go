@@ -6,9 +6,19 @@ import (
 	"github.com/info-matopush/matopush/src/conf"
 	"github.com/info-matopush/matopush/src/endpoint"
 	"github.com/info-matopush/matopush/src/site"
+	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/taskqueue"
 )
+
+// PutTaskSendNotifiation はタスクキューにWebPush用のタスクを積む
+func PutTaskSendNotifiation(ctx context.Context, feedURL string) {
+	t := taskqueue.NewPOSTTask("/admin/api/publish?FeedURL="+feedURL, nil)
+	if _, err := taskqueue.Add(ctx, t, ""); err != nil {
+		log.Errorf(ctx, "taskqueue.Add error %v", err)
+	}
+}
 
 // CleanupHandler はDatastore上の不要データを削除する
 func CleanupHandler(_ http.ResponseWriter, r *http.Request) {
@@ -101,15 +111,9 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 登録されている全サイト毎に、更新通知用のタスクをキューに積む
 	for _, ui := range siteList {
-		err := ui.CheckSite(ctx)
-		if err != nil {
-			// Feedの読み込みに失敗
-			log.Warningf(ctx, "feedの読み込みに失敗 url:%s", ui.FeedURL)
-			return
-		}
-		sendPushWhenSiteUpdate(ctx, &ui)
-		ui.Update(ctx)
+		PutTaskSendNotifiation(ctx, ui.FeedURL)
 	}
 
 	log.Infof(ctx, "site num:%d", len(siteList))

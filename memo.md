@@ -198,7 +198,7 @@ sequenceDiagram
 
 | 属性 | 値 |
 | --- | --- |
-| パス | /api/cron |
+| パス | /admin/api/cron |
 
 -----
 ### ヘルスチェック
@@ -209,7 +209,7 @@ endpointに不可視の通知を行い、無効なendpointを検出する。
 
 | 属性 | 値 |
 | --- | --- |
-| パス | /api/health |
+| パス | /admin/api/health |
 
 -----
 ### サイト情報クリーンナップ
@@ -220,7 +220,22 @@ endpointに不可視の通知を行い、無効なendpointを検出する。
 
 | 属性 | 値 |
 | --- | --- |
-| パス | /api/cleanup |
+| パス | /admin/api/cleanup |
+
+-----
+## TaskQueue
+
+### サイト更新通知
+
+サイトのFeed情報を読み込み、更新を検知した場合はWebPushで購読しているエンドポイントへ通知を行う。
+
+#### インターフェース
+
+| 属性 | 値 |
+| --- | --- |
+| パス | /admin/api/publish |
+| パラメータ(必須) | FeedURL |
+
 
 -----
 ## markdown
