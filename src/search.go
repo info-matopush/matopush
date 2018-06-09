@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/info-matopush/matopush/src/content"
 	"golang.org/x/oauth2/google"
@@ -66,18 +67,28 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var sr searchResult
+	var wg sync.WaitGroup
+	m := new(sync.Mutex)
 	for _, i := range s.Items {
-		h, err := content.ParseHTML(ctx, i.Link)
-		if err == nil && h.FeedURL != "" {
-			si := searchItem{
-				i.Title,
-				i.Snippet,
-				h.FeedURL,
+		wg.Add(1)
+		go func(i *customsearch.Result) {
+			defer wg.Done()
+			h, err := content.ParseHTML(ctx, i.Link)
+			if err == nil && h.FeedURL != "" {
+				si := searchItem{
+					i.Title,
+					i.Snippet,
+					h.FeedURL,
+				}
+				m.Lock()
+				sr.Items = append(sr.Items, si)
+				m.Unlock()
 			}
-			sr.Items = append(sr.Items, si)
-		}
+		}(i)
 	}
+	wg.Wait()
 	sr.Next = pos + 10
+	log.Infof(ctx, "検索結果: %v 件, フィルタ結果 %v 件", len(s.Items), len(sr.Items))
 
 	b, err := json.Marshal(sr)
 	if err != nil {
