@@ -1,0 +1,5 @@
+queue:
+# 主にfeedを読み取り更新があったらエンドポイントに通知を行うのに使用する
+- name: background-job
+  rate: 1/s
+  max_concurrent_requests: 1

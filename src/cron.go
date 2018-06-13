@@ -15,7 +15,7 @@ import (
 // PutTaskSendNotifiation はタスクキューにWebPush用のタスクを積む
 func PutTaskSendNotifiation(ctx context.Context, feedURL string) {
 	t := taskqueue.NewPOSTTask("/admin/api/publish?FeedURL="+feedURL, nil)
-	if _, err := taskqueue.Add(ctx, t, ""); err != nil {
+	if _, err := taskqueue.Add(ctx, t, "background-job"); err != nil {
 		log.Errorf(ctx, "taskqueue.Add error %v", err)
 	}
 }

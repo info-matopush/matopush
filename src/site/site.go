@@ -51,8 +51,9 @@ type Site struct {
 
 // Content コンテンツ情報
 type Content struct {
-	Title string `datastore:"title,noindex"`
-	URL   string `datastore:"url,noindex"`
+	URL   string        `datastore:"url,noindex"`
+	Title string        `datastore:"title,noindex"`
+	Image remodel.ExURL `datastore:"image,noindex"`
 }
 
 func (s *physicalSite) createSecret() string {
@@ -113,6 +114,7 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 	if err == nil {
 		// feed解析成功
 		h, _ := content.ParseHTML(ctx, feed.SiteURL)
+		c := content.Convert(ctx, feed.Contents)
 		result := Site{
 			FeedURL:   url,
 			Type:      feed.Type,
@@ -120,10 +122,11 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 			SiteTitle: feed.SiteTitle,
 			SiteIcon:  remodel.ExURL(h.IconURL),
 			LatestContent: Content{
-				URL:   feed.Contents[0].URL,
-				Title: feed.Contents[0].Title,
+				URL:   c[0].URL,
+				Title: c[0].Title,
+				Image: c[0].ImageURL,
 			},
-			Contents: content.Convert(ctx, feed.Contents),
+			Contents: c,
 			HubURL:   feed.HubURL,
 		}
 		return &result, nil

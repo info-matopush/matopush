@@ -7,6 +7,7 @@ self.addEventListener('push', function(evt) {
     var tag = '';
     var endpoint = '';
     var badge = '';
+    var image = '';
     if ('SiteTitle' in object) {
         title = object.SiteTitle;
     }
@@ -27,6 +28,9 @@ self.addEventListener('push', function(evt) {
     }
     if ('Endpoint' in object) {
         endpoint = object.Endpoint;
+    }
+    if ('ContentImage' in object) {
+        image = object.ContentImage;
     }
 
     // Endpointに到達したことをログする
@@ -58,6 +62,7 @@ self.addEventListener('push', function(evt) {
                         url:       content,
                         endpoint:  endpoint
                     },
+                    image:   image,
                     icon:    icon,
                     tag:     tag,
                     badge:   badge

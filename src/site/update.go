@@ -96,9 +96,10 @@ func (ui *UpdateInfo) CheckSite(ctx context.Context) error {
 	ui.SiteTitle = feed.SiteTitle
 	ui.Contents = content.Convert(ctx, feed.Contents)
 	ui.HubURL = feed.HubURL
-	if ui.LatestContent.URL != feed.Contents[0].URL {
-		ui.LatestContent.URL = feed.Contents[0].URL
-		ui.LatestContent.Title = feed.Contents[0].Title
+	if ui.LatestContent.URL != ui.Contents[0].URL {
+		ui.LatestContent.URL = ui.Contents[0].URL
+		ui.LatestContent.Title = ui.Contents[0].Title
+		ui.LatestContent.Image = ui.Contents[0].ImageURL
 		ui.UpdateFlg = true
 	}
 	return nil
@@ -152,9 +153,10 @@ func CheckSiteByFeed(ctx context.Context, url string, body []byte) (*UpdateInfo,
 	ui.SiteTitle = feed.SiteTitle
 	ui.Contents = content.Convert(ctx, feed.Contents)
 	ui.HubURL = feed.HubURL
-	if ui.LatestContent.URL != feed.Contents[0].URL {
-		ui.LatestContent.URL = feed.Contents[0].URL
-		ui.LatestContent.Title = feed.Contents[0].Title
+	if ui.LatestContent.URL != ui.Contents[0].URL {
+		ui.LatestContent.URL = ui.Contents[0].URL
+		ui.LatestContent.Title = ui.Contents[0].Title
+		ui.LatestContent.Image = ui.Contents[0].ImageURL
 		ui.UpdateFlg = true
 	}
 	return ui, nil

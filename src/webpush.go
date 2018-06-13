@@ -27,6 +27,7 @@ type pushMessage struct {
 	SiteIcon     string
 	ContentURL   string `json:"ContentUrl"`
 	ContentTitle string
+	ContentImage string
 	Icon         string
 	Endpoint     string
 }
@@ -98,6 +99,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 		SiteIcon:     sui.SiteIcon.TunneledURL(),
 		ContentURL:   sui.LatestContent.URL,
 		ContentTitle: sui.LatestContent.Title,
+		ContentImage: sui.LatestContent.Image.TunneledURL(),
 		Icon:         "/img/news.png",
 		Endpoint:     ei.Endpoint, // クライアントでログするのに使用
 	}
@@ -122,7 +124,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 
 	resp, err := webpush.SendNotification(message, &sub, &webpush.Options{
 		HTTPClient:      client,
-		Subscriber:      "https://push2ch.appspot.com",
+		Subscriber:      "https://matopush.appspot.com",
 		TTL:             60,
 		VAPIDPrivateKey: b64.EncodeToString(pri.D.Bytes()),
 	})
