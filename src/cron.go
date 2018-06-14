@@ -2,6 +2,7 @@ package src
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/info-matopush/matopush/src/conf"
 	"github.com/info-matopush/matopush/src/endpoint"
@@ -112,10 +113,15 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 
 	// 登録されている全サイト毎に、更新通知用のタスクをキューに積む
+	var wg sync.WaitGroup
 	for _, ui := range siteList {
-		PutTaskSendNotifiation(ctx, ui.FeedURL)
+		wg.Add(1)
+		go func(ui site.UpdateInfo) {
+			defer wg.Done()
+			PutTaskSendNotifiation(ctx, ui.FeedURL)
+		}(ui)
 	}
-
+	wg.Done()
 	log.Infof(ctx, "site num:%d", len(siteList))
 }
 
