@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/info-matopush/matopush/src/endpoint"
 	"github.com/info-matopush/matopush/src/site"
@@ -163,12 +164,18 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err erro
 	if sui.UpdateFlg {
 		log.Infof(ctx, "更新あり")
 
-		for _, conf := range confs {
-			err = sendPush(ctx, sui, conf.Endpoint)
-			if err == nil {
-				// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
-			}
+		var wg sync.WaitGroup
+		for _, c := range confs {
+			wg.Add(1)
+			go func(conf conf.SiteSubscribe) {
+				defer wg.Done()
+				err = sendPush(ctx, sui, conf.Endpoint)
+				if err == nil {
+					// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
+				}
+			}(c)
 		}
+		wg.Wait()
 	} else {
 		log.Infof(ctx, "更新なし")
 	}
@@ -182,9 +189,15 @@ func sendPushAll(ctx context.Context, sui *site.UpdateInfo) {
 	// 通知先のリストを取得する
 	endpoints := endpoint.GetAll(ctx)
 
+	var wg sync.WaitGroup
 	for _, e := range endpoints {
-		sendPush(ctx, sui, e)
+		wg.Add(1)
+		go func(e endpoint.Endpoint) {
+			defer wg.Done()
+			sendPush(ctx, sui, e)
+		}(e)
 	}
+	wg.Done()
 	log.Debugf(ctx, "通知した数 %d", len(endpoints))
 	return
 }
