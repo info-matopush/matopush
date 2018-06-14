@@ -1,6 +1,9 @@
 package content
 
 import (
+	"encoding/base64"
+	"hash/fnv"
+	"sync"
 	"time"
 
 	"github.com/info-matopush/matopush/src/remodel"
@@ -15,8 +18,9 @@ const (
 )
 
 type physicalContent struct {
-	// KeyはコンテンツURLとする
+	// KeyはコンテンツURLをハッシュ化したものとする
 	Key        string    `datastore:"-" goon:"id"`
+	URL        string    `datastore:"url,noindex"`
 	Title      string    `datastore:"title,noindex"`
 	Summary    string    `datastore:"desc,noindex"`
 	ImageURL   string    `datastore:"image_url,noindex"`
@@ -42,45 +46,57 @@ type FromFeed struct {
 	ModifyDate time.Time
 }
 
-// NewFromFeed はフィードで得た情報を元にコンテンツ情報を作成する
-func NewFromFeed(ctx context.Context, ff FromFeed) (*Content, error) {
-	g := goon.FromContext(ctx)
-	p := physicalContent{Key: ff.URL}
-	err := g.Get(&p)
-	if err == datastore.ErrNoSuchEntity {
-		return create(ctx, ff)
-	}
-	if err != nil {
-		log.Infof(ctx, "goon get error %v, %v", ff.URL, err)
-		return nil, err
-	}
-	c := p.makeContent()
-	return &c, nil
+// URLは長すぎる場合があるので、ハッシュを使ってキーを作成する
+func strToKeyString(str string) string {
+	h := fnv.New128a()
+	h.Write([]byte(str))
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func create(ctx context.Context, ff FromFeed) (*Content, error) {
-	h, err := ParseHTML(ctx, ff.URL)
-	if err != nil {
-		return nil, err
-	}
-
+// newFromFeed はフィードで得た情報を元にコンテンツ情報を作成する
+func newFromFeed(ctx context.Context, ff FromFeed) Content {
+	g := goon.FromContext(ctx)
 	p := physicalContent{
-		Key:        ff.URL,
+		Key: strToKeyString(ff.URL),
+	}
+	err := g.Get(&p)
+	if err == datastore.ErrNoSuchEntity {
+		// Datastore上にデータがない場合は、physicalContentを作成、保存を行う。
+		p = create(ctx, ff)
+	} else if err != nil {
+		log.Warningf(ctx, "NewFromFeed g.Get error %v, %v", ff, err)
+		p = create(ctx, ff)
+	}
+	return p.makeContent()
+}
+
+func create(ctx context.Context, ff FromFeed) physicalContent {
+	p := physicalContent{
+		Key:        strToKeyString(ff.URL),
+		URL:        ff.URL,
 		Title:      ff.Title,
 		Summary:    ff.Summary,
-		ImageURL:   h.ImageURL,
+		ImageURL:   "",
 		ModifyDate: ff.ModifyDate,
 		CreateDate: time.Now(),
 	}
+	h, err := ParseHTML(ctx, ff.URL)
+	if err == nil {
+		// HTMLの取得に成功したらImageURLを設定する
+		p.ImageURL = h.ImageURL
+	}
+
 	g := goon.FromContext(ctx)
-	g.Put(&p)
-	c := p.makeContent()
-	return &c, nil
+	_, err = g.Put(&p)
+	if err != nil {
+		log.Warningf(ctx, "create g.Put error %v, %v", ff, err)
+	}
+	return p
 }
 
 func (p *physicalContent) makeContent() Content {
 	return Content{
-		URL:        p.Key,
+		URL:        p.URL,
 		Title:      p.Title,
 		Summary:    p.Summary,
 		ImageURL:   remodel.ExURL(p.ImageURL),
@@ -90,18 +106,19 @@ func (p *physicalContent) makeContent() Content {
 
 // Convert はFromFeed配列をContent配列に変換する
 func Convert(ctx context.Context, ffs []FromFeed) []Content {
-	clist := []Content{}
-	for _, ff := range ffs {
-		c, err := NewFromFeed(ctx, ff)
-		if err != nil {
-			log.Warningf(ctx, "contents New error %v", err)
-			continue
-		}
-		clist = append(clist, *c)
-
-		if len(clist) > maxContents {
-			break
-		}
+	if len(ffs) > maxContents {
+		ffs = ffs[:maxContents]
 	}
+	clist := make([]Content, len(ffs))
+	var wg sync.WaitGroup
+	for i, ff := range ffs {
+		wg.Add(1)
+		go func(i int, ff FromFeed) {
+			defer wg.Done()
+			c := newFromFeed(ctx, ff)
+			clist[i] = c
+		}(i, ff)
+	}
+	wg.Wait()
 	return clist
 }
