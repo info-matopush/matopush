@@ -197,7 +197,7 @@ func sendPushAll(ctx context.Context, sui *site.UpdateInfo) {
 			sendPush(ctx, sui, e)
 		}(e)
 	}
-	wg.Done()
+	wg.Wait()
 	log.Debugf(ctx, "通知した数 %d", len(endpoints))
 	return
 }

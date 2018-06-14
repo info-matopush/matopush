@@ -121,7 +121,7 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 			PutTaskSendNotifiation(ctx, ui.FeedURL)
 		}(ui)
 	}
-	wg.Done()
+	wg.Wait()
 	log.Infof(ctx, "site num:%d", len(siteList))
 }
 
