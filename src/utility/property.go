@@ -1,4 +1,4 @@
-package src
+package utility
 
 import (
 	"golang.org/x/net/context"

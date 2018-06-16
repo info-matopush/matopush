@@ -1,20 +1,20 @@
-package src
+package webpush
 
 import (
-	"crypto/elliptic"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sync"
 
+	"github.com/info-matopush/matopush/src/conf"
 	"github.com/info-matopush/matopush/src/endpoint"
 	"github.com/info-matopush/matopush/src/site"
+	"github.com/info-matopush/matopush/src/trace"
+	"github.com/info-matopush/matopush/src/utility"
 
 	"github.com/SherClockHolmes/webpush-go"
-	"github.com/info-matopush/matopush/src/conf"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
@@ -42,6 +42,7 @@ func TestHandler(_ http.ResponseWriter, r *http.Request) {
 			SiteTitle: "まとプ",
 			LatestContent: site.Content{
 				Title: "これはテスト通知です。",
+				Image: "/img/IMGL5336_TP_V4.jpg",
 			},
 		},
 	}
@@ -78,17 +79,55 @@ func UnregistHandler(_ http.ResponseWriter, r *http.Request) {
 	e.Delete(ctx)
 }
 
-// KeyHandler は公開鍵を返却する
-func KeyHandler(w http.ResponseWriter, r *http.Request) {
+// HealthHandler は非表示のPushを全てのEndpointに送信し、
+// 無効なEndpointを検出する
+func HealthHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	publicKey, err := GetPublicKey(ctx)
-	if err != nil {
-		log.Errorf(ctx, "get public key error: %v", err)
+	sui := site.UpdateInfo{
+		Site: site.Site{
+			SiteTitle: "まとプ",
+			LatestContent: site.Content{
+				Title: "",
+			},
+		},
+	}
+
+	sendPushAll(ctx, &sui)
+
+	// 登録されているendpointの数を求める
+	log.Infof(ctx, "有効なendpoint数. %d", endpoint.Count(ctx))
+}
+
+// SendNotificationHandler はサイトの更新をPushで通知する
+func SendNotificationHandler(_ http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
+	params := r.URL.Query()
+	feedURL := params.Get("FeedURL")
+	if feedURL == "" {
+		log.Errorf(ctx, "FeedURL is empty")
 		return
 	}
-	byteArray := elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
-	fmt.Fprint(w, base64.RawURLEncoding.EncodeToString(byteArray))
+	log.Infof(ctx, "FeedURL:%v", feedURL)
+
+	ui, _, err := site.FromURL(ctx, feedURL)
+	if err != nil {
+		log.Errorf(ctx, "FromURL error %v", err)
+		return
+	}
+
+	err = ui.CheckSite(ctx)
+	if err != nil {
+		log.Errorf(ctx, "CheckSite error %v", err)
+		return
+	}
+
+	// 更新があればPushを行う
+	sendPushWhenSiteUpdate(ctx, ui)
+
+	// 更新された情報を保存する
+	ui.Update(ctx)
 }
 
 func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (err error) {
@@ -117,7 +156,7 @@ func sendPush(ctx context.Context, sui *site.UpdateInfo, ei endpoint.Endpoint) (
 	sub.Keys.Auth = b64.EncodeToString(ei.Auth)
 	sub.Keys.P256dh = b64.EncodeToString(ei.P256dh)
 
-	pri, err := getPrivateKey(ctx)
+	pri, err := utility.GetPrivateKey(ctx)
 	if err != nil {
 		log.Errorf(ctx, "private key get error.%v", err)
 		return
@@ -167,11 +206,11 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err erro
 		var wg sync.WaitGroup
 		for _, c := range confs {
 			wg.Add(1)
-			go func(conf conf.SiteSubscribe) {
+			go func(ss conf.SiteSubscribe) {
 				defer wg.Done()
-				err = sendPush(ctx, sui, conf.Endpoint)
+				err = sendPush(ctx, sui, ss.Endpoint)
 				if err == nil {
-					// LogPush(ctx, sui.Endpoint, sui.SiteUrl, sui.ContentUrl)
+					trace.LogPush(ctx, ss.Endpoint.Endpoint, sui.SiteURL, sui.LatestContent.URL)
 				}
 			}(c)
 		}

@@ -1,10 +1,9 @@
-package src
+package site
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/info-matopush/matopush/src/site"
 	"google.golang.org/appengine"
 )
 
@@ -12,7 +11,7 @@ import (
 func ListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	list := site.PublicList(ctx)
+	list := PublicList(ctx)
 	b, _ := json.Marshal(list)
 	w.Write(b)
 }

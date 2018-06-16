@@ -1,4 +1,4 @@
-package src
+package cron
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 	"github.com/info-matopush/matopush/src/conf"
 	"github.com/info-matopush/matopush/src/endpoint"
 	"github.com/info-matopush/matopush/src/site"
+	"github.com/info-matopush/matopush/src/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
@@ -47,58 +48,7 @@ func CleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	// TODO: サイト情報と紐付かない購読情報を削除する
 
 	// 古いログを削除する
-	LogCleanup(ctx)
-}
-
-// HealthHandler は非表示のPushを全てのEndpointに送信し、
-// 無効なEndpointを検出する
-func HealthHandler(_ http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-
-	sui := site.UpdateInfo{
-		Site: site.Site{
-			SiteTitle: "まとプ",
-			LatestContent: site.Content{
-				Title: "",
-			},
-		},
-	}
-
-	sendPushAll(ctx, &sui)
-
-	// 登録されているendpointの数を求める
-	log.Infof(ctx, "有効なendpoint数. %d", endpoint.Count(ctx))
-}
-
-// SendNotificationHandler はサイトの更新をPushで通知する
-func SendNotificationHandler(_ http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-
-	params := r.URL.Query()
-	feedURL := params.Get("FeedURL")
-	if feedURL == "" {
-		log.Errorf(ctx, "FeedURL is empty")
-		return
-	}
-	log.Infof(ctx, "FeedURL:%v", feedURL)
-
-	ui, _, err := site.FromURL(ctx, feedURL)
-	if err != nil {
-		log.Errorf(ctx, "FromURL error %v", err)
-		return
-	}
-
-	err = ui.CheckSite(ctx)
-	if err != nil {
-		log.Errorf(ctx, "CheckSite error %v", err)
-		return
-	}
-
-	// 更新があればPushを行う
-	sendPushWhenSiteUpdate(ctx, ui)
-
-	// 更新された情報を保存する
-	ui.Update(ctx)
+	trace.LogCleanup(ctx)
 }
 
 // CronHandler は全てのサイトのFeedを読み直し、
@@ -123,20 +73,4 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 	log.Infof(ctx, "site num:%d", len(siteList))
-}
-
-// RequestSubscribeHandler はHubURLを持つサイトに対し購読を要求する
-func RequestSubscribeHandler(_ http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-	siteList, err := site.List(ctx)
-	if err != nil {
-		log.Errorf(ctx, "get site failed. %v", err)
-		return
-	}
-
-	for _, ui := range siteList {
-		if ui.HubURL != "" {
-			SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
-		}
-	}
 }
