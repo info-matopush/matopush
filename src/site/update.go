@@ -21,7 +21,7 @@ type UpdateInfo struct {
 
 func fromPhysicalSite(s physicalSite) UpdateInfo {
 	return UpdateInfo{
-		Site:      s.Site(),
+		Site:      *s.site(),
 		UpdateFlg: false,
 		Value:     false,
 		Count:     0,

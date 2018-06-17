@@ -60,9 +60,9 @@ func (s *physicalSite) createSecret() string {
 	return s.CreateDate.Format("20060102031605")
 }
 
-// Site はphysicalSiteからサイト情報(Site)への変換を行う
-func (s physicalSite) Site() Site {
-	return Site{
+// site はphysicalSiteからサイト情報(Site)への変換を行う
+func (s physicalSite) site() *Site {
+	return &Site{
 		FeedURL:       s.Key,
 		Type:          s.Type,
 		SiteURL:       s.SiteURL,
@@ -72,6 +72,17 @@ func (s physicalSite) Site() Site {
 		HubURL:        s.HubURL,
 		Contents:      s.Contents,
 	}
+}
+
+// FromFeedURL はFeedURLを元にSiteを取得する
+func FromFeedURL(ctx context.Context, feedURL string) (*Site, error) {
+	g := goon.FromContext(ctx)
+	s := &physicalSite{Key: feedURL}
+	err := g.Get(s)
+	if err != nil {
+		return nil, err
+	}
+	return s.site(), nil
 }
 
 // DeleteUnnecessarySite は三ヶ月以上更新がないサイトを抽出し削除する

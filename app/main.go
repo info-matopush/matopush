@@ -14,6 +14,8 @@ import (
 )
 
 func main() {
+	// 招待
+	http.HandleFunc("/invite", src.InviteHandler)
 	// 登録・解除
 	http.HandleFunc("/api/regist", webpush.RegistHandler)
 	http.HandleFunc("/api/unregist", webpush.UnregistHandler)

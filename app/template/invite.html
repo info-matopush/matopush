@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta charset="utf-8" />
+        <title>ようこそ！</title>
+
+        <link rel="manifest" href="/manifest.json">
+        <link rel="icon" type="image/x-icon" href="/img/hira_31.ico" />
+
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.15/dist/vue.js"></script>
+        <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+        <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+    </head>
+    <body>
+        <header style="padding: 115px 16px 32px 16px;
+                box-sizing: border-box;
+                background-color: #2398eb;
+                color: white;"><h1>まとプ</h1></header>
+
+        <div id="matopush-invite" style="max-width: 90%; margin-left: auto; margin-right: auto;">
+            <div v-if="vueData.hasPermission&&vueData.hasPushManager&&!vueData.complete">
+                <p></p>
+                <h4>「{{.SiteTitle}}」の更新をWebPushで通知します</h4>
+                <strong>利用方法</strong>
+                <p>
+                    1. 下部の[「{{.SiteTitle}}」の更新通知を受け取る]ボタンを押す。<br>
+                    2. ブラウザに表示される「matopush.appspot.com」の通知を「許可」する。
+                </p>
+                <b-button
+                    size="sm"
+                    variant="primary"
+                    v-on:click="accept()">
+                    「{{.SiteTitle}}」の更新通知を受け取る
+                </b-button>
+            </div>
+            <div v-if="!vueData.hasPermission">
+                <p></p>
+                <h4>このブラウザで通知が許可されていません。</h4>
+                <p>
+                    ・ブラウザ設定の「通知」の項目で許可されていることを確認してください。<br>
+                </p>
+            </div>
+            <div v-if="!vueData.hasPushManager">
+                <p></p>
+                <h4>このブラウザはサポートされていません。</h4>
+                <p>
+                    当サイトは以下のいずれかをご使用ください。<br>
+                    ・Chrome(Windows, Linux, Android)<br>
+                    ・FireFox(Windows, Linux, Android)<br>
+                    ・Edge(Android)
+                </p>
+            </div>
+            <div v-if="vueData.complete">
+                <p></p>
+                <h4>「{{.SiteTitle}}」を登録しました。</h4>
+                <p>
+                    <b-button
+                        size="sm"
+                        variant="primary"
+                        v-on:click="testPush()">
+                        通知をテストする
+                    </b-button>
+                    <p>
+                    もし通知がこない場合は以下を確認してください。<br>
+                    【Android】<br>
+                    ・「設定」>「アプリ」>「Chrome」>「通知」<br>
+                    または<br>
+                    ・「設定」>「アプリ」>「FireFox」>「通知」<br>
+                    </p>
+                    <a href="/">こちら</a>もご利用ください。
+                </p>
+            </div>
+        </div>
+    </body>
+    <script>
+        'use strict'
+        var registURL = '/api/regist';
+        var vueData = {
+            // ServiceWorkerが使用できるか?
+            isExistServiceWorker: true,
+            // PushManagerがあるか?
+            hasPushManager: true,
+            // 許可があるか?
+            hasPermission: true,
+            // 登録完了を示す
+            complete: false,
+        };
+        // サーバキー
+        var serverKey = null;
+        // サブスクリプション
+        var subscription = null;
+        // FeedURL
+        var feedURL = "{{.FeedURL}}";
+
+        window.addEventListener('load', function() {
+            var vue = new Vue({
+                el: "#matopush-invite",
+                data: {
+                    vueData,
+                },
+                methods: {
+                    accept: function() {
+                        requestNotificationPermission();
+                    },
+                    testPush: function() {
+                        var sendData = new FormData();
+                        sendData.append('endpoint', subscription.endpoint);
+                        $.ajax({
+                            url: "/api/test",
+                            type: "POST",
+                            data: sendData,
+                            processData: false,
+                            contentType: false, 
+                        });
+                    }
+                },
+            });
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('push.js');
+                $.ajax({
+                    url: "/api/key",
+                    type: "GET",
+                    dataType: "text",
+                    processData: false,
+                    contentData: false,
+                    success:
+                        function (resp) {
+                            serverKey = decodeBase64URL(resp);
+                            navigator.serviceWorker.ready.then(serviceWorkerReady);
+                        }
+                });
+            }
+            else {
+                isExistServiceWorker = false;
+            }
+        }, false);
+
+        function encodeBase64URL(buffer) {
+            return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function decodeBase64URL(str) {
+            var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
+            var buffer = new Uint8Array(dec.length);
+            for(var i = 0 ; i < dec.length ; i++)
+                buffer[i] = dec.charCodeAt(i);
+            return buffer;
+        }
+
+        function serviceWorkerReady(registration) {
+            if ('pushManager' in registration) {
+                //registration.pushManager.getSubscription().then(getSubscription);
+            }
+            else {
+                vueData.hasPushManager = false;
+            }
+        }
+
+        function requestNotificationPermission() {
+            Notification.requestPermission(function(permission) {
+                if (permission !== 'denied') {
+                    requestPushPermission();
+                }
+                else {
+                    vueData.hasPermission = false;
+                }
+            });
+        }
+
+        function requestPushPermission() {
+            if ('permissions' in navigator)
+                navigator.permissions.query({
+                    name: 'push',
+                    userVisibleOnly: true
+                }).then(checkPushPermission);
+            else if (Notification.permission !== 'denied') {
+                navigator.serviceWorker.ready.then(requestPushSubscription);
+            }
+        }
+
+        function checkPushPermission(evt) {
+            var state = evt.state || evt.status;
+            if (state !== 'denied') {
+                navigator.serviceWorker.ready.then(requestPushSubscription);
+            }
+            else {
+                vueData.hasPermission = false;
+            }
+        }
+
+        function requestPushSubscription(registration) {
+            var opt = {
+                userVisible: true,
+                userVisibleOnly: true,
+                applicationServerKey: serverKey
+            };
+            if ('pushManager' in registration) {
+                registration.pushManager.subscribe(opt).then(getSubscription, errorSubscription);
+            }
+            else {
+                vueData.hasPushManager = false;
+            }
+
+        }
+
+        function errorSubscription(err) {
+            vueData.hasPermission = false;
+        }
+
+        function getSubscription(sub) {
+            subscription = sub;
+
+            // subscriptionを登録する
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+            sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+            sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+
+            $.ajax({
+                url: registURL,
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false,
+                success:
+                    function (resp) {
+                        registFeedURL();
+                    },
+            });
+        }
+
+        function registFeedURL() {
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+            sendData.append('siteUrl', feedURL);
+            sendData.append('value', 'true')
+
+            $.ajax({
+                url: "/api/conf/site",
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false,
+                success:
+                    function () {
+                        vueData.complete = true;
+                    },
+            });
+        }
+
+    </script>
+</html>
