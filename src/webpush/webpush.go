@@ -39,9 +39,9 @@ func TestHandler(_ http.ResponseWriter, r *http.Request) {
 
 	sui := site.UpdateInfo{
 		Site: site.Site{
-			SiteTitle: "まとプ",
+			SiteTitle: "まとプ　少し長めのタイトルの表示はこのようになります。",
 			LatestContent: site.Content{
-				Title: "これはテスト通知です。",
+				Title: "これはテスト通知です。長めの文章の表示はこのようになります。ブラウザによっては画像も表示されます。",
 				Image: "/img/IMGL5336_TP_V4.jpg",
 			},
 		},
