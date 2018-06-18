@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sync"
 
 	"github.com/info-matopush/matopush/src/cron"
 	"github.com/info-matopush/matopush/src/site"
@@ -102,9 +103,15 @@ func RequestSubscribeHandler(_ http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var wg sync.WaitGroup
 	for _, ui := range siteList {
-		if ui.HubURL != "" {
-			SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
-		}
+		wg.Add(1)
+		go func(ui site.UpdateInfo) {
+			defer wg.Done()
+			if ui.HubURL != "" {
+				SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
+			}
+		}(ui)
 	}
+	wg.Wait()
 }
