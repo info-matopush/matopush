@@ -1,28 +1,28 @@
-package rss
+package rdf
 
 import (
 	"encoding/xml"
 	"errors"
 	"time"
 
-	"github.com/info-matopush/matopush/src/content"
+	"github.com/info-matopush/matopush/content"
 )
 
-type rss struct {
+type rdf struct {
 	Channel channel `xml:"channel"`
+	Item    []item  `xml:"item"`
 }
 
 type channel struct {
 	Title string `xml:"title"`
 	Link  []link `xml:"link"`
-	Item  []item `xml:"item"`
 }
 
 type item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
-	PubDate     string `xml:"pubDate"`
+	Date        string `xml:"date"`
 }
 
 type link struct {
@@ -32,37 +32,34 @@ type link struct {
 }
 
 // Analyze はXMLデータをFeed型へ変換する
-// RSS 2.0のスキーマについては下記を参照
-// http://www.futomi.com/lecture/japanese/rss20.html
+// RDFのスキーマについては下記を参照
+// https://qiita.com/you88/items/e903fd463cf770688e1e
 func Analyze(bytes []byte) (content.Feed, error) {
-	feed := content.Feed{Type: "RSS 2.0"}
-	rss := rss{}
-	err := xml.Unmarshal(bytes, &rss)
+	feed := content.Feed{Type: "RSS 1.0"}
+	rdf := rdf{}
+	err := xml.Unmarshal(bytes, &rdf)
 	if err != nil {
 		return feed, err
 	}
 
-	feed.SiteTitle = rss.Channel.Title
+	feed.SiteTitle = rdf.Channel.Title
 
-	for _, item := range rss.Channel.Item {
+	for _, item := range rdf.Item {
 		cff := content.FromFeed{
 			URL:     item.Link,
 			Title:   item.Title,
 			Summary: item.Description,
 		}
 
-		layout1 := "Mon, 02 Jan 2006 15:04:05 -0700"
-		layout2 := "Mon, 02 Jan 2006 15:04:05 MST"
-		cff.ModifyDate, err = time.Parse(layout1, item.PubDate)
-		if err != nil {
-			cff.ModifyDate, err = time.Parse(layout2, item.PubDate)
-			// エラーは無視する
-		}
+		// 2018-03-31T10:02:32+09:00
+		layout1 := "2006-01-02T15:04:05-07:00"
+		cff.ModifyDate, err = time.Parse(layout1, item.Date)
+		// エラーは無視する
 
 		feed.Contents = append(feed.Contents, cff)
 	}
 
-	for _, l := range rss.Channel.Link {
+	for _, l := range rdf.Channel.Link {
 		if l.Rel == "hub" {
 			feed.HubURL = l.Href
 		} else if l.Data != "" {

@@ -3,7 +3,7 @@ package site
 import (
 	"time"
 
-	"github.com/info-matopush/matopush/src/content"
+	"github.com/info-matopush/matopush/content"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"

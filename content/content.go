@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/info-matopush/matopush/src/remodel"
+	"github.com/info-matopush/matopush/remodel"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"

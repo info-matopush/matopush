@@ -1,9 +1,9 @@
-package src
+package main
 
 import (
 	"net/http"
 
-	"github.com/info-matopush/matopush/src/conf"
+	"github.com/info-matopush/matopush/conf"
 	"google.golang.org/appengine"
 )
 

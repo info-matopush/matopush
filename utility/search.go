@@ -1,4 +1,4 @@
-package src
+package utility
 
 import (
 	"encoding/json"
@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/info-matopush/matopush/src/content"
-	"github.com/info-matopush/matopush/src/utility"
+	"github.com/info-matopush/matopush/content"
 	"golang.org/x/oauth2/google"
 	customsearch "google.golang.org/api/customsearch/v1"
 	"google.golang.org/appengine"
@@ -29,7 +28,7 @@ type searchItem struct {
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
-	p := utility.NewFromContext(ctx)
+	p := NewFromContext(ctx)
 	key := p.GetString("google.custom.search.apikey", "undefined")
 	id := p.GetString("google.search.engine.id", "undefined")
 

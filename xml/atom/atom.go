@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/info-matopush/matopush/src/content"
+	"github.com/info-matopush/matopush/content"
 )
 
 type atom struct {

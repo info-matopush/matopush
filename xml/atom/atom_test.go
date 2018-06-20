@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/info-matopush/matopush/src/content"
+	"github.com/info-matopush/matopush/content"
 )
 
 func TestRead(t *testing.T) {

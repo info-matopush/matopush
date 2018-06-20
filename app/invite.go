@@ -1,10 +1,10 @@
-package src
+package main
 
 import (
 	"html/template"
 	"net/http"
 
-	"github.com/info-matopush/matopush/src/site"
+	"github.com/info-matopush/matopush/site"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 )

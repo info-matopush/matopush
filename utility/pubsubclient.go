@@ -1,4 +1,4 @@
-package src
+package utility
 
 import (
 	"bytes"
@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/info-matopush/matopush/src/cron"
-	"github.com/info-matopush/matopush/src/site"
+	"github.com/info-matopush/matopush/cron"
+	"github.com/info-matopush/matopush/site"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"

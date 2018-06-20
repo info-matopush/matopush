@@ -5,7 +5,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	ep "github.com/info-matopush/matopush/src/endpoint"
+	ep "github.com/info-matopush/matopush/endpoint"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"

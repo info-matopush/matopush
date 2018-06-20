@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/info-matopush/matopush/src/conf"
-	"github.com/info-matopush/matopush/src/endpoint"
-	"github.com/info-matopush/matopush/src/site"
-	"github.com/info-matopush/matopush/src/trace"
-	"github.com/info-matopush/matopush/src/utility"
+	"github.com/info-matopush/matopush/conf"
+	"github.com/info-matopush/matopush/endpoint"
+	"github.com/info-matopush/matopush/site"
+	"github.com/info-matopush/matopush/trace"
+	"github.com/info-matopush/matopush/utility"
 
 	"github.com/SherClockHolmes/webpush-go"
 	"golang.org/x/net/context"
