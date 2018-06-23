@@ -31,7 +31,7 @@ func main() {
 	http.HandleFunc("/api/log", trace.LogHandler)
 	http.HandleFunc("/api/tunnel", utility.TunnelHandler)
 	// cron起動
-	http.HandleFunc("/admin/api/cron", cron.CronHandler)
+	http.HandleFunc("/admin/api/cron", cron.SiteCruisingHandler)
 	http.HandleFunc("/admin/api/health", webpush.HealthHandler)
 	http.HandleFunc("/admin/api/cleanup", cron.CleanupHandler)
 	// taskqueue起動

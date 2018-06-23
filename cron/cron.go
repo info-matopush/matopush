@@ -51,9 +51,9 @@ func CleanupHandler(_ http.ResponseWriter, r *http.Request) {
 	trace.LogCleanup(ctx)
 }
 
-// CronHandler は全てのサイトのFeedを読み直し、
+// SiteCruisingHandler は全てのサイトのFeedを読み直し、
 // 更新があればPush送信を行う
-func CronHandler(_ http.ResponseWriter, r *http.Request) {
+func SiteCruisingHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	siteList, err := site.List(ctx)
@@ -62,15 +62,17 @@ func CronHandler(_ http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 登録されている全サイト毎に、更新通知用のタスクをキューに積む
-	var wg sync.WaitGroup
-	for _, ui := range siteList {
-		wg.Add(1)
-		go func(ui site.UpdateInfo) {
-			defer wg.Done()
-			PutTaskSendNotifiation(ctx, ui.FeedURL)
-		}(ui)
+	if len(siteList) > 0 {
+		// 登録されている全サイト毎に、更新通知用のタスクをキューに積む
+		var wg sync.WaitGroup
+		for _, ui := range siteList {
+			wg.Add(1)
+			go func(ui site.UpdateInfo) {
+				defer wg.Done()
+				PutTaskSendNotifiation(ctx, ui.FeedURL)
+			}(ui)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 	log.Infof(ctx, "site num:%d", len(siteList))
 }

@@ -79,26 +79,6 @@ func UnregistHandler(_ http.ResponseWriter, r *http.Request) {
 	e.Delete(ctx)
 }
 
-// HealthHandler は非表示のPushを全てのEndpointに送信し、
-// 無効なEndpointを検出する
-func HealthHandler(_ http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
-
-	sui := site.UpdateInfo{
-		Site: site.Site{
-			SiteTitle: "まとプ",
-			LatestContent: site.Content{
-				Title: "",
-			},
-		},
-	}
-
-	sendPushAll(ctx, &sui)
-
-	// 登録されているendpointの数を求める
-	log.Infof(ctx, "有効なendpoint数. %d", endpoint.Count(ctx))
-}
-
 // SendNotificationHandler はサイトの更新をPushで通知する
 func SendNotificationHandler(_ http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
@@ -224,19 +204,41 @@ func sendPushWhenSiteUpdate(ctx context.Context, sui *site.UpdateInfo) (err erro
 	return
 }
 
+// HealthHandler は非表示のPushを全てのEndpointに送信し、
+// 無効なEndpointを検出する
+func HealthHandler(_ http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
+	sui := site.UpdateInfo{
+		Site: site.Site{
+			SiteTitle: "まとプ",
+			LatestContent: site.Content{
+				Title: "",
+			},
+		},
+	}
+
+	sendPushAll(ctx, &sui)
+
+	// 登録されているendpointの数を求める
+	log.Infof(ctx, "有効なendpoint数. %d", endpoint.Count(ctx))
+}
+
 func sendPushAll(ctx context.Context, sui *site.UpdateInfo) {
 	// 通知先のリストを取得する
 	endpoints := endpoint.GetAll(ctx)
 
-	var wg sync.WaitGroup
-	for _, e := range endpoints {
-		wg.Add(1)
-		go func(e endpoint.Endpoint) {
-			defer wg.Done()
-			sendPush(ctx, sui, e)
-		}(e)
+	if len(endpoints) > 0 {
+		var wg sync.WaitGroup
+		for _, e := range endpoints {
+			wg.Add(1)
+			go func(e endpoint.Endpoint) {
+				defer wg.Done()
+				sendPush(ctx, sui, e)
+			}(e)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 	log.Debugf(ctx, "通知した数 %d", len(endpoints))
 	return
 }
