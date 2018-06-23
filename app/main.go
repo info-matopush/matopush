@@ -5,6 +5,7 @@ import (
 
 	"github.com/info-matopush/matopush/conf"
 	"github.com/info-matopush/matopush/cron"
+	"github.com/info-matopush/matopush/doc"
 	"github.com/info-matopush/matopush/site"
 	"github.com/info-matopush/matopush/trace"
 	"github.com/info-matopush/matopush/utility"
@@ -14,7 +15,7 @@ import (
 
 func main() {
 	// 招待
-	http.HandleFunc("/invite", InviteHandler)
+	http.HandleFunc("/invite", doc.InviteHandler)
 	// 登録・解除
 	http.HandleFunc("/api/regist", webpush.RegistHandler)
 	http.HandleFunc("/api/unregist", webpush.UnregistHandler)
