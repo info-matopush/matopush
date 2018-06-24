@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/info-matopush/matopush/remodel"
 	"github.com/info-matopush/matopush/utility"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
@@ -34,7 +33,7 @@ type Content struct {
 	URL        string `json:"Url"`
 	Title      string
 	Summary    string
-	ImageURL   remodel.ExURL `json:"ImageUrl"`
+	ImageURL   utility.ExURL `json:"ImageUrl"`
 	ModifyDate time.Time
 }
 
@@ -100,7 +99,7 @@ func (p *physicalContent) makeContent() Content {
 		URL:        p.URL,
 		Title:      p.Title,
 		Summary:    p.Summary,
-		ImageURL:   remodel.ExURL(p.ImageURL),
+		ImageURL:   utility.ExURL(p.ImageURL),
 		ModifyDate: p.ModifyDate,
 	}
 }

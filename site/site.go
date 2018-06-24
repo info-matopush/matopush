@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/info-matopush/matopush/content"
-	"github.com/info-matopush/matopush/remodel"
+	"github.com/info-matopush/matopush/utility"
 	"github.com/info-matopush/matopush/xml/atom"
 	"github.com/info-matopush/matopush/xml/rdf"
 	"github.com/info-matopush/matopush/xml/rss"
@@ -43,7 +43,7 @@ type Site struct {
 	Type          string
 	SiteURL       string `json:"SiteUrl"`
 	SiteTitle     string
-	SiteIcon      remodel.ExURL
+	SiteIcon      utility.ExURL
 	LatestContent Content
 	HubURL        string `json:"HubUrl"`
 	Contents      []content.Content
@@ -53,7 +53,7 @@ type Site struct {
 type Content struct {
 	URL   string        `datastore:"url,noindex"`
 	Title string        `datastore:"title,noindex"`
-	Image remodel.ExURL `datastore:"image,noindex"`
+	Image utility.ExURL `datastore:"image,noindex"`
 }
 
 func (s *physicalSite) createSecret() string {
@@ -67,7 +67,7 @@ func (s physicalSite) site() *Site {
 		Type:          s.Type,
 		SiteURL:       s.SiteURL,
 		SiteTitle:     s.SiteTitle,
-		SiteIcon:      remodel.ExURL(s.SiteIcon),
+		SiteIcon:      utility.ExURL(s.SiteIcon),
 		LatestContent: s.LatestContent,
 		HubURL:        s.HubURL,
 		Contents:      s.Contents,
@@ -124,14 +124,14 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 	feed, err := getFeedInfo(ctx, body)
 	if err == nil {
 		// feed解析成功
-		h, _ := content.ParseHTML(ctx, feed.SiteURL)
+		h, _ := utility.ParseHTML(ctx, feed.SiteURL)
 		c := content.Convert(ctx, feed.Contents)
 		result := Site{
 			FeedURL:   url,
 			Type:      feed.Type,
 			SiteURL:   feed.SiteURL,
 			SiteTitle: feed.SiteTitle,
-			SiteIcon:  remodel.ExURL(h.IconURL),
+			SiteIcon:  utility.ExURL(h.IconURL),
 			LatestContent: Content{
 				URL:   c[0].URL,
 				Title: c[0].Title,
@@ -144,7 +144,7 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 	}
 
 	// html形式か？
-	h, err := content.ParseHTML(ctx, url)
+	h, err := utility.ParseHTML(ctx, url)
 	if err == nil && h.FeedURL != "" {
 		return getContentsInfo(ctx, h.FeedURL)
 	}
