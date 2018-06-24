@@ -24,7 +24,7 @@ func InviteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	t, err := template.ParseFiles("resources/template/invite.html")
 	if err != nil {
-		log.Warningf(ctx, "template.ParseFileserr=%v", err)
+		log.Warningf(ctx, "template.ParseFiles err=%v", err)
 		redirectIndexHTML(w)
 		return
 	}
