@@ -1,4 +1,4 @@
-package utility
+package pubsubhubbub
 
 import (
 	"bytes"

@@ -6,6 +6,7 @@ import (
 	"github.com/info-matopush/matopush/conf"
 	"github.com/info-matopush/matopush/cron"
 	"github.com/info-matopush/matopush/doc"
+	"github.com/info-matopush/matopush/pubsubhubbub"
 	"github.com/info-matopush/matopush/site"
 	"github.com/info-matopush/matopush/trace"
 	"github.com/info-matopush/matopush/utility"
@@ -28,7 +29,7 @@ func main() {
 	http.HandleFunc("/api/list", site.ListHandler)
 	http.HandleFunc("/api/test", webpush.TestHandler)
 	http.HandleFunc("/api/search", utility.SearchHandler)
-	http.HandleFunc("/api/subscriber", utility.SubscriberHandler)
+	http.HandleFunc("/api/subscriber", pubsubhubbub.SubscriberHandler)
 	http.HandleFunc("/api/log", trace.LogHandler)
 	http.HandleFunc("/api/tunnel", utility.TunnelHandler)
 	// cron起動
@@ -37,7 +38,7 @@ func main() {
 	http.HandleFunc("/admin/api/cleanup", cron.CleanupHandler)
 	// taskqueue起動
 	http.HandleFunc("/admin/api/publish", webpush.SendNotificationHandler)
-	http.HandleFunc("/admin/api/request/subscribe", utility.RequestSubscribeHandler)
+	http.HandleFunc("/admin/api/request/subscribe", pubsubhubbub.RequestSubscribeHandler)
 	// メンテナンス
 	http.HandleFunc("/admin/api/mainte", MainteHandler)
 	http.HandleFunc("/admin/api/dummy", DummyHandler)

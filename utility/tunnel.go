@@ -1,13 +1,31 @@
 package utility
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 )
+
+// ExURL は拡張URL型
+type ExURL string
+
+// MarshalJSON は拡張ExURLをJSON出力する
+func (e ExURL) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.TunneledURL())
+}
+
+// TunneledURL はproxyされたURLを返却する
+func (e ExURL) TunneledURL() string {
+	if strings.HasPrefix(string(e), "http://") {
+		return "/api/tunnel?url=" + string(e)
+	}
+	return string(e)
+}
 
 // TunnelHandler はhttpで提供されているコンテンツにアクセスするためのproxy機能
 func TunnelHandler(w http.ResponseWriter, r *http.Request) {

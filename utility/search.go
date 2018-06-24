@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/info-matopush/matopush/content"
 	"golang.org/x/oauth2/google"
 	customsearch "google.golang.org/api/customsearch/v1"
 	"google.golang.org/appengine"
@@ -73,7 +72,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(i *customsearch.Result) {
 			defer wg.Done()
-			h, err := content.ParseHTML(ctx, i.Link)
+			h, err := ParseHTML(ctx, i.Link)
 			if err == nil && h.FeedURL != "" {
 				si := searchItem{
 					i.Title,

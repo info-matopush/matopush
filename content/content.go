@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/info-matopush/matopush/remodel"
+	"github.com/info-matopush/matopush/utility"
 	"github.com/mjibson/goon"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
@@ -80,7 +81,7 @@ func create(ctx context.Context, ff FromFeed) physicalContent {
 		ModifyDate: ff.ModifyDate,
 		CreateDate: time.Now(),
 	}
-	h, err := ParseHTML(ctx, ff.URL)
+	h, err := utility.ParseHTML(ctx, ff.URL)
 	if err == nil {
 		// HTMLの取得に成功したらImageURLを設定する
 		p.ImageURL = h.ImageURL
