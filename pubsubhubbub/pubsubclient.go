@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/info-matopush/matopush/cron"
@@ -27,21 +28,13 @@ func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// POST時はfeedが送られてくる
+	// サイトが登録済みのものか？
 	params := r.URL.Query()
-	defer r.Body.Close()
-	body, _ := ioutil.ReadAll(r.Body)
-
-	// 購読情報があればpushを行う
-	sui, _ := site.CheckSiteByFeed(ctx, params.Get("site"), body)
-	if sui == nil {
-		// 購読対象外の場合はステータスコードを4xxにする
-		w.WriteHeader(http.StatusNotFound)
-		return
+	_, err := site.FromFeedURL(ctx, params.Get("site"))
+	if err == nil {
+		// サイト更新情報をWebPushで通知するためのタスクをキューに積む
+		cron.PutTaskSendNotifiation(ctx, params.Get("site"))
 	}
-
-	// サイト更新情報をWebPushで通知するためのタスクをキューに積む
-	cron.PutTaskSendNotifiation(ctx, sui.FeedURL)
 }
 
 // https://www.w3.org/TR/websub
@@ -109,7 +102,8 @@ func RequestSubscribeHandler(_ http.ResponseWriter, r *http.Request) {
 		go func(ui site.UpdateInfo) {
 			defer wg.Done()
 			if ui.HubURL != "" {
-				SubscribeRequest(ctx, SubscribeURL+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
+				url := strings.Replace(SubscribeURL, "matopush", appengine.AppID(ctx), -1)
+				SubscribeRequest(ctx, url+ui.FeedURL, ui.FeedURL, ui.HubURL, ui.Secret)
 			}
 		}(ui)
 	}
