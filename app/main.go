@@ -42,5 +42,7 @@ func main() {
 	// メンテナンス
 	http.HandleFunc("/admin/api/mainte", MainteHandler)
 	http.HandleFunc("/admin/api/dummy", DummyHandler)
+	// sitemap.xml
+	http.HandleFunc("/sitemap.xml", doc.SitemapHandler)
 	appengine.Main()
 }

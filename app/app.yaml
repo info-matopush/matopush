@@ -14,11 +14,6 @@ handlers:
   upload: resources/js/push.js
   secure: always
 
-- url: /sitemap.xml
-  static_files: resources/xml/sitemap.xml
-  upload: resources/xml/sitemap.xml
-  secure: always
-
 - url: /manifest.json
   mime_type: application/manifest+json
   static_files: resources/json/manifest.json

@@ -47,6 +47,7 @@ type Site struct {
 	LatestContent Content
 	HubURL        string `json:"HubUrl"`
 	Contents      []content.Content
+	CreateDate    time.Time
 }
 
 // Content コンテンツ情報
@@ -71,6 +72,7 @@ func (s physicalSite) site() *Site {
 		LatestContent: s.LatestContent,
 		HubURL:        s.HubURL,
 		Contents:      s.Contents,
+		CreateDate:    s.CreateDate,
 	}
 }
 
@@ -137,8 +139,9 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 				Title: c[0].Title,
 				Image: c[0].ImageURL,
 			},
-			Contents: c,
-			HubURL:   feed.HubURL,
+			Contents:   c,
+			HubURL:     feed.HubURL,
+			CreateDate: time.Now(),
 		}
 		return &result, nil
 	}
