@@ -1,6 +1,9 @@
-# matopush
+# まとプ
 GAE/Go+WebPushを使ったサービスです。
 
+https://matopush.appspot.com/
+
+# その他
 icon画像は下記のサイトのものを使用しています。  
 提供元：株式会社テトラクローマ　
 URL：http://tetrachroma.co.jp/

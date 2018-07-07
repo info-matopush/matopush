@@ -36,6 +36,30 @@ http://dexie.org/
 | google.search.engine.id | google検索エンジンのID |
 
 -----
+## ドキュメント
+
+### invite
+
+招待用のページ
+
+#### インターフェース
+
+| 属性 | 値 |
+| --- | --- |
+| パス | /invite |
+| パラメータ(必須) | FeedURL |
+
+### sitemap.xml
+
+有効なURLを動的に作成
+
+#### インターフェース
+
+| 属性 | 値 |
+| --- | --- |
+| パス | /sitemap.xml |
+
+-----
 ## API
 
 ### エンドポイント登録
@@ -235,7 +259,6 @@ endpointに不可視の通知を行い、無効なendpointを検出する。
 | --- | --- |
 | パス | /admin/api/publish |
 | パラメータ(必須) | FeedURL |
-
 
 -----
 ## markdown
