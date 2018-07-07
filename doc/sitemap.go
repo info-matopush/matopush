@@ -14,6 +14,7 @@ func SitemapHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 	list := site.PublicList(ctx)
 
+	w.Header().Set("content-type", "application/xml")
 	w.Write([]byte(xml.Header))
 	s := sitemap.FromLocation("https://matopush.appspot.com/")
 
