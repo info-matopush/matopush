@@ -25,6 +25,11 @@ handlers:
   upload: resources/txt/robots.txt
   secure: always
 
+- url: /BingSiteAuth.xml
+  static_files: resources/xml/BingSiteAuth.xml
+  upload: resources/xml/BingSiteAuth.xml
+  secure: always
+
 - url: /(.*\.html)$
   static_files: resources/html/\1
   upload: resources/html/.\.html$

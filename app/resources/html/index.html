@@ -1,11 +1,13 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="ja"></html>
     <head>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="keywords" content="更新,通知,ウェブプッシュ,プッシュ,WebPush,Push,RSS,ATOM" />
-        <meta name="discription" content="気にサイトの更新をWebPush通知で受け取れるサービス" />
+        <meta name="description" content="気にサイトの更新をWebPush通知で受け取れるサービスです。" />
+        <meta itemprop="description" content="気にサイトの更新をWebPush通知で受け取れるサービスです。" />
+        <meta name="msvalidate.01" content="D602798B17435C88CD05EC852F58298E" />
         <title>まとプ - 気になるサイトの更新をまとめてWebPush通知 -</title>
         <link rel="manifest" href="/manifest.json">
         <link rel="stylesheet" href="style/webpush.css" />
@@ -29,7 +31,15 @@
             gtag('js', new Date());
             gtag('config', 'UA-121959580-1');
         </script>
-
+        <script type="application/ld+json">
+            {
+            "@context": "http://schema.org/",
+            "@type": "WebSite",
+            "url": "https://matopush.appspot.com/",
+            "name": "まとプ",
+            "image": "https://matopush.appspot.com/img/news.png"
+            }
+        </script>
     </head>
 
     <body>
