@@ -149,7 +149,7 @@
                                 <td class="col-2">
                                     <b-button
                                         class="float-right"
-                                        v-on:click="remove(index)"
+                                        v-on:click="removeSite(index)"
                                         size="sm"
                                         variant="danger">削除
                                     </b-button>
@@ -173,7 +173,7 @@
                                 <td class="col-2" v-on:click="item.Value=!item.Value;">
                                     <b-button
                                         class="float-right"
-                                        v-on:click="addfeed(index)"
+                                        v-on:click="addFeed(index)"
                                         size="sm"
                                         variant="success"
                                         >購読
@@ -269,10 +269,10 @@
                         window.open(url);
                     },
                     addFeed: function (index) {
-                        var sel = publicList[index];
+                        var sel = vueData.publicList[index];
                         sel.Value = true;
-                        myList.push(sel);
-                        publicList.splice(index, 1);
+                        vueData.myList.push(sel);
+                        vueData.publicList.splice(index, 1);
                         toggleSubscribe(sel);
                     },
                     accept: function() {
@@ -298,7 +298,7 @@
                         });
                     },
                     removeSite: function (index) {
-                        var sel = myList[index];
+                        var sel = vueData.myList[index];
                         var sendData = new FormData();
                         sendData.append('endpoint', subscription.endpoint);
                         sendData.append('feedUrl', sel.FeedUrl);
@@ -311,12 +311,12 @@
                             contentType: false,
                             success:
                                 function (resp) {
-                                    myList.splice(index, 1);
+                                    vueData.myList.splice(index, 1);
                                 },
                         });
                     },
                     toggleAtMyList: function (index) {
-                        var sel = myList[index];
+                        var sel = vueData.myList[index];
                         toggleSubscribe(sel);
                     },
                     onTabClick: function(index) {
@@ -447,6 +447,37 @@
                 }
             }
             vueData.myList = items;
+        }
+
+        function toggleSubscribe(item) {
+            if (subscription == null) {
+                alert('プッシュ通知が有効になっていません。');
+                location.reload();
+                return;
+            }
+
+            // 
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+            sendData.append('siteUrl', item.FeedUrl);
+            if (item.Value) {
+                sendData.append('value', "true");
+            } else {
+                sendData.append('value', "false");
+            }
+
+            $.ajax({
+                url: "/api/conf/site",
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false,
+                success:
+                    function (resp) {
+                        alert(resp);
+                        refreshMyList();
+                    },
+            });
         }
 
         function togglePushSubscription() {
