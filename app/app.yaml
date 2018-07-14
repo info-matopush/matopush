@@ -4,11 +4,6 @@ api_version: go1.9
 default_expiration: "2s"
 
 handlers:
-- url: /
-  static_files: resources/html/index.html
-  upload: resources/html/index.html
-  secure: always
-
 - url: /push.js
   static_files: resources/js/push.js
   upload: resources/js/push.js

@@ -15,6 +15,9 @@ import (
 )
 
 func main() {
+	// メインページ
+	http.HandleFunc("/", doc.IndexHandler)
+	http.HandleFunc("/index.html", doc.IndexHandler)
 	// 招待
 	http.HandleFunc("/invite", doc.InviteHandler)
 	// 登録・解除

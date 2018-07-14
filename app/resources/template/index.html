@@ -1,0 +1,661 @@
+<!doctype html>
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="ja">
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="更新,通知,ウェブプッシュ,プッシュ,WebPush,Push,RSS,ATOM" />
+        <meta name="description" content="気にサイトの更新をWebPush通知で受け取れるサービスです。" />
+        <meta itemprop="description" content="気にサイトの更新をWebPush通知で受け取れるサービスです。" />
+        <meta name="msvalidate.01" content="D602798B17435C88CD05EC852F58298E" />
+        <title>まとプ - 気になるサイトの更新をまとめてWebPush通知 -</title>
+        <link rel="manifest" href="/manifest.json">
+        <link rel="stylesheet" href="style/webpush.css" />
+        <link rel="icon" type="image/x-icon" href="/img/hira_31.ico" />
+
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+        <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+        <link rel="apple-touch-icon" sizes="192x192" href="/img/news-192x192.png">
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.5.15/dist/vue.js"></script>
+        <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+        <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+        <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-121959580-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-121959580-1');
+        </script>
+        <script type="application/ld+json">
+            {
+            "@context": "http://schema.org/",
+            "@type": "WebSite",
+            "url": "https://matopush.appspot.com/",
+            "name": "まとプ",
+            "image": "https://matopush.appspot.com/img/news.png"
+            }
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>気になるサイトの更新をまとめてWebPush通知</h1>
+            <div id="control">
+                <button id="subscribe" class="btn-sm btn-primary" disabled></button>
+                <button id="test" class="btn-sm btn-primary" disabled>通知をテストする</button>
+            </div>
+
+            <div id="how_to_use"><BR>
+                <dl class="dl-horizontal">
+                    <dt>対応ブラウザ</dt><dd>Chrome, FireFox, Edge</dd>
+                    <dt>対応OS</dt><dd>Windows, Android, Mac</dd>
+                    <dt>使い方</dt><dd>①プッシュ通知を有効にして、テスト通知が届くことを確認してください。</dd>
+                    <dt></dt><dd>②下記の「登録済みサンプルサイト」のリストから更新を通知してほしいサイトをチェックしてください。</dd>
+                    <dt></dt><dd>③「登録済みサンプルサイト」のリストにないサイトはサイトURLを参考にフィード配信しているURLを入力することで追加ができます。</dd>
+                    <dt></dt><dd>→RSS 1.0, RSS 2.0, ATOMに対応しています。(html内にフィードへのリンクがあればhtmlを指定してもいいです)</dd>
+                    <dt>通知について</dt><dd><strong>１時間に１回、サーバー側でサイトを巡回して新着記事があればWebPushで通知します。</strong></dd>
+                </dl>
+            </div>
+            <div id="matopush">
+                <b-tabs small v-model="vueData.tabIndex">
+                    <b-tab title="サイト別" v-on:click="onTabClick('site')">
+                        <template v-for="(site, siteid) in vueData.myList">
+                            <br>
+                            <h6>
+                                <template v-if="site.SiteIcon!=''">
+                                    <img v-bind:src="site.SiteIcon" style="width: 1.2rem; height: 1.2rem;"/>
+                                </template>
+                                <a v-bind:href="site.SiteUrl" target="_blank">${site.SiteTitle}</a>
+                            </h6>
+                            <div style="height: 200px;">
+                            <b-carousel class="h-100" v-bind:id="site.FeedUrl"
+                                        style="text-shadow: 1px 1px 2px #333;"
+                                        background="rgb(76, 76, 76)"
+                                        :interval="0"
+                                        controls
+                                        indicators
+                                >
+                                <template v-for="(content, contentid) in site.Contents">
+                                    <b-carousel-slide
+                                                style="height: 200px;"
+                                                v-bind:id="content.Url"
+                                                v-bind:img-src="content.ImageUrl"
+                                                fluid-grow
+                                                >
+                                        <div style="height: 130px; background-color: rgba(0, 0, 0, 0.3); color:white; display: flex;" 
+                                                    v-on:click="openUrl(content.Url)">
+                                            <div style="margin: auto; flex: 0 1 auto;">
+                                                <h6 style="font-size: small;"
+                                                    v-text="content.Title" >
+                                                </h6>
+                                                <p style="max-height: 80px; line-height: 100%; font-size: x-small; word-break: break-all;"
+                                                    v-text="content.Summary">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </b-carousel-slide>
+                                </template>
+                            </b-carousel>
+                            </div>
+                        </template>                
+                    </b-tab>
+
+                    <b-tab title="タイムライン" v-on:click="onTabClick('timeline')">
+                        <template v-for="(content, contentid) in vueData.timelineList">
+                            <br>
+                            <b-card v-on:click="openUrl(content.Url)"
+                                v-bind:header="content.Title"
+                                v-bind:footer="content.ModifyDate"
+                                footer-text-variant="right"
+                                footer-class="small">
+                                <template v-if="content.ImageUrl !== ''">
+                                    <b-card-img
+                                        background="rgb(76, 76, 76)"
+                                        v-bind:src="content.ImageUrl"
+                                        style="max-height: 200px; margin-left: auto; margin-right: auto; width: auto; max-width: 100%; display: block;"
+                                        >
+                                    </b-card-img>
+                                    <br>
+                                </template>                                
+                                <p style="line-height: 100%; font-size: small; word-break: break-all;"
+                                    v-text="content.Summary">
+                                </p>
+                            </b-card>
+                        </template>
+                    </b-tab>
+
+                    <b-tab title="設定">
+                        <br>
+                        <h4>マイ・サイト</h4>
+                        現在通知対象、または過去に通知対象としてチェックしたことのあるサイトです。
+                        <table class="table">
+                            <thead>
+                            <tr class="d-flex">
+                                <th class="col-2">通知</th>
+                                <th class="col-10">サイト名</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr class="d-flex" v-for="(item, index) in vueData.myList">
+                                <td class="col-1" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">
+                                    <input type="checkbox" v-model="item.Value">
+                                </td>
+                                <td class="col-9" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">${item.SiteTitle}
+                                    <span class="badge badge-pill badge-secondary">${item.Type}</span>
+                                </td>
+                                <td class="col-2">
+                                    <b-button
+                                        class="float-right"
+                                        v-on:click="remove(index)"
+                                        size="sm"
+                                        variant="danger">削除
+                                    </b-button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+            
+                        <h4>登録済みサンプルサイト</h4>
+                        <table class="table">
+                            <thead>
+                            <tr class="d-flex">
+                                <th class="col-12">サイト名</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr class="d-flex" v-for="(item, index) in vueData.publicList">
+                                <td class="col-10" v-on:click="item.Value=!item.Value;">${item.SiteTitle}
+                                    <span class="badge badge-pill badge-secondary">${item.Type}</span>
+                                </td>
+                                <td class="col-2" v-on:click="item.Value=!item.Value;">
+                                    <b-button
+                                        class="float-right"
+                                        v-on:click="addfeed(index)"
+                                        size="sm"
+                                        variant="success"
+                                        >購読
+                                    </b-button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </b-tab>
+                    <b-tab title="追加">
+                        <br>
+                        サイトURL(フィード配信URL)
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <button id="addSite" class="btn btn-success" disabled>追加</button>
+                            </div>
+                            <input type="url" class="form-control" id="siteUrl" placeholder="http://any_site/feed.xml">
+                        </div>
+                        <br>
+                        キーワード検索
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <button id="searchSite" class="btn btn-success">検索</button>
+                            </div>
+                            <input type="text" class="form-control" id="keyword" placeholder="キーワード">
+                        </div>
+                        <br>
+                        <div>
+                            <b-card-group columns>
+                                <template v-for="(site, siteid) in vueData.searchList">
+                                    <b-card v-bind:header="site.title">
+                                        <p v-text="site.snippet"></p>
+                                        <b-button size="sm"
+                                                variant="outline-success"
+                                                v-on:click="addSite(site.feedURL)">登録する
+                                        </b-button>
+                                    </b-card>
+                                </template>
+                            </b-card-group>
+                        </div>
+                    </b-tab>
+                </b-tabs>
+                <div style="height: 200px;">
+
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+        'use strict'
+        var _ = function(id) {return document.getElementById(id);};
+        var registURL = '/api/regist';
+        var unregistURL = '/api/unregist';
+        var vueData = {
+            // ServiceWorkerが使用できるか?
+            isExistServiceWorker: true,
+            // PushManagerがあるか?
+            hasPushManager: true,
+            // 許可があるか?
+            hasPermission: true,
+            // 登録完了を示す
+            complete: false,
+            // マイリスト
+            myList: [],
+            // 検索リスト
+            searchList: [],
+            // タイムラインリスト
+            timelineList: [],
+
+            publicList: [],
+            // タブインデックス
+            tabIndex: 0,
+        };
+        // サーバキー
+        var serverKey = null;
+        // サブスクリプション
+        var subscription = null;
+
+        var db = new Dexie("key_value_database");
+        db.version(1).stores({
+            keyvalue: 'key, value'
+        });
+
+        window.addEventListener('load', function() {
+            var vue = new Vue({
+                delimiters: ['${', '}'],
+                el: "#matopush",
+                data: {
+                    vueData,
+                },
+                methods: {
+                    openUrl: function (url) {
+                        window.open(url);
+                    },
+                    addFeed: function (index) {
+                        var sel = publicList[index];
+                        sel.Value = true;
+                        myList.push(sel);
+                        publicList.splice(index, 1);
+                        toggleSubscribe(sel);
+                    },
+                    accept: function() {
+                        requestNotificationPermission();
+                    },
+                    addSite: function (feedURL) {
+                        var sendData = new FormData();
+                        sendData.append('endpoint', subscription.endpoint);
+                        sendData.append('siteUrl', feedURL);
+                        sendData.append('value', 'true')
+
+                        $.ajax({
+                            url: "/api/conf/site",
+                            type: "POST",
+                            data: sendData,
+                            processData: false,
+                            contentType: false,
+                            success:
+                                function (resp) {
+                                    alert(resp);
+                                    refreshMyList();
+                                },
+                        });
+                    },
+                    removeSite: function (index) {
+                        var sel = myList[index];
+                        var sendData = new FormData();
+                        sendData.append('endpoint', subscription.endpoint);
+                        sendData.append('feedUrl', sel.FeedUrl);
+
+                        $.ajax({
+                            url: "/api/conf/remove",
+                            type: "POST",
+                            data: sendData,
+                            processData: false,
+                            contentType: false,
+                            success:
+                                function (resp) {
+                                    myList.splice(index, 1);
+                                },
+                        });
+                    },
+                    toggleAtMyList: function (index) {
+                        var sel = myList[index];
+                        toggleSubscribe(sel);
+                    },
+                    onTabClick: function(index) {
+                        db.keyvalue.put({key: "latest_tab", value: index});
+                    },
+                    testPush: function() {
+                        var sendData = new FormData();
+                        sendData.append('endpoint', subscription.endpoint);
+                        $.ajax({
+                            url: "/api/test",
+                            type: "POST",
+                            data: sendData,
+                            processData: false,
+                            contentType: false, 
+                        });
+                    }
+                },
+            });
+
+            navigator.serviceWorker.addEventListener('message', onWorkerMessage);
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('push.js');
+                $.ajax({
+                    url: "/api/key",
+                    type: "GET",
+                    dataType: "text",
+                    processData: false,
+                    contentData: false,
+                    success:
+                        function (resp) {
+                            serverKey = decodeBase64URL(resp);
+                            navigator.serviceWorker.ready.then(serviceWorkerReady);
+                        }
+                });
+            }
+            else {
+                isExistServiceWorker = false;
+            }
+
+            $.ajax({
+                url: "/api/list",
+                type: "GET",
+                dataType: "json",
+                processData: false,
+                contentData: false,
+                success:
+                    function (resp) {
+                        if (resp != null) {
+                            vueData.publicList = resp;
+                        }
+                        // 画面が作られたらWebPushの準備を行う
+                        if ('serviceWorker' in navigator) {
+                            _('subscribe').addEventListener('click', togglePushSubscription, false);
+                            _('test').addEventListener('click', testPush, false);
+                            _('addSite').addEventListener('click', addSite, false);
+                            _('searchSite').addEventListener('click', searchSite, false);
+                        }
+                    },
+            });
+
+            db.keyvalue.get('latest_tab').then(function(tab) {
+                if (tab.value === 'site') {
+                    vueData.tabIndex = 0;
+                } else {
+                    vueData.tabIndex = 1;
+                }    
+            });
+        }, false);
+
+        // ServiceWorkerの通知を取得。
+        // 画面を更新する
+        function onWorkerMessage() {
+            refreshMyList();
+        }
+
+        function refreshMyList() {
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+
+            $.ajax({
+                url: "/api/conf/list",
+                type: "POST",
+                data: sendData,
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                success:
+                    function (resp) {
+                        setMyList(resp);
+                    },
+            });
+        }
+
+        function compare(a, b) {
+            const timea = a.ModifyDate;
+            const timeb = b.ModifyDate;
+            if (timea < timeb) {
+                return 1;
+            } else if (timea > timeb) {
+                return -1;
+            }
+            return 0;
+        }
+
+        function setMyList(items) {
+            vueData.myList.splice(0);
+            vueData.timelineList.splice(0);
+            if (items == null) {
+                return
+            }
+            // 重複する登録済みリストから消し込みを行う
+            for (var i=0; i<items.length; i++) {
+                // サイト別表示用
+                for (var j=0; j<vueData.publicList.length; j++) {
+                    if (vueData.publicList[j].FeedUrl === items[i].FeedUrl) {
+                        vueData.publicList.splice(j, 1);
+                    }
+                }
+                // タイムライン表示用
+                for (var j=0; j<items[i].Contents.length; j++) {
+                    var date = items[i].Contents[j].ModifyDate;
+                    date = date.replace('T', ' ');
+                    date = date.replace('+09:00', '');
+                    items[i].Contents[j].ModifyDate = date;
+                    vueData.timelineList.push(items[i].Contents[j]);
+                    vueData.timelineList.sort(compare)
+                }
+            }
+            vueData.myList = items;
+        }
+
+        function togglePushSubscription() {
+            _('subscribe').disabled = true;
+
+            if (!_('subscribe').classList.contains('subscribing')) {
+                requestNotificationPermission();
+            }
+            else {
+                requestPushUnsubscription();
+            }
+        }
+
+        function encodeBase64URL(buffer) {
+            return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function decodeBase64URL(str) {
+            var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
+            var buffer = new Uint8Array(dec.length);
+            for(var i = 0 ; i < dec.length ; i++)
+                buffer[i] = dec.charCodeAt(i);
+            return buffer;
+        }
+
+        function serviceWorkerReady(registration) {
+            if ('pushManager' in registration) {
+                registration.pushManager.getSubscription().then(getSubscription);
+            }
+            else {
+                vueData.hasPushManager = false;
+            }
+        }
+
+        function requestNotificationPermission() {
+            Notification.requestPermission(function(permission) {
+                if (permission !== 'denied') {
+                    requestPushPermission();
+                }
+                else {
+                    vueData.hasPermission = false;
+                }
+            });
+        }
+
+        function requestPushPermission() {
+            if ('permissions' in navigator)
+                navigator.permissions.query({
+                    name: 'push',
+                    userVisibleOnly: true
+                }).then(checkPushPermission);
+            else if (Notification.permission !== 'denied') {
+                navigator.serviceWorker.ready.then(requestPushSubscription);
+            }
+        }
+
+        function checkPushPermission(evt) {
+            var state = evt.state || evt.status;
+            if (state !== 'denied') {
+                navigator.serviceWorker.ready.then(requestPushSubscription);
+            }
+            else {
+                vueData.hasPermission = false;
+            }
+        }
+
+        function requestPushSubscription(registration) {
+            var opt = {
+                userVisible: true,
+                userVisibleOnly: true,
+                applicationServerKey: serverKey
+            };
+            if ('pushManager' in registration) {
+                registration.pushManager.subscribe(opt).then(getSubscription, errorSubscription);
+            }
+            else {
+                vueData.hasPushManager = false;
+            }
+
+        }
+
+        function errorSubscription(err) {
+            vueData.hasPermission = false;
+        }
+
+        function getSubscription(sub) {
+            if (sub) {
+                enablePushRequest(sub);
+            }
+            else {
+                disablePushRequest();
+            }
+        }
+
+        function requestPushUnsubscription() {
+            if (subscription) {
+                subscription.unsubscribe();
+
+                // subscriptionを削除する
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+
+                $.ajax({
+                    url: unregistURL,
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentTYpe: false,
+                    success:
+                        function () {
+                            subscription = null;
+                            disablePushRequest();
+                            // todo:
+                            location.reload();                            
+                        }
+                });
+            }
+        }
+
+        function disablePushRequest() {
+            _('subscribe').classList.remove('subscribing');
+            _('subscribe').disabled = false;
+            _('test').disabled = true;
+            _('addSite').disabled = true;
+            _('siteUrl').disabled = true;
+        }
+
+        function enablePushRequest(sub) {
+            subscription = sub;
+            _('subscribe').classList.add('subscribing');
+            _('subscribe').disabled = false;
+            _('test').disabled = false;
+            _('addSite').disabled = false;
+            _('siteUrl').disabled = false;
+
+            // subscriptionを登録する
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+            sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+            sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+
+            $.ajax({
+                url: registURL,
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false,
+                success:
+                    function (resp) {
+                        refreshMyList();
+                    },
+            });
+        }
+
+        function getSubscription2(sub) {
+            subscription = sub;
+
+            // subscriptionを登録する
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+            sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+            sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+
+            $.ajax({
+                url: registURL,
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false,
+                success:
+                    function (resp) {
+                        registFeedURL();
+                    },
+            });
+        }
+
+        function addSite() {
+    var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+            sendData.append('siteUrl', _('siteUrl').value);
+
+            _('siteUrl').value = '';
+
+            $.ajax({
+                url: "/api/conf/site",
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false,
+                success:
+                    function (resp) {
+                        alert(resp);
+                        refreshMyList();
+                    },
+            });
+        }
+
+        function testPush() {
+            var sendData = new FormData();
+            sendData.append('endpoint', subscription.endpoint);
+
+            $.ajax({
+                url: "/api/test",
+                type: "POST",
+                data: sendData,
+                processData: false,
+                contentType: false, 
+            });
+        }
+
+    </script>    
+</html>
