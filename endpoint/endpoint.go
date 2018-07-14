@@ -91,6 +91,7 @@ func (e *Endpoint) Create(ctx context.Context) error {
 	}
 	g := goon.FromContext(ctx)
 	_, err := g.Put(pei)
+	log.Infof(ctx, "Create Endpoint err:%v", err)
 	return err
 }
 
