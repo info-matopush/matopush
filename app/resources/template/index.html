@@ -5,8 +5,8 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="keywords" content="更新,通知,ウェブプッシュ,プッシュ,WebPush,Push,RSS,ATOM" />
-        <meta name="description" content="気にサイトの更新をWebPush通知で受け取れるサービスです。" />
-        <meta itemprop="description" content="気にサイトの更新をWebPush通知で受け取れるサービスです。" />
+        <meta name="description" content="フィード配信サイトの更新をWebPush通知で受け取れるサービスです。ユーザ登録なしで利用できます。" />
+        <meta itemprop="description" content="フィード配信サイトの更新をWebPush通知で受け取れるサービスです。ユーザ登録なしで利用できます。" />
         <meta name="msvalidate.01" content="D602798B17435C88CD05EC852F58298E" />
         <title>まとプ - 気になるサイトの更新をまとめてWebPush通知 -</title>
         <link rel="manifest" href="/manifest.json">
@@ -190,7 +190,7 @@
                                 </td>
                             </tr>
                             {{end}}
-                            </tbody>
+                        </tbody>
                         </table>
                     </b-tab>
                     <b-tab title="追加">
@@ -358,13 +358,13 @@
                 isExistServiceWorker = false;
             }
 
-                        // 画面が作られたらWebPushの準備を行う
-                        if ('serviceWorker' in navigator) {
-                            _('subscribe').addEventListener('click', togglePushSubscription, false);
-                            _('test').addEventListener('click', testPush, false);
-                            _('addSite').addEventListener('click', addSite, false);
-                            _('searchSite').addEventListener('click', searchSite, false);
-                        }
+            // 画面が作られたらWebPushの準備を行う
+            if ('serviceWorker' in navigator) {
+                _('subscribe').addEventListener('click', togglePushSubscription, false);
+                _('test').addEventListener('click', testPush, false);
+                _('addSite').addEventListener('click', addSite, false);
+                _('searchSite').addEventListener('click', searchSite, false);
+            }
 
             db.keyvalue.get('latest_tab').then(function(tab) {
                 if (tab.value === 'site') {
@@ -637,7 +637,7 @@
         }
 
         function addSite() {
-    var sendData = new FormData();
+            var sendData = new FormData();
             sendData.append('endpoint', subscription.endpoint);
             sendData.append('siteUrl', _('siteUrl').value);
 
