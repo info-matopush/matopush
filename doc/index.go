@@ -9,11 +9,29 @@ import (
 	"google.golang.org/appengine/log"
 )
 
+type updateInfoView struct {
+	site.UpdateInfo
+	HasHub       bool
+	SafeSiteIcon string
+	HasIcon      bool
+}
+
 // IndexHandler はペインページを作成する
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appengine.NewContext(r)
 
 	list := site.PublicList(ctx)
+
+	var vlist []updateInfoView
+	for _, u := range list {
+		v := updateInfoView{
+			UpdateInfo:   u,
+			HasHub:       ("" != u.HubURL),
+			SafeSiteIcon: u.SiteIcon.TunneledURL(),
+			HasIcon:      ("" != u.SiteIcon),
+		}
+		vlist = append(vlist, v)
+	}
 
 	// 雛形を読み込む
 	t, err := template.ParseFiles("resources/template/index.html")
@@ -24,7 +42,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// html生成
-	err = t.Execute(w, list)
+	err = t.Execute(w, vlist)
 	if err != nil {
 		log.Warningf(ctx, "t.Execute err=%v", err)
 		redirectErrorHTML(w)
