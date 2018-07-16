@@ -29,7 +29,7 @@ func main() {
 	http.HandleFunc("/api/conf/remove", conf.RemoveHandler)
 	// サービス補助
 	http.HandleFunc("/api/key", utility.KeyHandler)
-	http.HandleFunc("/api/list", site.ListHandler)
+	http.HandleFunc("/api/list", site.ListHandler) // todo:不要になったカモ
 	http.HandleFunc("/api/test", webpush.TestHandler)
 	http.HandleFunc("/api/search", utility.SearchHandler)
 	http.HandleFunc("/api/subscriber", pubsubhubbub.SubscriberHandler)
