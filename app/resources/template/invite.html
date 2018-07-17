@@ -35,9 +35,9 @@
                 color: white;"><h1>まとプ</h1></header>
 
         <div id="matopush-invite" style="max-width: 90%; margin-left: auto; margin-right: auto;">
-            <div v-if="vueData.hasPermission&&vueData.hasPushManager&&!vueData.complete">
+            <div v-if="vueData.hasPermission&&vueData.hasPushManager&&!vueData.hasError&&!vueData.complete">
                 <p></p>
-                <h4>「{{.SiteTitle}}」の更新をWebPushで通知します</h4>
+                <h4>「<a href="{{.SiteURL}}" target="_blank">{{.SiteTitle}}</a>」の更新をWebPushで通知します</h4>
                 <strong>利用方法</strong>
                 <p>
                     1. 下部の[「{{.SiteTitle}}」の更新通知を受け取る]ボタンを押す。<br>
@@ -54,7 +54,7 @@
                 <p></p>
                 <h4>このブラウザで通知が許可されていません。</h4>
                 <p>
-                    ・ブラウザ設定の「通知」の項目で許可されていることを確認してください。<br>
+                    ・ブラウザ設定の「通知」の項目で許可されていることを確認してください。
                 </p>
             </div>
             <div v-if="!vueData.hasPushManager">
@@ -67,9 +67,17 @@
                     ・Edge(Android)
                 </p>
             </div>
+            <div v-if="vueData.hasError">
+                <p></p>
+                <h4>エラーが発生しました。</h4>
+                <p>
+                    エラー内容について:<br>
+                    ${errorMessage}
+                </p>
+            </div>
             <div v-if="vueData.complete">
                 <p></p>
-                <h4>「{{.SiteTitle}}」を登録しました。</h4>
+                <h4>「<a href="{{.SiteURL}}" target="_blank">{{.SiteTitle}}</a>」を登録しました。</h4>
                 <p>
                     <b-button
                         size="sm"
@@ -78,7 +86,7 @@
                         通知をテストする
                     </b-button>
                     <p>
-                    もし通知がこない場合は以下を確認してください。<br>
+                    もし通知がこない場合は以下を確認してください。<br><br>
                     【Android】<br>
                     ・「設定」>「アプリ」>「Chrome」>「通知」<br>
                     または<br>
@@ -99,6 +107,10 @@
             hasPushManager: true,
             // 許可があるか?
             hasPermission: true,
+            // エラーが発生したか?
+            hasError: false,
+            // エラーメッセージ
+            errorMessage: "",
             // 登録完了を示す
             complete: false,
         };
@@ -111,6 +123,7 @@
 
         window.addEventListener('load', function() {
             var vue = new Vue({
+                delimiters: ['${', '}'],
                 el: "#matopush-invite",
                 data: {
                     vueData,
@@ -222,7 +235,8 @@
         }
 
         function errorSubscription(err) {
-            vueData.hasPermission = false;
+            vueData.hasError = true;
+            vueData.errorMessage = err;
         }
 
         function getSubscription(sub) {

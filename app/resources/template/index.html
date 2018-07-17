@@ -43,23 +43,50 @@
     <body>
         <div class="container">
             <h1>気になるサイトの更新をまとめてWebPush通知</h1>
-            <div id="control">
-                <button id="subscribe" class="btn-sm btn-primary" disabled></button>
-                <button id="test" class="btn-sm btn-primary" disabled>通知をテストする</button>
-            </div>
-
-            <div id="how_to_use"><BR>
-                <dl class="dl-horizontal">
-                    <dt>対応ブラウザ</dt><dd>Chrome, FireFox, Edge</dd>
-                    <dt>対応OS</dt><dd>Windows, Android, Mac</dd>
-                    <dt>使い方</dt><dd>①プッシュ通知を有効にして、テスト通知が届くことを確認してください。</dd>
-                    <dt></dt><dd>②下記の「登録済みサンプルサイト」のリストから更新を通知してほしいサイトをチェックしてください。</dd>
-                    <dt></dt><dd>③「登録済みサンプルサイト」のリストにないサイトはサイトURLを参考にフィード配信しているURLを入力することで追加ができます。</dd>
-                    <dt></dt><dd>→RSS 1.0, RSS 2.0, ATOMに対応しています。(html内にフィードへのリンクがあればhtmlを指定してもいいです)</dd>
-                    <dt>通知について</dt><dd><strong>１時間に１回、サーバー側でサイトを巡回して新着記事があればWebPushで通知します。</strong></dd>
-                </dl>
-            </div>
             <div id="matopush">
+                <div v-if="!vueData.hasPermission">
+                    <b-alert show>
+                        <h4>このブラウザで通知が許可されていません。</h4>
+                        <p>
+                            ・ブラウザ設定の「通知」の項目で許可されていることを確認してください。
+                        </p>
+                    </b-alert>
+                </div>
+                <div v-if="!vueData.hasPushManager">
+                    <b-alert show>
+                        <h4>このブラウザはサポートされていません。</h4>
+                        <p>
+                            当サイトは以下のいずれかをご使用ください。<br>
+                            ・Chrome(Windows, Linux, Android)<br>
+                            ・FireFox(Windows, Linux, Android)<br>
+                            ・Edge(Android)
+                        </p>
+                    </b-alert>
+                </div>
+                <div v-if="vueData.hasError">
+                    <b-alert show>
+                        <h4>エラーが発生しました。</h4>
+                        <p>
+                            エラー内容について:<br>
+                            ${errorMessage}
+                        </p>
+                    </b-alert>
+                </div>
+                <div id="control">
+                    <button id="subscribe" class="btn-sm btn-primary" disabled></button>
+                    <button id="test" class="btn-sm btn-primary" disabled>通知をテストする</button>
+                </div>
+                <div id="how_to_use"><BR>
+                    <dl class="dl-horizontal">
+                        <dt>対応ブラウザ</dt><dd>Chrome, FireFox, Edge</dd>
+                        <dt>対応OS</dt><dd>Windows, Android, Mac</dd>
+                        <dt>使い方</dt><dd>①プッシュ通知を有効にして、テスト通知が届くことを確認してください。</dd>
+                        <dt></dt><dd>②下記の「登録済みサンプルサイト」のリストから更新を通知してほしいサイトをチェックしてください。</dd>
+                        <dt></dt><dd>③「登録済みサンプルサイト」のリストにないサイトはサイトURLを参考にフィード配信しているURLを入力することで追加ができます。</dd>
+                        <dt></dt><dd>→RSS 1.0, RSS 2.0, ATOMに対応しています。(html内にフィードへのリンクがあればhtmlを指定してもいいです)</dd>
+                        <dt>通知について</dt><dd><strong>１時間に１回、サーバー側でサイトを巡回して新着記事があればWebPushで通知します。</strong></dd>
+                    </dl>
+                </div>
                 <b-tabs small v-model="vueData.tabIndex">
                     <b-tab title="サイト別" v-on:click="onTabClick('site')">
                         <template v-for="(site, siteid) in vueData.myList">
@@ -244,6 +271,10 @@
             hasPushManager: true,
             // 許可があるか?
             hasPermission: true,
+            // エラーが発生したか?
+            hasError: false,
+            // エラーメッセージ
+            errorMessage: "",
             // 登録完了を示す
             complete: false,
             // マイリスト
@@ -542,7 +573,8 @@
         }
 
         function errorSubscription(err) {
-            vueData.hasPermission = false;
+            vueData.hasError = true;
+            vueData.errorMessage = err;
         }
 
         function getSubscription(sub) {
