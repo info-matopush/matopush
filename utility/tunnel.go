@@ -56,7 +56,7 @@ func TunnelHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	copyHeaders(w.Header(), resp.Header)
 	// キャッシュを有効にする
-	w.Header().Set("cache-control", "public, max-age=3")
+	w.Header().Set("cache-control", "public, max-age=259200")
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
