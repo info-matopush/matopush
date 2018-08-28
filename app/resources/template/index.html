@@ -399,11 +399,15 @@
             }
 
             db.keyvalue.get('latest_tab').then(function(tab) {
-                if (tab.value === 'site') {
-                    vueData.tabIndex = 0;
+                if (tab != null) {
+                    if (tab.value === 'site') {
+                        vueData.tabIndex = 0;
+                    } else {
+                        vueData.tabIndex = 1;
+                    }
                 } else {
-                    vueData.tabIndex = 1;
-                }    
+                    vueData.tabIndex = 2;
+                }
             });
         }, false);
 
