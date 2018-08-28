@@ -121,7 +121,7 @@
         // FeedURL
         var feedURL = "{{.FeedURL}}";
 
-        window.addEventListener('load', function() {
+        $(document).ready(function() {
             var vue = new Vue({
                 delimiters: ['${', '}'],
                 el: "#matopush-invite",
