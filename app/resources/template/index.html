@@ -173,7 +173,7 @@
                                 <td class="col-9" v-on:click="item.Value=!item.Value; toggleAtMyList(index)">${item.SiteTitle}
                                     <span class="badge badge-pill badge-secondary">${item.Type}</span>
                                 </td>
-                                <td class="col-2">
+                                <td class="col-2">
                                     <b-button
                                         class="float-right"
                                         v-on:click="removeSite(index)"
@@ -258,454 +258,453 @@
                 </div>
             </div>
         </div>
-    </body>
-    <script>
-        'use strict'
-        var _ = function(id) {return document.getElementById(id);};
-        var registURL = '/api/regist';
-        var unregistURL = '/api/unregist';
-        var vueData = {
-            // ServiceWorkerが使用できるか?
-            isExistServiceWorker: true,
-            // PushManagerがあるか?
-            hasPushManager: true,
-            // 許可があるか?
-            hasPermission: true,
-            // エラーが発生したか?
-            hasError: false,
-            // エラーメッセージ
-            errorMessage: "",
-            // 登録完了を示す
-            complete: false,
-            // マイリスト
-            myList: [],
-            // 検索リスト
-            searchList: [],
-            // タイムラインリスト
-            timelineList: [],
-            // タブインデックス
-            tabIndex: 0,
-        };
-        // サーバキー
-        var serverKey = null;
-        // サブスクリプション
-        var subscription = null;
+        <script>
+            'use strict'
+            var _ = function(id) {return document.getElementById(id);};
+            var registURL = '/api/regist';
+            var unregistURL = '/api/unregist';
+            var vueData = {
+                // ServiceWorkerが使用できるか?
+                isExistServiceWorker: true,
+                // PushManagerがあるか?
+                hasPushManager: true,
+                // 許可があるか?
+                hasPermission: true,
+                // エラーが発生したか?
+                hasError: false,
+                // エラーメッセージ
+                errorMessage: "",
+                // 登録完了を示す
+                complete: false,
+                // マイリスト
+                myList: [],
+                // 検索リスト
+                searchList: [],
+                // タイムラインリスト
+                timelineList: [],
+                // タブインデックス
+                tabIndex: 0,
+            };
+            // サーバキー
+            var serverKey = null;
+            // サブスクリプション
+            var subscription = null;
 
-        var db = new Dexie("key_value_database");
-        db.version(1).stores({
-            keyvalue: 'key, value'
-        });
-
-
-        $(document).ready(function() {
-            var vue = new Vue({
-                delimiters: ['${', '}'],
-                el: "#matopush",
-                data: {
-                    vueData,
-                },
-                methods: {
-                    openUrl: function (url) {
-                        window.open(url);
-                    },
-                    accept: function() {
-                        requestNotificationPermission();
-                    },
-                    addSite: function (feedURL) {
-                        var sendData = new FormData();
-                        sendData.append('endpoint', subscription.endpoint);
-                        sendData.append('siteUrl', feedURL);
-                        sendData.append('value', 'true')
-
-                        $.ajax({
-                            url: "/api/conf/site",
-                            type: "POST",
-                            data: sendData,
-                            processData: false,
-                            contentType: false,
-                            success:
-                                function (resp) {
-                                    alert(resp);
-                                    refreshMyList();
-                                },
-                        });
-                    },
-                    removeSite: function (index) {
-                        var sel = vueData.myList[index];
-                        var sendData = new FormData();
-                        sendData.append('endpoint', subscription.endpoint);
-                        sendData.append('feedUrl', sel.FeedUrl);
-
-                        $.ajax({
-                            url: "/api/conf/remove",
-                            type: "POST",
-                            data: sendData,
-                            processData: false,
-                            contentType: false,
-                            success:
-                                function (resp) {
-                                    vueData.myList.splice(index, 1);
-                                },
-                        });
-                    },
-                    toggleAtMyList: function (index) {
-                        var sel = vueData.myList[index];
-                        toggleSubscribe(sel);
-                    },
-                    onTabClick: function(index) {
-                        db.keyvalue.put({key: "latest_tab", value: index});
-                    },
-                    testPush: function() {
-                        var sendData = new FormData();
-                        sendData.append('endpoint', subscription.endpoint);
-                        $.ajax({
-                            url: "/api/test",
-                            type: "POST",
-                            data: sendData,
-                            processData: false,
-                            contentType: false, 
-                        });
-                    }
-                },
+            var db = new Dexie("key_value_database");
+            db.version(1).stores({
+                keyvalue: 'key, value'
             });
 
-            navigator.serviceWorker.addEventListener('message', onWorkerMessage);
 
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('push.js');
-                $.ajax({
-                    url: "/api/key",
-                    type: "GET",
-                    dataType: "text",
-                    processData: false,
-                    contentData: false,
-                    success:
-                        function (resp) {
-                            serverKey = decodeBase64URL(resp);
-                            navigator.serviceWorker.ready.then(serviceWorkerReady);
+            $(document).ready(function() {
+                var vue = new Vue({
+                    delimiters: ['${', '}'],
+                    el: "#matopush",
+                    data: {
+                        vueData,
+                    },
+                    methods: {
+                        openUrl: function (url) {
+                            window.open(url);
+                        },
+                        accept: function() {
+                            requestNotificationPermission();
+                        },
+                        addSite: function (feedURL) {
+                            var sendData = new FormData();
+                            sendData.append('endpoint', subscription.endpoint);
+                            sendData.append('siteUrl', feedURL);
+                            sendData.append('value', 'true')
+
+                            $.ajax({
+                                url: "/api/conf/site",
+                                type: "POST",
+                                data: sendData,
+                                processData: false,
+                                contentType: false,
+                                success:
+                                    function (resp) {
+                                        alert(resp);
+                                        refreshMyList();
+                                    },
+                            });
+                        },
+                        removeSite: function (index) {
+                            var sel = vueData.myList[index];
+                            var sendData = new FormData();
+                            sendData.append('endpoint', subscription.endpoint);
+                            sendData.append('feedUrl', sel.FeedUrl);
+
+                            $.ajax({
+                                url: "/api/conf/remove",
+                                type: "POST",
+                                data: sendData,
+                                processData: false,
+                                contentType: false,
+                                success:
+                                    function (resp) {
+                                        vueData.myList.splice(index, 1);
+                                    },
+                            });
+                        },
+                        toggleAtMyList: function (index) {
+                            var sel = vueData.myList[index];
+                            toggleSubscribe(sel);
+                        },
+                        onTabClick: function(index) {
+                            db.keyvalue.put({key: "latest_tab", value: index});
+                        },
+                        testPush: function() {
+                            var sendData = new FormData();
+                            sendData.append('endpoint', subscription.endpoint);
+                            $.ajax({
+                                url: "/api/test",
+                                type: "POST",
+                                data: sendData,
+                                processData: false,
+                                contentType: false, 
+                            });
                         }
+                    },
                 });
-            }
-            else {
-                isExistServiceWorker = false;
-            }
 
-            // 画面が作られたらWebPushの準備を行う
-            if ('serviceWorker' in navigator) {
-                _('subscribe').addEventListener('click', togglePushSubscription, false);
-                _('test').addEventListener('click', testPush, false);
-                _('addSite').addEventListener('click', addSite, false);
-                _('searchSite').addEventListener('click', searchSite, false);
-            }
+                navigator.serviceWorker.addEventListener('message', onWorkerMessage);
 
-            db.keyvalue.get('latest_tab').then(function(tab) {
-                if (tab != null) {
-                    if (tab.value === 'site') {
-                        vueData.tabIndex = 0;
-                    } else {
-                        vueData.tabIndex = 1;
-                    }
-                } else {
-                    vueData.tabIndex = 2;
-                }
-            });
-        }, false);
-
-        // ServiceWorkerの通知を取得。
-        // 画面を更新する
-        function onWorkerMessage() {
-            refreshMyList();
-        }
-
-        function refreshMyList() {
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-
-            $.ajax({
-                url: "/api/conf/list",
-                type: "POST",
-                data: sendData,
-                dataType: "json",
-                processData: false,
-                contentType: false,
-                success:
-                    function (resp) {
-                        setMyList(resp);
-                    },
-            });
-        }
-
-        function compare(a, b) {
-            const timea = a.ModifyDate;
-            const timeb = b.ModifyDate;
-            if (timea < timeb) {
-                return 1;
-            } else if (timea > timeb) {
-                return -1;
-            }
-            return 0;
-        }
-
-        function setMyList(items) {
-            vueData.myList.splice(0);
-            vueData.timelineList.splice(0);
-            if (items == null) {
-                return
-            }
-            // 重複する登録済みリストから消し込みを行う
-            for (var i=0; i<items.length; i++) {
-                // タイムライン表示用
-                for (var j=0; j<items[i].Contents.length; j++) {
-                    var date = items[i].Contents[j].ModifyDate;
-                    date = date.replace('T', ' ');
-                    date = date.replace('+09:00', '');
-                    items[i].Contents[j].ModifyDate = date;
-                    vueData.timelineList.push(items[i].Contents[j]);
-                    vueData.timelineList.sort(compare)
-                }
-            }
-            vueData.myList = items;
-        }
-
-        function toggleSubscribe(item) {
-            if (subscription == null) {
-                alert('プッシュ通知が有効になっていません。');
-                location.reload();
-                return;
-            }
-
-            // 
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-            sendData.append('siteUrl', item.FeedUrl);
-            if (item.Value) {
-                sendData.append('value', "true");
-            } else {
-                sendData.append('value', "false");
-            }
-
-            $.ajax({
-                url: "/api/conf/site",
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false,
-                success:
-                    function (resp) {
-                        alert(resp);
-                        refreshMyList();
-                    },
-            });
-        }
-
-        function togglePushSubscription() {
-            _('subscribe').disabled = true;
-
-            if (!_('subscribe').classList.contains('subscribing')) {
-                requestNotificationPermission();
-            }
-            else {
-                requestPushUnsubscription();
-            }
-        }
-
-        function encodeBase64URL(buffer) {
-            return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        }
-
-        function decodeBase64URL(str) {
-            var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
-            var buffer = new Uint8Array(dec.length);
-            for(var i = 0 ; i < dec.length ; i++)
-                buffer[i] = dec.charCodeAt(i);
-            return buffer;
-        }
-
-        function serviceWorkerReady(registration) {
-            if ('pushManager' in registration) {
-                registration.pushManager.getSubscription().then(getSubscription);
-            }
-            else {
-                vueData.hasPushManager = false;
-            }
-        }
-
-        function requestNotificationPermission() {
-            Notification.requestPermission(function(permission) {
-                if (permission !== 'denied') {
-                    requestPushPermission();
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('push.js');
+                    $.ajax({
+                        url: "/api/key",
+                        type: "GET",
+                        dataType: "text",
+                        processData: false,
+                        contentData: false,
+                        success:
+                            function (resp) {
+                                serverKey = decodeBase64URL(resp);
+                                navigator.serviceWorker.ready.then(serviceWorkerReady);
+                            }
+                    });
                 }
                 else {
-                    vueData.hasPermission = false;
+                    isExistServiceWorker = false;
                 }
-            });
-        }
 
-        function requestPushPermission() {
-            if ('permissions' in navigator)
-                navigator.permissions.query({
-                    name: 'push',
-                    userVisibleOnly: true
-                }).then(checkPushPermission);
-            else if (Notification.permission !== 'denied') {
-                navigator.serviceWorker.ready.then(requestPushSubscription);
-            }
-        }
+                // 画面が作られたらWebPushの準備を行う
+                if ('serviceWorker' in navigator) {
+                    _('subscribe').addEventListener('click', togglePushSubscription, false);
+                    _('test').addEventListener('click', testPush, false);
+                    _('addSite').addEventListener('click', addSite, false);
+                    _('searchSite').addEventListener('click', searchSite, false);
+                }
 
-        function checkPushPermission(evt) {
-            var state = evt.state || evt.status;
-            if (state !== 'denied') {
-                navigator.serviceWorker.ready.then(requestPushSubscription);
-            }
-            else {
-                vueData.hasPermission = false;
-            }
-        }
+                db.keyvalue.get('latest_tab').then(function(tab) {
+                    if (tab != null) {
+                        if (tab.value === 'site') {
+                            vueData.tabIndex = 0;
+                        } else {
+                            vueData.tabIndex = 1;
+                        }
+                    } else {
+                        vueData.tabIndex = 2;
+                    }
+                });
+            }, false);
 
-        function requestPushSubscription(registration) {
-            var opt = {
-                userVisible: true,
-                userVisibleOnly: true,
-                applicationServerKey: serverKey
-            };
-            if ('pushManager' in registration) {
-                registration.pushManager.subscribe(opt).then(getSubscription, errorSubscription);
-            }
-            else {
-                vueData.hasPushManager = false;
+            // ServiceWorkerの通知を取得。
+            // 画面を更新する
+            function onWorkerMessage() {
+                refreshMyList();
             }
 
-        }
-
-        function errorSubscription(err) {
-            vueData.hasError = true;
-            vueData.errorMessage = err;
-        }
-
-        function getSubscription(sub) {
-            if (sub) {
-                enablePushRequest(sub);
-            }
-            else {
-                disablePushRequest();
-            }
-        }
-
-        function requestPushUnsubscription() {
-            if (subscription) {
-                subscription.unsubscribe();
-
-                // subscriptionを削除する
+            function refreshMyList() {
                 var sendData = new FormData();
                 sendData.append('endpoint', subscription.endpoint);
 
                 $.ajax({
-                    url: unregistURL,
+                    url: "/api/conf/list",
+                    type: "POST",
+                    data: sendData,
+                    dataType: "json",
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            setMyList(resp);
+                        },
+                });
+            }
+
+            function compare(a, b) {
+                const timea = a.ModifyDate;
+                const timeb = b.ModifyDate;
+                if (timea < timeb) {
+                    return 1;
+                } else if (timea > timeb) {
+                    return -1;
+                }
+                return 0;
+            }
+
+            function setMyList(items) {
+                vueData.myList.splice(0);
+                vueData.timelineList.splice(0);
+                if (items == null) {
+                    return
+                }
+                // 重複する登録済みリストから消し込みを行う
+                for (var i=0; i<items.length; i++) {
+                    // タイムライン表示用
+                    for (var j=0; j<items[i].Contents.length; j++) {
+                        var date = items[i].Contents[j].ModifyDate;
+                        date = date.replace('T', ' ');
+                        date = date.replace('+09:00', '');
+                        items[i].Contents[j].ModifyDate = date;
+                        vueData.timelineList.push(items[i].Contents[j]);
+                        vueData.timelineList.sort(compare)
+                    }
+                }
+                vueData.myList = items;
+            }
+
+            function toggleSubscribe(item) {
+                if (subscription == null) {
+                    alert('プッシュ通知が有効になっていません。');
+                    location.reload();
+                    return;
+                }
+
+                // 
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('siteUrl', item.FeedUrl);
+                if (item.Value) {
+                    sendData.append('value', "true");
+                } else {
+                    sendData.append('value', "false");
+                }
+
+                $.ajax({
+                    url: "/api/conf/site",
                     type: "POST",
                     data: sendData,
                     processData: false,
-                    contentTYpe: false,
+                    contentType: false,
                     success:
-                        function () {
-                            subscription = null;
-                            disablePushRequest();
-                            // todo:
-                            location.reload();                            
-                        }
+                        function (resp) {
+                            alert(resp);
+                            refreshMyList();
+                        },
                 });
             }
-        }
 
-        function disablePushRequest() {
-            _('subscribe').classList.remove('subscribing');
-            _('subscribe').disabled = false;
-            _('test').disabled = true;
-            _('addSite').disabled = true;
-            _('siteUrl').disabled = true;
-        }
+            function togglePushSubscription() {
+                _('subscribe').disabled = true;
 
-        function enablePushRequest(sub) {
-            subscription = sub;
-            _('subscribe').classList.add('subscribing');
-            _('subscribe').disabled = false;
-            _('test').disabled = false;
-            _('addSite').disabled = false;
-            _('siteUrl').disabled = false;
+                if (!_('subscribe').classList.contains('subscribing')) {
+                    requestNotificationPermission();
+                }
+                else {
+                    requestPushUnsubscription();
+                }
+            }
 
-            // subscriptionを登録する
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-            sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
-            sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+            function encodeBase64URL(buffer) {
+                return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            }
 
-            $.ajax({
-                url: registURL,
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false,
-                success:
-                    function (resp) {
-                        refreshMyList();
-                    },
-            });
-        }
+            function decodeBase64URL(str) {
+                var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
+                var buffer = new Uint8Array(dec.length);
+                for(var i = 0 ; i < dec.length ; i++)
+                    buffer[i] = dec.charCodeAt(i);
+                return buffer;
+            }
 
-        function getSubscription2(sub) {
-            subscription = sub;
+            function serviceWorkerReady(registration) {
+                if ('pushManager' in registration) {
+                    registration.pushManager.getSubscription().then(getSubscription);
+                }
+                else {
+                    vueData.hasPushManager = false;
+                }
+            }
 
-            // subscriptionを登録する
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-            sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
-            sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+            function requestNotificationPermission() {
+                Notification.requestPermission(function(permission) {
+                    if (permission !== 'denied') {
+                        requestPushPermission();
+                    }
+                    else {
+                        vueData.hasPermission = false;
+                    }
+                });
+            }
 
-            $.ajax({
-                url: registURL,
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false,
-                success:
-                    function (resp) {
-                        registFeedURL();
-                    },
-            });
-        }
+            function requestPushPermission() {
+                if ('permissions' in navigator)
+                    navigator.permissions.query({
+                        name: 'push',
+                        userVisibleOnly: true
+                    }).then(checkPushPermission);
+                else if (Notification.permission !== 'denied') {
+                    navigator.serviceWorker.ready.then(requestPushSubscription);
+                }
+            }
 
-        function addSite() {
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-            sendData.append('siteUrl', _('siteUrl').value);
+            function checkPushPermission(evt) {
+                var state = evt.state || evt.status;
+                if (state !== 'denied') {
+                    navigator.serviceWorker.ready.then(requestPushSubscription);
+                }
+                else {
+                    vueData.hasPermission = false;
+                }
+            }
 
-            _('siteUrl').value = '';
+            function requestPushSubscription(registration) {
+                var opt = {
+                    userVisible: true,
+                    userVisibleOnly: true,
+                    applicationServerKey: serverKey
+                };
+                if ('pushManager' in registration) {
+                    registration.pushManager.subscribe(opt).then(getSubscription, errorSubscription);
+                }
+                else {
+                    vueData.hasPushManager = false;
+                }
 
-            $.ajax({
-                url: "/api/conf/site",
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false,
-                success:
-                    function (resp) {
-                        alert(resp);
-                        refreshMyList();
-                    },
-            });
-        }
+            }
 
-        function testPush() {
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
+            function errorSubscription(err) {
+                vueData.hasError = true;
+                vueData.errorMessage = err;
+            }
 
-            $.ajax({
-                url: "/api/test",
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false, 
-            });
-        }
+            function getSubscription(sub) {
+                if (sub) {
+                    enablePushRequest(sub);
+                }
+                else {
+                    disablePushRequest();
+                }
+            }
 
-    </script>    
+            function requestPushUnsubscription() {
+                if (subscription) {
+                    subscription.unsubscribe();
+
+                    // subscriptionを削除する
+                    var sendData = new FormData();
+                    sendData.append('endpoint', subscription.endpoint);
+
+                    $.ajax({
+                        url: unregistURL,
+                        type: "POST",
+                        data: sendData,
+                        processData: false,
+                        contentTYpe: false,
+                        success:
+                            function () {
+                                subscription = null;
+                                disablePushRequest();
+                                // todo:
+                                location.reload();                            
+                            }
+                    });
+                }
+            }
+
+            function disablePushRequest() {
+                _('subscribe').classList.remove('subscribing');
+                _('subscribe').disabled = false;
+                _('test').disabled = true;
+                _('addSite').disabled = true;
+                _('siteUrl').disabled = true;
+            }
+
+            function enablePushRequest(sub) {
+                subscription = sub;
+                _('subscribe').classList.add('subscribing');
+                _('subscribe').disabled = false;
+                _('test').disabled = false;
+                _('addSite').disabled = false;
+                _('siteUrl').disabled = false;
+
+                // subscriptionを登録する
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+                sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+
+                $.ajax({
+                    url: registURL,
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            refreshMyList();
+                        },
+                });
+            }
+
+            function getSubscription2(sub) {
+                subscription = sub;
+
+                // subscriptionを登録する
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+                sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+
+                $.ajax({
+                    url: registURL,
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            registFeedURL();
+                        },
+                });
+            }
+
+            function addSite() {
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('siteUrl', _('siteUrl').value);
+
+                _('siteUrl').value = '';
+
+                $.ajax({
+                    url: "/api/conf/site",
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            alert(resp);
+                            refreshMyList();
+                        },
+                });
+            }
+
+            function testPush() {
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+
+                $.ajax({
+                    url: "/api/test",
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false, 
+                });
+            }
+        </script>
+    </body>
 </html>

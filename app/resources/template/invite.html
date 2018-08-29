@@ -85,200 +85,202 @@
                         v-on:click="testPush()">
                         通知をテストする
                     </b-button>
-                    <p>
+                </p>
+                <p>
                     もし通知がこない場合は以下を確認してください。<br><br>
                     【Android】<br>
                     ・「設定」>「アプリ」>「Chrome」>「通知」<br>
                     または<br>
                     ・「設定」>「アプリ」>「FireFox」>「通知」<br>
-                    </p>
+                </p>
+                <p>
                     <a href="/">こちら</a>もご利用ください。
                 </p>
             </div>
         </div>
-    </body>
-    <script>
-        'use strict'
-        var registURL = '/api/regist';
-        var vueData = {
-            // ServiceWorkerが使用できるか?
-            isExistServiceWorker: true,
-            // PushManagerがあるか?
-            hasPushManager: true,
-            // 許可があるか?
-            hasPermission: true,
-            // エラーが発生したか?
-            hasError: false,
-            // エラーメッセージ
-            errorMessage: "",
-            // 登録完了を示す
-            complete: false,
-        };
-        // サーバキー
-        var serverKey = null;
-        // サブスクリプション
-        var subscription = null;
-        // FeedURL
-        var feedURL = "{{.FeedURL}}";
+        <script>
+            'use strict'
+            var registURL = '/api/regist';
+            var vueData = {
+                // ServiceWorkerが使用できるか?
+                isExistServiceWorker: true,
+                // PushManagerがあるか?
+                hasPushManager: true,
+                // 許可があるか?
+                hasPermission: true,
+                // エラーが発生したか?
+                hasError: false,
+                // エラーメッセージ
+                errorMessage: "",
+                // 登録完了を示す
+                complete: false,
+            };
+            // サーバキー
+            var serverKey = null;
+            // サブスクリプション
+            var subscription = null;
+            // FeedURL
+            var feedURL = "{{.FeedURL}}";
 
-        $(document).ready(function() {
-            var vue = new Vue({
-                delimiters: ['${', '}'],
-                el: "#matopush-invite",
-                data: {
-                    vueData,
-                },
-                methods: {
-                    accept: function() {
-                        requestNotificationPermission();
+            $(document).ready(function() {
+                var vue = new Vue({
+                    delimiters: ['${', '}'],
+                    el: "#matopush-invite",
+                    data: {
+                        vueData,
                     },
-                    testPush: function() {
-                        var sendData = new FormData();
-                        sendData.append('endpoint', subscription.endpoint);
-                        $.ajax({
-                            url: "/api/test",
-                            type: "POST",
-                            data: sendData,
-                            processData: false,
-                            contentType: false, 
-                        });
-                    }
-                },
-            });
-
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('push.js');
-                $.ajax({
-                    url: "/api/key",
-                    type: "GET",
-                    dataType: "text",
-                    processData: false,
-                    contentData: false,
-                    success:
-                        function (resp) {
-                            serverKey = decodeBase64URL(resp);
-                            navigator.serviceWorker.ready.then(serviceWorkerReady);
+                    methods: {
+                        accept: function() {
+                            requestNotificationPermission();
+                        },
+                        testPush: function() {
+                            var sendData = new FormData();
+                            sendData.append('endpoint', subscription.endpoint);
+                            $.ajax({
+                                url: "/api/test",
+                                type: "POST",
+                                data: sendData,
+                                processData: false,
+                                contentType: false, 
+                            });
                         }
+                    },
+                });
+
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('push.js');
+                    $.ajax({
+                        url: "/api/key",
+                        type: "GET",
+                        dataType: "text",
+                        processData: false,
+                        contentData: false,
+                        success:
+                            function (resp) {
+                                serverKey = decodeBase64URL(resp);
+                                navigator.serviceWorker.ready.then(serviceWorkerReady);
+                            }
+                    });
+                }
+                else {
+                    isExistServiceWorker = false;
+                }
+            }, false);
+
+            function encodeBase64URL(buffer) {
+                return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            }
+
+            function decodeBase64URL(str) {
+                var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
+                var buffer = new Uint8Array(dec.length);
+                for(var i = 0 ; i < dec.length ; i++)
+                    buffer[i] = dec.charCodeAt(i);
+                return buffer;
+            }
+
+            function serviceWorkerReady(registration) {
+                if ('pushManager' in registration) {
+                    //registration.pushManager.getSubscription().then(getSubscription);
+                }
+                else {
+                    vueData.hasPushManager = false;
+                }
+            }
+
+            function requestNotificationPermission() {
+                Notification.requestPermission(function(permission) {
+                    if (permission !== 'denied') {
+                        requestPushPermission();
+                    }
+                    else {
+                        vueData.hasPermission = false;
+                    }
                 });
             }
-            else {
-                isExistServiceWorker = false;
+
+            function requestPushPermission() {
+                if ('permissions' in navigator)
+                    navigator.permissions.query({
+                        name: 'push',
+                        userVisibleOnly: true
+                    }).then(checkPushPermission);
+                else if (Notification.permission !== 'denied') {
+                    navigator.serviceWorker.ready.then(requestPushSubscription);
+                }
             }
-        }, false);
 
-        function encodeBase64URL(buffer) {
-            return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        }
-
-        function decodeBase64URL(str) {
-            var dec = atob(str.replace(/\-/g, '+').replace(/_/g, '/'));
-            var buffer = new Uint8Array(dec.length);
-            for(var i = 0 ; i < dec.length ; i++)
-                buffer[i] = dec.charCodeAt(i);
-            return buffer;
-        }
-
-        function serviceWorkerReady(registration) {
-            if ('pushManager' in registration) {
-                //registration.pushManager.getSubscription().then(getSubscription);
-            }
-            else {
-                vueData.hasPushManager = false;
-            }
-        }
-
-        function requestNotificationPermission() {
-            Notification.requestPermission(function(permission) {
-                if (permission !== 'denied') {
-                    requestPushPermission();
+            function checkPushPermission(evt) {
+                var state = evt.state || evt.status;
+                if (state !== 'denied') {
+                    navigator.serviceWorker.ready.then(requestPushSubscription);
                 }
                 else {
                     vueData.hasPermission = false;
                 }
-            });
-        }
-
-        function requestPushPermission() {
-            if ('permissions' in navigator)
-                navigator.permissions.query({
-                    name: 'push',
-                    userVisibleOnly: true
-                }).then(checkPushPermission);
-            else if (Notification.permission !== 'denied') {
-                navigator.serviceWorker.ready.then(requestPushSubscription);
-            }
-        }
-
-        function checkPushPermission(evt) {
-            var state = evt.state || evt.status;
-            if (state !== 'denied') {
-                navigator.serviceWorker.ready.then(requestPushSubscription);
-            }
-            else {
-                vueData.hasPermission = false;
-            }
-        }
-
-        function requestPushSubscription(registration) {
-            var opt = {
-                userVisible: true,
-                userVisibleOnly: true,
-                applicationServerKey: serverKey
-            };
-            if ('pushManager' in registration) {
-                registration.pushManager.subscribe(opt).then(getSubscription, errorSubscription);
-            }
-            else {
-                vueData.hasPushManager = false;
             }
 
-        }
+            function requestPushSubscription(registration) {
+                var opt = {
+                    userVisible: true,
+                    userVisibleOnly: true,
+                    applicationServerKey: serverKey
+                };
+                if ('pushManager' in registration) {
+                    registration.pushManager.subscribe(opt).then(getSubscription, errorSubscription);
+                }
+                else {
+                    vueData.hasPushManager = false;
+                }
 
-        function errorSubscription(err) {
-            vueData.hasError = true;
-            vueData.errorMessage = err;
-        }
+            }
 
-        function getSubscription(sub) {
-            subscription = sub;
+            function errorSubscription(err) {
+                vueData.hasError = true;
+                vueData.errorMessage = err;
+            }
 
-            // subscriptionを登録する
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-            sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
-            sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
+            function getSubscription(sub) {
+                subscription = sub;
 
-            $.ajax({
-                url: registURL,
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false,
-                success:
-                    function (resp) {
-                        registFeedURL();
-                    },
-            });
-        }
+                // subscriptionを登録する
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
+                sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
 
-        function registFeedURL() {
-            var sendData = new FormData();
-            sendData.append('endpoint', subscription.endpoint);
-            sendData.append('siteUrl', feedURL);
-            sendData.append('value', 'true')
+                $.ajax({
+                    url: registURL,
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            registFeedURL();
+                        },
+                });
+            }
 
-            $.ajax({
-                url: "/api/conf/site",
-                type: "POST",
-                data: sendData,
-                processData: false,
-                contentType: false,
-                success:
-                    function () {
-                        vueData.complete = true;
-                    },
-            });
-        }
+            function registFeedURL() {
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('siteUrl', feedURL);
+                sendData.append('value', 'true')
 
-    </script>
+                $.ajax({
+                    url: "/api/conf/site",
+                    type: "POST",
+                    data: sendData,
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function () {
+                            vueData.complete = true;
+                        },
+                });
+            }
+
+        </script>
+    </body>
 </html>
