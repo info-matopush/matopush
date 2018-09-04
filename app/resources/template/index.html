@@ -697,6 +697,24 @@
                         },
                 });
             }
+            function searchSite() {
+                var sendData = new FormData();
+                sendData.append('endpoint', subscription.endpoint);
+                sendData.append('keyword', _('keyword').value);
+
+                $.ajax({
+                    url: "api/search",
+                    type: "POST",
+                    data: sendData,
+                    dataType: "json",
+                    processData: false,
+                    contentType: false,
+                    success:
+                        function (resp) {
+                            vueData.searchList = resp.items;
+                        },
+                });
+            }
         </script>
     </body>
 </html>
