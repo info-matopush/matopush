@@ -73,7 +73,13 @@
                     </b-alert>
                 </div>
                 <div id="control">
-                    <button id="subscribe" class="btn-sm btn-primary" disabled></button>
+                    <b-button
+                        :disabled="vueData.processing"
+                        size="sm"
+                        variant="primary"
+                        v-on:click="togglePushControl()">
+                        ${ getLabel }
+                    </b-button>
                     <b-button
                         v-bind:disabled="!vueData.complete"
                         size="sm"
@@ -290,6 +296,8 @@
                 timelineList: [],
                 // タブインデックス
                 tabIndex: 0,
+                // 処理中
+                processing: false,
             };
             // サーバキー
             var serverKey = null;
@@ -309,6 +317,15 @@
                     data: {
                         vueData,
                     },
+                    computed: {
+                        getLabel: function() {
+                            if (vueData.complete == true) {
+                                return "プッシュ通知を無効にする";
+                            } else {
+                                return "プッシュ通知を有効にする";
+                            }
+                        }
+                    },
                     methods: {
                         openUrl: function (url) {
                             window.open(url);
@@ -320,7 +337,7 @@
                             var sendData = new FormData();
                             sendData.append('endpoint', subscription.endpoint);
                             sendData.append('siteUrl', feedURL);
-                            sendData.append('value', 'true')
+                            sendData.append('value', 'true');
 
                             $.ajax({
                                 url: "/api/conf/site",
@@ -370,6 +387,15 @@
                                 processData: false,
                                 contentType: false, 
                             });
+                        },
+                        togglePushControl: function() {
+                            vueData.processing = true;
+
+                            if (!vueData.complete) {
+                                requestNotificationPermission();
+                            } else {
+                                requestPushUnsubscription();
+                            }
                         }
                     },
                 });
@@ -397,7 +423,6 @@
 
                 // 画面が作られたらWebPushの準備を行う
                 if ('serviceWorker' in navigator) {
-                    _('subscribe').addEventListener('click', togglePushSubscription, false);
                     _('addSite').addEventListener('click', addSite, false);
                     _('searchSite').addEventListener('click', searchSite, false);
                 }
@@ -502,17 +527,6 @@
                 });
             }
 
-            function togglePushSubscription() {
-                _('subscribe').disabled = true;
-
-                if (!_('subscribe').classList.contains('subscribing')) {
-                    requestNotificationPermission();
-                }
-                else {
-                    requestPushUnsubscription();
-                }
-            }
-
             function encodeBase64URL(buffer) {
                 return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
             }
@@ -613,8 +627,8 @@
                             function () {
                                 subscription = null;
                                 disablePushRequest();
-                                // todo:
-                                location.reload();                            
+                                vueData.myList.splice(0);
+                                vueData.timelineList.splice(0);
                             }
                     });
                 }
@@ -622,17 +636,15 @@
 
             function disablePushRequest() {
                 vueData.complete = false;
-                _('subscribe').classList.remove('subscribing');
-                _('subscribe').disabled = false;
+                vueData.processing = false;
                 _('addSite').disabled = true;
                 _('siteUrl').disabled = true;
             }
 
             function enablePushRequest(sub) {
                 vueData.complete = true;
+                vueData.processing = false;
                 subscription = sub;
-                _('subscribe').classList.add('subscribing');
-                _('subscribe').disabled = false;
                 _('addSite').disabled = false;
                 _('siteUrl').disabled = false;
 
