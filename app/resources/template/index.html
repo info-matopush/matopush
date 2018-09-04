@@ -74,7 +74,13 @@
                 </div>
                 <div id="control">
                     <button id="subscribe" class="btn-sm btn-primary" disabled></button>
-                    <button id="test" class="btn-sm btn-primary" disabled>通知をテストする</button>
+                    <b-button
+                        v-bind:disabled="!vueData.complete"
+                        size="sm"
+                        variant="primary"
+                        v-on:click="testPush()">
+                        通知をテストする
+                    </b-button>
                 </div>
                 <div id="how_to_use"><BR>
                     <dl class="dl-horizontal">
@@ -392,7 +398,6 @@
                 // 画面が作られたらWebPushの準備を行う
                 if ('serviceWorker' in navigator) {
                     _('subscribe').addEventListener('click', togglePushSubscription, false);
-                    _('test').addEventListener('click', testPush, false);
                     _('addSite').addEventListener('click', addSite, false);
                     _('searchSite').addEventListener('click', searchSite, false);
                 }
@@ -616,18 +621,18 @@
             }
 
             function disablePushRequest() {
+                vueData.complete = false;
                 _('subscribe').classList.remove('subscribing');
                 _('subscribe').disabled = false;
-                _('test').disabled = true;
                 _('addSite').disabled = true;
                 _('siteUrl').disabled = true;
             }
 
             function enablePushRequest(sub) {
+                vueData.complete = true;
                 subscription = sub;
                 _('subscribe').classList.add('subscribing');
                 _('subscribe').disabled = false;
-                _('test').disabled = false;
                 _('addSite').disabled = false;
                 _('siteUrl').disabled = false;
 
@@ -690,19 +695,6 @@
                             alert(resp);
                             refreshMyList();
                         },
-                });
-            }
-
-            function testPush() {
-                var sendData = new FormData();
-                sendData.append('endpoint', subscription.endpoint);
-
-                $.ajax({
-                    url: "/api/test",
-                    type: "POST",
-                    data: sendData,
-                    processData: false,
-                    contentType: false, 
                 });
             }
         </script>
