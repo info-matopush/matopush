@@ -81,7 +81,7 @@
                         ${ getLabel }
                     </b-button>
                     <b-button
-                        v-bind:disabled="!vueData.complete"
+                        v-bind:disabled="(!vueData.complete)||vueData.processing"
                         size="sm"
                         variant="primary"
                         v-on:click="testPush()">
@@ -219,6 +219,7 @@
                                 </td>
                                 <td class="col-2">
                                     <b-button
+                                        v-bind:disabled="!vueData.complete"
                                         class="float-right"
                                         v-on:click="addSite('{{.FeedURL}}')"
                                         size="sm"
@@ -235,20 +236,34 @@
                     <b-tab title="追加">
                         <br>
                         サイトURL(フィード配信URL)
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <button id="addSite" class="btn btn-success" disabled>追加</button>
-                            </div>
-                            <input type="url" class="form-control" id="siteUrl" placeholder="http://any_site/feed.xml">
-                        </div>
+                        <b-input-group>
+                            <b-input-group-prepend>
+                                <b-btn
+                                    variant="success"
+                                    v-on:click="onClickAddSite()"
+                                    v-bind:disabled="!vueData.complete">追加</b-btn>
+                            </b-input-group-prepend>
+                            <b-form-input
+                                v-model="vueData.input_url"
+                                placeholder="http://any_site/feed.xml"
+                                type="url"
+                                v-bind:disabled="!vueData.complete"></b-form-input>
+                        </b-input-group>
                         <br>
                         キーワード検索
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <button id="searchSite" class="btn btn-success">検索</button>
-                            </div>
-                            <input type="text" class="form-control" id="keyword" placeholder="キーワード">
-                        </div>
+                        <b-input-group>
+                            <b-input-group-prepend>
+                                <b-btn
+                                    variant="success"
+                                    v-on:click="searchSite()"
+                                    v-bind:disabled="!vueData.complete">検索</b-btn>
+                            </b-input-group-prepend>
+                            <b-form-input
+                                v-model="vueData.input_keyword"
+                                placeholder="キーワード"
+                                type="search"
+                                v-bind:disabled="!vueData.complete"></b-form-input>
+                        </b-input-group>
                         <br>
                         <div>
                             <b-card-group columns>
@@ -298,6 +313,10 @@
                 tabIndex: 0,
                 // 処理中
                 processing: false,
+                // キーワード
+                input_keyword: "",
+                // url
+                input_url: "",
             };
             // サーバキー
             var serverKey = null;
@@ -352,6 +371,26 @@
                                     },
                             });
                         },
+                        onClickAddSite: function () {
+                            var sendData = new FormData();
+                            sendData.append('endpoint', subscription.endpoint);
+                            sendData.append('siteUrl', vueData.input_url);
+                            sendData.append('value', 'true');
+
+                            $.ajax({
+                                url: "/api/conf/site",
+                                type: "POST",
+                                data: sendData,
+                                processData: false,
+                                contentType: false,
+                                success:
+                                    function (resp) {
+                                        alert(resp);
+                                        refreshMyList();
+                                        vueData.input_url="";
+                                    },
+                            });
+                        },
                         removeSite: function (index) {
                             var sel = vueData.myList[index];
                             var sendData = new FormData();
@@ -396,6 +435,24 @@
                             } else {
                                 requestPushUnsubscription();
                             }
+                        },
+                        searchSite: function() {
+                            var sendData = new FormData();
+                            sendData.append('endpoint', subscription.endpoint);
+                            sendData.append('keyword', vueData.input_keyword);
+
+                            $.ajax({
+                                url: "api/search",
+                                type: "POST",
+                                data: sendData,
+                                dataType: "json",
+                                processData: false,
+                                contentType: false,
+                                success:
+                                    function (resp) {
+                                        vueData.searchList = resp.items;
+                                    },
+                            });
                         }
                     },
                 });
@@ -419,12 +476,6 @@
                 }
                 else {
                     isExistServiceWorker = false;
-                }
-
-                // 画面が作られたらWebPushの準備を行う
-                if ('serviceWorker' in navigator) {
-                    _('addSite').addEventListener('click', addSite, false);
-                    _('searchSite').addEventListener('click', searchSite, false);
                 }
 
                 db.keyvalue.get('latest_tab').then(function(tab) {
@@ -637,16 +688,12 @@
             function disablePushRequest() {
                 vueData.complete = false;
                 vueData.processing = false;
-                _('addSite').disabled = true;
-                _('siteUrl').disabled = true;
             }
 
             function enablePushRequest(sub) {
                 vueData.complete = true;
                 vueData.processing = false;
                 subscription = sub;
-                _('addSite').disabled = false;
-                _('siteUrl').disabled = false;
 
                 // subscriptionを登録する
                 var sendData = new FormData();
@@ -685,27 +732,6 @@
                     success:
                         function (resp) {
                             registFeedURL();
-                        },
-                });
-            }
-
-            function addSite() {
-                var sendData = new FormData();
-                sendData.append('endpoint', subscription.endpoint);
-                sendData.append('siteUrl', _('siteUrl').value);
-
-                _('siteUrl').value = '';
-
-                $.ajax({
-                    url: "/api/conf/site",
-                    type: "POST",
-                    data: sendData,
-                    processData: false,
-                    contentType: false,
-                    success:
-                        function (resp) {
-                            alert(resp);
-                            refreshMyList();
                         },
                 });
             }
