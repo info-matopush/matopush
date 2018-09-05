@@ -713,46 +713,6 @@
                         },
                 });
             }
-
-            function getSubscription2(sub) {
-                subscription = sub;
-
-                // subscriptionを登録する
-                var sendData = new FormData();
-                sendData.append('endpoint', subscription.endpoint);
-                sendData.append('auth',     encodeBase64URL(subscription.getKey('auth')));
-                sendData.append('p256dh',   encodeBase64URL(subscription.getKey('p256dh')));
-
-                $.ajax({
-                    url: registURL,
-                    type: "POST",
-                    data: sendData,
-                    processData: false,
-                    contentType: false,
-                    success:
-                        function (resp) {
-                            registFeedURL();
-                        },
-                });
-            }
-            function searchSite() {
-                var sendData = new FormData();
-                sendData.append('endpoint', subscription.endpoint);
-                sendData.append('keyword', _('keyword').value);
-
-                $.ajax({
-                    url: "api/search",
-                    type: "POST",
-                    data: sendData,
-                    dataType: "json",
-                    processData: false,
-                    contentType: false,
-                    success:
-                        function (resp) {
-                            vueData.searchList = resp.items;
-                        },
-                });
-            }
         </script>
     </body>
 </html>
