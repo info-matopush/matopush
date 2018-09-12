@@ -161,6 +161,9 @@ func getContentsInfo(ctx context.Context, url string) (*Site, error) {
 }
 
 func getFeedInfo(ctx context.Context, body []byte) (*content.Feed, error) {
+	// 入力データをクリーニング
+	body = []byte(strings.Replace(string(body), string('\u000c'), "", -1))
+
 	// ATOM形式か?
 	feed, err := atom.Analyze(body)
 	if err == nil {
