@@ -50,8 +50,12 @@ func ParseHTML(ctx context.Context, url string) (HTML, error) {
 	})
 	doc.Find("meta").Each(func(i int, s *goquery.Selection) {
 		pro, _ := s.Attr("property")
+		nam, _ := s.Attr("name")
 		con, _ := s.Attr("content")
 		if pro == "og:image" {
+			h.ImageURL = con
+		} else if nam == "og:image" {
+			// サイトによってはproperty="og:image"ではなくname="og:image"の場合がある
 			h.ImageURL = con
 		}
 	})
