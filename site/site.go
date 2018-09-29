@@ -173,7 +173,7 @@ func getFeedInfo(ctx context.Context, body []byte) (*content.Feed, error) {
 	// RSS 1.0形式か?
 	feed, err = rdf.Analyze(body)
 	if err == nil {
-		log.Debugf(ctx, "Feed(RDF) %v", feed)
+		//log.Debugf(ctx, "Feed(RDF) %v", feed)
 		return &feed, nil
 	}
 

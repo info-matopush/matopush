@@ -69,10 +69,23 @@ func SiteCruisingHandler(_ http.ResponseWriter, r *http.Request) {
 			wg.Add(1)
 			go func(ui site.UpdateInfo) {
 				defer wg.Done()
-				PutTaskSendNotifiation(ctx, ui.FeedURL)
+
+				err = ui.CheckSite(ctx)
+				if err != nil {
+					log.Errorf(ctx, "CheckSite error %v", err)
+					return
+				}
+
+				if ui.UpdateFlg {
+					// チェック結果を保存
+					ui.Update(ctx)
+
+					// 更新がある場合はプッシュで通知する
+					PutTaskSendNotifiation(ctx, ui.FeedURL)
+				}
 			}(ui)
 		}
 		wg.Wait()
 	}
-	log.Infof(ctx, "site num:%d", len(siteList))
+	log.Infof(ctx, "巡回したサイトの数:%d", len(siteList))
 }

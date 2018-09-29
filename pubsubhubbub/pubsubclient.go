@@ -30,10 +30,26 @@ func SubscriberHandler(w http.ResponseWriter, r *http.Request) {
 
 	// サイトが登録済みのものか？
 	params := r.URL.Query()
-	_, err := site.FromFeedURL(ctx, params.Get("site"))
-	if err == nil {
-		// サイト更新情報をWebPushで通知するためのタスクをキューに積む
-		cron.PutTaskSendNotifiation(ctx, params.Get("site"))
+	ui, _, err := site.FromURL(ctx, params.Get("site"))
+	if err != nil {
+		log.Errorf(ctx, "該当するサイト情報がない")
+		return
+	}
+
+	// 更新の有無を確認する
+	err = ui.CheckSite(ctx)
+	if err != nil {
+		log.Errorf(ctx, "CheckSite error %v", err)
+		return
+	}
+
+	// 更新がある場合はプッシュで通知する
+	if ui.UpdateFlg {
+		// チェック結果を保存
+		ui.Update(ctx)
+
+		// 更新がある場合はプッシュで通知する
+		cron.PutTaskSendNotifiation(ctx, ui.FeedURL)
 	}
 }
 
