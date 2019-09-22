@@ -1,5 +1,4 @@
-runtime: go
-api_version: go1.9
+runtime: go111
 
 default_expiration: "2s"
 
@@ -54,8 +53,8 @@ handlers:
 - url: /admin/.*
   secure: always
   login: admin
-  script: _go_app
+  script: auto
 
 - url: /.*
-  script: _go_app
+  script: auto
   secure: always
